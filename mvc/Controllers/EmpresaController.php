@@ -71,17 +71,17 @@ class EmpresaController
                 $mail->isHTML(true);
                 $mail->Subject = 'GUIAR - Verificacao de E-mail para Cadastro';
                 $mail->Body = "
-                    <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;'>
-                        <h2 style='color: #ff9a52; text-align: center; margin-bottom: 20px;'>GUIAR</h2>
-                        <h3 style='color: #333;'>Seja bem-vindo(a) ao GUIAR!</h3>
+                    <div style='font-family: Arial, sans-serif; color: #102b61; line-height: 1.6; max-width: 600px; margin: 0 auto; background-color: #eef5ff; border: 1px solid #c4d8ff; padding: 20px; border-radius: 8px;'>
+                        <h2 style='color: #ffffff; background-color: #111979; text-align: center; margin: -20px -20px 20px; padding: 20px; border-radius: 8px 8px 0 0;'>GUIAR</h2>
+                        <h3 style='color: #102b61;'>Seja bem-vindo(a) ao GUIAR!</h3>
                         <p>Agradecemos por iniciar o seu cadastro como empresa parceira. Para dar continuidade ao processo e garantir a segurança da sua conta, precisamos confirmar o seu endereço de e-mail.</p>
                         <p>Por favor, utilize o código de verificação de 4 dígitos abaixo na tela de cadastro:</p>
                         <div style='text-align: center; margin: 30px 0;'>
-                            <span style='background-color: #f8f9fa; border: 2px dashed #ff9a52; color: #ff9a52; padding: 15px 30px; border-radius: 5px; font-weight: bold; font-size: 24px; display: inline-block; letter-spacing: 5px;'>{$codigo_verificacao}</span>
+                            <span style='background-color: #ffffff; border: 2px dashed #111979; color: #111979; padding: 15px 30px; border-radius: 5px; font-weight: bold; font-size: 24px; display: inline-block; letter-spacing: 5px;'>{$codigo_verificacao}</span>
                         </div>
                         <p>Caso você não tenha se cadastrado na plataforma <strong>GUIAR</strong>, por favor, desconsidere este e-mail de forma segura.</p>
-                        <hr style='border: none; border-top: 1px solid #eee; margin: 20px 0;'>
-                        <p style='font-size: 12px; color: #777; text-align: center;'>
+                        <hr style='border: none; border-top: 1px solid #c4d8ff; margin: 20px 0;'>
+                        <p style='font-size: 12px; color: #58769f; text-align: center;'>
                             Atenciosamente,<br>
                             <strong>Equipe GUIAR</strong><br>
                         </p>
@@ -215,19 +215,19 @@ class EmpresaController
                 $mail->isHTML(true);
                 $mail->Subject = 'GUIAR - Solicitacao de Redefinicao de Senha';
                 $mail->Body = "
-                    <div style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;'>
-                        <h2 style='color: #ff9a52; text-align: center; margin-bottom: 20px;'>GUIAR</h2>
-                        <h3 style='color: #333;'>Prezado(a) parceiro(a),</h3>
+                    <div style='font-family: Arial, sans-serif; color: #102b61; line-height: 1.6; max-width: 600px; margin: 0 auto; background-color: #eef5ff; border: 1px solid #c4d8ff; padding: 20px; border-radius: 8px;'>
+                        <h2 style='color: #ffffff; background-color: #111979; text-align: center; margin: -20px -20px 20px; padding: 20px; border-radius: 8px 8px 0 0;'>GUIAR</h2>
+                        <h3 style='color: #102b61;'>Prezado(a) parceiro(a),</h3>
                         <p>Recebemos uma solicitação para redefinir a senha da sua conta empresarial no sistema <strong>GUIAR</strong>.</p>
                         <p>Para cadastrar uma nova senha e recuperar o acesso, por favor, clique no botão abaixo:</p>
                         <div style='text-align: center; margin: 30px 0;'>
-                            <a href='{$resetLink}' style='background-color: #ff9a52; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;'>Redefinir Minha Senha</a>
+                            <a href='{$resetLink}' style='background-color: #ffd400; color: #102b61; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;'>Redefinir Minha Senha</a>
                         </div>
                         <p>Se o botão não funcionar, você também pode acessar o endereço abaixo, copiando-o e colando-o em seu navegador:</p>
-                        <p style='word-break: break-all; color: #0056b3;'><a href='{$resetLink}'>{$resetLink}</a></p>
+                        <p style='word-break: break-all; color: #00288a;'><a href='{$resetLink}' style='color: #00288a;'>{$resetLink}</a></p>
                         <p>Ressaltamos que este link de redefinição é válido por apenas <strong>1 hora</strong>. Caso você não tenha solicitado esta alteração, por favor, desconsidere este e-mail. Sua senha atual permanecerá segura e inalterada.</p>
-                        <hr style='border: none; border-top: 1px solid #eee; margin: 20px 0;'>
-                        <p style='font-size: 12px; color: #777; text-align: center;'>
+                        <hr style='border: none; border-top: 1px solid #c4d8ff; margin: 20px 0;'>
+                        <p style='font-size: 12px; color: #58769f; text-align: center;'>
                             Atenciosamente,<br>
                             <strong>Equipe GUIAR</strong><br>
                         </p>

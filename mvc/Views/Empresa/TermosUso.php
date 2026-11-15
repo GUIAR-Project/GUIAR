@@ -58,6 +58,13 @@
       background: linear-gradient(135deg, #e6eaf0 0%, #f0f4f8 100%);
     }
 
+    body {
+            background-color: #eef5ff !important;
+            background-image: none !important;
+            color: #102b61;
+            font-family: 'Inter', sans-serif !important;
+        }
+
     body > header {
         min-height: 80px;
         background: #fff !important;
@@ -373,7 +380,7 @@
                 Recusar
               </a>
               <a href="<?= BASE_URL ?>/routes.php?action=confirmarTermos"
-                class="w-full sm:w-1/2 bg-brand-yellow text-gray-900 font-bold text-base py-3 rounded-xl hover:bg-[#eacc00] hover:shadow-md transform hover:-translate-y-[0.5px] transition-all flex items-center justify-center gap-2 text-center">
+                class="w-full sm:w-1/2 bg-[#1B138F] text-white font-bold text-base py-3 rounded-xl hover:bg-[#111979] hover:shadow-md transform hover:-translate-y-[0.5px] transition-all flex items-center justify-center gap-2 text-center">
                 Aceitar e Continuar
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -400,11 +407,11 @@
 
   <!-- RODAPÉ -->
   <footer class="w-full bg-brand-blue px-6 py-4 mt-auto border-t border-white/10 shadow-inner z-50">
-    <div class="w-full flex flex-col md:flex-row items-center justify-between text-[0.85rem] text-white/80">
+    <div class="w-full flex flex-col md:flex-row items-center justify-between text-[0.85rem]">
       <p class="mb-2 md:mb-0">&copy; <?= date('Y') ?> GUIAR. Todos os direitos reservados.</p>
       <div class="flex space-x-4 font-medium">
         <a href="#" class="hover:text-brand-yellow transition-colors">Política de Privacidade</a>
-        <a href="<?= BASE_URL ?>/routes.php?action=termosUso" class="hover:text-brand-yellow transition-colors underline decoration-brand-yellow underline-offset-4">Termos de Serviço</a>
+        <a href="<?= BASE_URL ?>/routes.php?action=termosUso" class="hover:text-brand-yellow transition-colors">Termos de Serviço</a>
       </div>
     </div>
   </footer>
