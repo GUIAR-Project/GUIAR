@@ -576,6 +576,72 @@ select:focus {
     color: #d91d39;
 }
 
+.order-actions .btn-track {
+    flex: 0 0 auto;
+    min-height: 32px;
+    padding: 6px 10px;
+    border: 1px solid var(--emp-primary-light-border, #fed7aa);
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    background: var(--emp-primary-light, #fff7ed);
+    color: var(--emp-primary, #c2410c);
+    transition: .3s;
+}
+
+.order-actions .btn-track:hover { transform: translateY(-2px); }
+
+.rastreio-link {
+    display: flex;
+    gap: 8px;
+    margin: 14px 0 6px;
+}
+
+.rastreio-link input {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #334155;
+    background: #f8fafc;
+}
+
+.rastreio-acoes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.rastreio-acoes a,
+.rastreio-acoes button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+
+.rastreio-aviso {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
 .orders-empty {
     padding: 34px 20px !important;
     color: #8793a9 !important;
@@ -794,6 +860,15 @@ select:focus {
                     Acompanhar Rotas
                 </a>
 
+                <a href="<?= BASE_URL ?>/routes.php?action=inteligenciaAdm"
+                    class="menu-item active flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold text-sm transition-all"
+                    style="background-color: var(--emp-primary, #4F46E5); color: var(--emp-primary-contrast, #ffffff); box-shadow: 0 8px 18px -4px var(--emp-primary-ring, rgba(79, 70, 229, 0.35));">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Inteligência
+                </a>
+
                 <!-- PERFIL -->
                 <a href="<?= BASE_URL ?>/routes.php?action=perfilAdm"
                     class="menu-item flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-all">
@@ -901,7 +976,9 @@ select:focus {
                         <tbody>
                             <?php if (!empty($result)): ?>
                                 <?php foreach ($result as $row): ?>
-                                    <tr class="order-row" data-price="<?= htmlspecialchars((string) $row['preco'], ENT_QUOTES, 'UTF-8') ?>">
+                                    <tr class="order-row" data-price="<?= htmlspecialchars((string) $row['preco'], ENT_QUOTES, 'UTF-8') ?>"
+                                        data-telefone="<?= htmlspecialchars((string) ($row['telefone_cliente'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                                        data-rastreio="<?= htmlspecialchars(BASE_URL . '/routes.php?action=rastreio&t=' . ($row['token_rastreio'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                         <td class="order-id-column" data-label="Pedido">
                                             <span class="order-id-cell">
                                                 <input type="checkbox" name="pedido_ids[]" value="<?= htmlspecialchars($row["id_pedido"]) ?>">
@@ -929,6 +1006,7 @@ select:focus {
                                         </td>
                                         <td class="order-actions-column" data-label="Ações">
                                             <div class="order-actions">
+                                                <button type="button" class="btn-track" title="Link de acompanhamento para o cliente">📍 Rastrear</button>
                                                 <button type="button" class="btn-edit" data-id="<?= htmlspecialchars($row["id_pedido"]) ?>">Editar</button>
                                                 <button type="button" class="btn-delete" data-id="<?= htmlspecialchars($row["id_pedido"]) ?>">Excluir</button>
                                             </div>
@@ -985,6 +1063,19 @@ select:focus {
                     id="nome_cliente"
                     name="nome_cliente"
                     required>
+            </div>
+
+            <div class="form-group">
+                <label for="telefone_cliente">
+                    WhatsApp do cliente (opcional):
+                </label>
+
+                <input type="tel"
+                    id="telefone_cliente"
+                    name="telefone_cliente"
+                    inputmode="tel"
+                    autocomplete="tel"
+                    placeholder="(19) 99999-9999">
             </div>
 
             <div class="form-group">
@@ -1206,6 +1297,19 @@ select:focus {
             </div>
 
             <div class="form-group">
+                <label for="edit_telefone_cliente">
+                    WhatsApp do cliente (opcional):
+                </label>
+
+                <input type="tel"
+                    id="edit_telefone_cliente"
+                    name="telefone_cliente"
+                    inputmode="tel"
+                    autocomplete="tel"
+                    placeholder="(19) 99999-9999">
+            </div>
+
+            <div class="form-group">
 
                 <label for="edit_preco">
                     Preço:
@@ -1366,6 +1470,34 @@ select:focus {
     </div>
 
 </div>
+
+<!-- MODAL LINK DE RASTREIO -->
+<div id="trackOrderModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="trackOrderTitle">
+    <div class="modal-content">
+        <span class="close" id="closeTrackOrderModal" aria-label="Fechar">&times;</span>
+        <h2 id="trackOrderTitle">Acompanhamento do pedido</h2>
+        <p style="color:#64748B; line-height:1.6; font-size:14px;">
+            Envie este link para <strong id="trackCliente"></strong>. Ele mostra a previsão de chegada e o entregador no mapa, em tempo real, sem precisar de login.
+        </p>
+
+        <div class="rastreio-link">
+            <input type="text" id="trackLink" readonly aria-label="Link de rastreio">
+        </div>
+
+        <div class="rastreio-acoes">
+            <button type="button" id="trackCopiar" style="background:#F1F5F9; color:#334155;">Copiar link</button>
+            <a id="trackWhatsapp" href="#" target="_blank" rel="noopener" style="background:#16A34A; color:#fff;">WhatsApp</a>
+        </div>
+        <p id="trackSemTelefone" style="display:none; margin-top:10px; color:#64748B; font-size:12px;">
+            Sem WhatsApp cadastrado: o WhatsApp vai abrir para você escolher o contato.
+        </p>
+        <a id="trackAbrir" href="#" target="_blank" rel="noopener" style="display:block; text-align:center; margin-top:12px; font-size:13px; font-weight:600; color:var(--emp-primary, #E94E00);">Ver como o cliente vê ↗</a>
+
+        <div id="trackAvisoLocal" class="rastreio-aviso" style="display:none;">
+            Este link usa <strong>localhost</strong> e só abre neste computador. Para o cliente abrir no celular, acesse o painel pelo endereço de rede (ex.: <strong>https://10.0.3.168:8000</strong>) e gere o link de novo.
+        </div>
+    </div>
+</div>
 <script>
 
     // =============================
@@ -1494,6 +1626,10 @@ select:focus {
             ).value = descricao;
 
             document.getElementById(
+                'edit_telefone_cliente'
+            ).value = orderRow.dataset.telefone || '';
+
+            document.getElementById(
                 'editOrderModal'
             ).style.display = 'block';
         });
@@ -1579,7 +1715,8 @@ select:focus {
             'newOrderModal',
             'sendOrdersModal',
             'editOrderModal',
-            'deleteOrderModal'
+            'deleteOrderModal',
+            'trackOrderModal'
         ];
 
         modals.forEach(modalId => {
@@ -2239,5 +2376,61 @@ iniciarMapaPedido();
 </script>
 <script src="<?= BASE_URL ?>/public/js/empresa-palette.js"></script>
 
+
+<script>
+    // =============================
+    // LINK DE RASTREIO PARA O CLIENTE
+    // =============================
+    (function () {
+        const NOME_EMPRESA = <?= json_encode($nomeEmpresa ?? '') ?>;
+        const modal = document.getElementById('trackOrderModal');
+
+        function numeroWhatsapp(telefone) {
+            let d = (telefone || '').replace(/\D/g, '');
+            if (!d) return '';
+            if (d.length === 10 || d.length === 11) d = '55' + d; // DDD + número → adiciona o código do Brasil
+            return d;
+        }
+
+        document.querySelectorAll('.btn-track').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const linha = btn.closest('.order-row');
+                const link = linha.dataset.rastreio;
+                const cliente = linha.querySelector('.order-client').innerText.trim();
+                const primeiroNome = cliente.split(' ')[0];
+                const numero = numeroWhatsapp(linha.dataset.telefone);
+
+                const mensagem = `Olá, ${primeiroNome}! Seu pedido${NOME_EMPRESA ? ' da ' + NOME_EMPRESA : ''} já está com a gente. ` +
+                    `Acompanhe a entrega em tempo real, com a previsão de chegada: ${link}`;
+
+                document.getElementById('trackCliente').textContent = cliente;
+                document.getElementById('trackLink').value = link;
+                document.getElementById('trackAbrir').href = link;
+                document.getElementById('trackWhatsapp').href =
+                    'https://wa.me/' + numero + '?text=' + encodeURIComponent(mensagem);
+                document.getElementById('trackSemTelefone').style.display = numero ? 'none' : 'block';
+                document.getElementById('trackAvisoLocal').style.display =
+                    /\/\/(localhost|127\.0\.0\.1)(:|\/)/.test(link) ? 'block' : 'none';
+                document.getElementById('trackCopiar').textContent = 'Copiar link';
+                modal.style.display = 'block';
+            });
+        });
+
+        document.getElementById('trackCopiar').addEventListener('click', async function () {
+            const campo = document.getElementById('trackLink');
+            try {
+                await navigator.clipboard.writeText(campo.value);
+            } catch (e) {
+                campo.select();
+                document.execCommand('copy');
+            }
+            this.textContent = 'Copiado ✓';
+        });
+
+        document.getElementById('closeTrackOrderModal').addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    })();
+</script>
 </body>
 </html>

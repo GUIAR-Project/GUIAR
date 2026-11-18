@@ -371,6 +371,14 @@
                     Acompanhar Rotas
                 </a>
 
+                <a href="<?= BASE_URL ?>/routes.php?action=inteligenciaAdm"
+                    class="menu-item flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Inteligência
+                </a>
+
                 <!-- PERFIL -->
                 <a href="<?= BASE_URL ?>/routes.php?action=perfilAdm"
                     class="menu-item flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-all">
@@ -813,6 +821,38 @@
             }
         }
 
+        // PREVISÃO DE CHEGADA (mesma do link de rastreio do cliente)
+        function escHtml(t) {
+            const d = document.createElement('div');
+            d.textContent = t == null ? '' : String(t);
+            return d.innerHTML;
+        }
+
+        function textoPrevisao(prev) {
+            if (!prev) return null;
+            const min = prev.restante_s != null ? Math.round(prev.restante_s / 60) : null;
+            const emMin = min == null ? '' : (min < 1 ? ' · chegando' : ` · em ${min} min`);
+            switch (prev.tipo) {
+                case 'chegou': return { icone: '📍', texto: 'No endereço agora', forte: true };
+                case 'a_caminho': return { icone: '🕒', texto: `Chega ${prev.chega_em_hora}${emMin}`, forte: true };
+                case 'fila': return prev.chega_em_hora
+                    ? { icone: '⏳', texto: `Previsão ${prev.chega_em_hora}${emMin}`, forte: false }
+                    : { icone: '⏳', texto: `Na fila · ${prev.entregas_antes} antes`, forte: false };
+                default: return { icone: '•', texto: 'Aguardando início da rota', forte: false };
+            }
+        }
+
+        function htmlPrevisao(prev, extraClasse) {
+            const t = textoPrevisao(prev);
+            if (!t) return '';
+            const cor = t.forte ? 'color: var(--emp-primary, #4F46E5);' : 'color:#64748B;';
+            let sinal = '';
+            if (prev && prev.sinal_ha_s != null && prev.sinal_ha_s > 180) {
+                sinal = ` <span style="color:#B45309;">(sinal há ${Math.round(prev.sinal_ha_s / 60)} min)</span>`;
+            }
+            return `<p class="text-[11px] font-bold mt-1 ${extraClasse || ''}" style="${cor}">${t.icone} ${escHtml(t.texto)}${sinal}</p>`;
+        }
+
         // RENDERIZA A INTERFACE COMPLETA
         function renderizarInterface() {
             var dados = dadosEntregadoresCache || [];
@@ -960,6 +1000,18 @@
                         </div>
                     `;
 
+                    // PRÓXIMA ENTREGA COM PREVISÃO
+                    var proxima = pedidosPendentes[0];
+                    if (temPedidos && proxima && proxima.previsao && ['a_caminho', 'chegou'].includes(proxima.previsao.tipo)) {
+                        cardHTML += `
+                            <div class="mt-3 py-2 px-3 rounded-xl border text-xs font-semibold flex items-center gap-2"
+                                style="background-color: var(--emp-primary-light, #EEF2FF); border-color: var(--emp-primary-light-border, #C7D2FE); color: var(--emp-primary, #4F46E5);">
+                                <span>→</span>
+                                <span class="truncate">${escHtml((proxima.nome_cliente || 'Cliente').split(' ')[0])} · ${escHtml(textoPrevisao(proxima.previsao).texto)}</span>
+                            </div>
+                        `;
+                    }
+
                     // LISTAGEM DE PEDIDOS PENDENTES DESTE ENTREGADOR
                     if (temPedidos) {
                         cardHTML += `
@@ -992,6 +1044,7 @@
                                                 </svg>
                                                 <span>${pedido.endereco || 'Endereço não informado'}${pedido.bairro ? ', ' + pedido.bairro : ''}</span>
                                             </p>
+                                            ${htmlPrevisao(pedido.previsao)}
                                         </div>
                                     </div>
 
@@ -1083,6 +1136,11 @@
                                     <span class="text-slate-400">Entregas ativas:</span>
                                     <strong class="font-bold text-slate-800">${pedidosPendentes.length}</strong>
                                 </p>
+                                ${temPedidos && pedidosPendentes[0].previsao ? `
+                                <p class="flex items-center justify-between gap-3">
+                                    <span class="text-slate-400">Próxima:</span>
+                                    <strong class="font-bold text-slate-800 text-right">${escHtml((pedidosPendentes[0].nome_cliente || 'Cliente').split(' ')[0])} · ${escHtml(textoPrevisao(pedidosPendentes[0].previsao).texto)}</strong>
+                                </p>` : ''}
                             </div>
                         </div>
                     `;
@@ -1128,6 +1186,7 @@
                                             <span>📍</span>
                                             <span>${pedido.endereco || ''}${pedido.bairro ? ', ' + pedido.bairro : ''}</span>
                                         </p>
+                                        ${htmlPrevisao(pedido.previsao)}
                                     </div>
                                 `;
 

@@ -233,6 +233,53 @@ switch ($action) {
         $controller->getPedidosMapa();
         break;
 
+    // --- Estimativa de tempo de entrega (machine learning) ---
+    case 'apiEtaIniciar':
+        $controller = new \mvc\Controllers\EtaController($pdo);
+        $controller->iniciar();
+        break;
+
+    case 'apiEtaChegada':
+        $controller = new \mvc\Controllers\EtaController($pdo);
+        $controller->chegada();
+        break;
+
+    case 'apiEtaPlanejar':
+        $controller = new \mvc\Controllers\EtaController($pdo);
+        $controller->planejar();
+        break;
+
+    case 'apiEtaProgresso':
+        $controller = new \mvc\Controllers\EtaController($pdo);
+        $controller->progresso();
+        break;
+
+    // --- Rastreio público do pedido (cliente, sem login) ---
+    case 'rastreio':
+        $controller = new \mvc\Controllers\RastreioController($pdo);
+        $controller->pagina();
+        break;
+
+    case 'apiRastreio':
+        $controller = new \mvc\Controllers\RastreioController($pdo);
+        $controller->api();
+        break;
+
+    case 'inteligenciaAdm':
+        $controller = new \mvc\Controllers\AdministradorController($pdo);
+        $controller->inteligencia();
+        break;
+
+    case 'apiEtaStatus':
+        $controller = new \mvc\Controllers\EtaController($pdo);
+        $controller->status();
+        break;
+
+    case 'apiEtaTreinar':
+        $controller = new \mvc\Controllers\EtaController($pdo);
+        $controller->treinar();
+        break;
+
     default:
         // Por padrão, se a rota não for encontrada, redireciona para a home
         header("Location: " . BASE_URL . "/index.html");

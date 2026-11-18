@@ -102,6 +102,14 @@ jobs:
       - name: Testar Models com SQLite em memória
         run: php tests/backend/model_smoke.php
 
+      - name: Testar modelo de estimativa de tempo (machine learning)
+        run: php tests/backend/eta_regressor_test.php
+
+      - name: Testar previsão da fila e painel de inteligência
+        run: |
+          php tests/backend/previsao_fila_test.php
+          php tests/backend/inteligencia_test.php
+
       - name: Iniciar aplicação
         shell: bash
         run: |

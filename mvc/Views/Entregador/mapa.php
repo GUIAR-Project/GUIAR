@@ -17,9 +17,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Leaflet CSS & Routing Machine -->
+    <!-- Leaflet CSS (rotas e tempos vêm direto da API do OSRM) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
 
     <style>
         @font-face {
@@ -553,6 +552,25 @@
                     <!-- LEAFLET MAP ELEMENT -->
                     <div id="map"></div>
 
+                    <!-- PAINEL DE PREVISÃO DE CHEGADA (estilo navegação) -->
+                    <div id="etaPainel" class="hidden absolute z-[1000] left-3 right-3 top-16 sm:left-4 sm:right-auto sm:w-[23rem] max-w-[calc(100%-1.5rem)] bg-white/95 backdrop-blur rounded-2xl shadow-xl border border-slate-200 px-5 py-4" role="status" aria-live="polite">
+                        <div class="flex items-baseline gap-3">
+                            <span id="etaTempo" class="heading-font text-3xl font-extrabold leading-none" style="color: var(--emp-primary);"></span>
+                            <span id="etaDistancia" class="text-base font-semibold text-slate-500"></span>
+                        </div>
+                        <p id="etaLinhaChegada" class="mt-1.5 text-sm text-slate-700"></p>
+                        <p id="etaCliente" class="mt-0.5 text-sm text-slate-500 truncate"></p>
+                        <details id="etaParadas" class="hidden mt-2 pt-2 border-t border-slate-100 group">
+                            <summary class="cursor-pointer select-none text-sm font-semibold text-slate-700 list-none flex items-center justify-between">
+                                <span id="etaParadasTitulo">Próximas paradas</span>
+                                <span class="text-slate-400 transition-transform group-open:rotate-180">▾</span>
+                            </summary>
+                            <ol id="etaListaParadas" class="mt-2 space-y-1.5 text-sm"></ol>
+                        </details>
+                        <p id="etaFonte" class="mt-2 pt-2 border-t border-slate-100 text-xs text-slate-500"></p>
+                        <p id="etaTela" class="hidden mt-1 text-xs"></p>
+                    </div>
+
                     <!-- LEGENDA FLUTUANTE INFERIOR -->
                     <div class="absolute bottom-4 left-4 z-10 glass-panel px-3.5 py-2 rounded-2xl text-[11px] font-semibold text-slate-700 flex items-center gap-3.5 shadow-md hidden sm:flex pointer-events-auto">
                         <div class="flex items-center gap-1.5">
@@ -569,7 +587,7 @@
                         </div>
                         <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3">
                             <span class="w-4 h-1 rounded-full" style="background-color: var(--emp-primary);"></span>
-                            <span>Rota mais curta</span>
+                            <span>Rota otimizada</span>
                         </div>
                     </div>
 
@@ -615,7 +633,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            Recálculo automático a cada 20m
+                            Recálculo automático a cada 30 s
                         </span>
                         <span id="routeStatusFooter" class="font-bold text-slate-600">Aguardando percurso</span>
                     </div>
@@ -657,22 +675,27 @@
 
     <!-- Scripts Leaflet -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
-    <script src="https://rawgit.com/bbecquet/Leaflet.RotatedMarker/master/leaflet.rotatedMarker.js"></script>
 
     <script>
-        // Cor primária da paleta de referência
-        const PRIMARY_COLOR = '#4F46E5';
+        // =====================================================================
+        // MAPA DO ENTREGADOR
+        //  - Rota otimizada com todas as paradas (serviço trip do OSRM)
+        //  - Previsão de chegada ajustada pelo modelo treinado com as entregas reais do GUIAR
+        //  - Mapa acompanha o entregador; tela fica ligada durante o percurso
+        //  - Previsão enviada ao vivo para o link do cliente e o mapa do gestor
+        // =====================================================================
+        const API = '<?= BASE_URL ?>/routes.php?action=';
+        const OSRM = 'https://router.project-osrm.org';
+        const RECALCULO_MS = 30000;          // recalcula a rota no máximo a cada 30 s…
+        const RECALCULO_DIST_M = 150;        // …ou quando andar 150 m desde o último cálculo
+        const RAIO_CHEGADA_M = 40;           // distância do destino considerada "chegou"
+        const ZOOM_SEGUINDO = 16;
+        const VISAO_GERAL_ROTA_MS = 4000;    // tempo mostrando a rota inteira ao começar
+        const COR_ROTA = getComputedStyle(document.documentElement).getPropertyValue('--emp-primary').trim() || '#4F46E5';
 
-        // CRIA O MAPA
-        var map = L.map('map', {
-            zoomControl: false
-        }).setView([-22.3674, -46.9428], 15);
-
-        // CONTROLE DE ZOOM NO CANTO INFERIOR DIREITO
-        L.control.zoom({
-            position: 'bottomright'
-        }).addTo(map);
+        // CRIA O MAPA (zoom no canto inferior direito)
+        var map = L.map('map', { zoomControl: false }).setView([-22.3674, -46.9428], 15);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         // ÍCONE MODERNO DA MOTO DO ENTREGADOR
         var emojiIcon = L.divIcon({
@@ -694,123 +717,398 @@
             maxZoom: 20
         }).addTo(map);
 
-        var userMarker, routeControl;
-        var currentUserPosition;
-        var points = [];
-        var shortestRouteControl;
-        var pedidosCache = [];
-        var marcadoresPedidos = {};
-        var proximoPedidoId = null;
+        var userMarker = null;
+        var currentUserPosition = null;
+        var pedidos = [];            // pedidos em aberto do entregador
+        var marcadores = {};         // id_pedido -> marcador
+        var percursoAtivo = false;
+        var destinoAtual = null;     // { pedido, destino, viagem, linha, restanteS, distanciaM, calculadoEm, posCalculo, chegou }
+        var recalculando = false;
+        var plano = null;            // rota otimizada: { paradas: [{id_pedido, ordem, trecho_s}], tempo_no_local_s, fonte, pedidos }
+        var telaLigada = null;       // Wake Lock
+        var seguindo = true;         // mapa acompanha o entregador (desliga ao arrastar)
+        var pausarSeguirAte = 0;
         var termoBusca = '';
 
-        // CARREGA PEDIDOS DO MAPA
-        fetch('<?= BASE_URL ?>/routes.php?action=apiPedidosMapa')
-            .then(response => response.json())
-            .then(data => {
-                if (data && !data.error) {
-                    pedidosCache = Array.isArray(data) ? data : [];
+        // ---------- utilidades ----------
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.textContent = texto == null ? '' : String(texto);
+            return div.innerHTML;
+        }
 
-                    pedidosCache.forEach((pedido, index) => {
-                        if (pedido.latitude && pedido.longitude) {
-                            var deliveryIcon = L.divIcon({
-                                className: 'delivery-marker-icon',
-                                html: `<div class="delivery-marker" id="pinMarker_${pedido.id_pedido}">${index + 1}</div>`,
-                                iconSize: [26, 26],
-                                iconAnchor: [13, 26]
-                            });
+        function formatarDuracao(segundos) {
+            const min = Math.round(segundos / 60);
+            if (min < 1) return '< 1 min';
+            if (min < 60) return min + ' min';
+            return Math.floor(min / 60) + ' h ' + String(min % 60).padStart(2, '0') + ' min';
+        }
 
-                            var marker = L.marker([pedido.latitude, pedido.longitude], {
-                                icon: deliveryIcon
-                            }).addTo(map);
+        function formatarDistancia(metros) {
+            if (metros < 1000) return Math.round(metros / 10) * 10 + ' m';
+            return (metros / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' km';
+        }
 
-                            marker.bindPopup(`
-                                <div class="p-4 min-w-[240px]" style="font-family: 'Inter', sans-serif;">
-                                    <div class="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-slate-100">
-                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold text-white"
-                                            style="background-color: #4F46E5;">
-                                            Entrega #${index + 1}
-                                        </span>
-                                        <span class="text-[11px] font-bold text-slate-400">ID #${pedido.id_pedido}</span>
-                                    </div>
+        function formatarHora(data) {
+            return data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
 
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Cliente</p>
-                                    <p class="text-sm font-bold text-slate-900 mb-2.5">${pedido.nome_cliente}</p>
-
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Endereço</p>
-                                    <p class="text-xs font-medium text-slate-600 mb-3.5 leading-relaxed">${pedido.endereco}</p>
-
-                                    <button type="button" class="btn-concluir" data-id="${pedido.id_pedido}" data-lat="${pedido.latitude}" data-lng="${pedido.longitude}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        Concluir Entrega
-                                    </button>
-                                </div>
-                            `);
-
-                            marker.pedidoId = pedido.id_pedido;
-                            marker.latitude = pedido.latitude;
-                            marker.longitude = pedido.longitude;
-                            marcadoresPedidos[pedido.id_pedido] = marker;
-
-                            marker.on('popupopen', function(e) {
-                                var popupEl = e.popup.getElement();
-                                if (!popupEl) return;
-                                var btn = popupEl.querySelector('.btn-concluir');
-                                if (btn) {
-                                    btn.onclick = function() {
-                                        const originalText = btn.innerHTML;
-                                        btn.innerHTML = 'Processando...';
-                                        btn.disabled = true;
-                                        concluirEntrega(this.getAttribute('data-id'), marker, btn, originalText);
-                                    };
-                                }
-                            });
-                        }
-                    });
-
-                    renderizarListaPedidos();
-                } else {
-                    pedidosCache = [];
-                    renderizarListaPedidos();
-                }
-            })
-            .catch(err => {
-                console.error("Erro ao carregar pedidos:", err);
-                pedidosCache = [];
-                renderizarListaPedidos();
+        async function postJson(acao, corpo) {
+            const res = await fetch(API + acao, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(corpo)
             });
+            return res.json();
+        }
 
-        // RENDERIZA LISTA LATERAL DE PEDIDOS
+        function temCoordenadas(p) {
+            return p.latitude && p.longitude;
+        }
+
+        // ---------- OSRM ----------
+        function coord(latLng) {
+            return latLng.lng.toFixed(6) + ',' + latLng.lat.toFixed(6);
+        }
+
+        /** Melhor ordem de visita (serviço trip do OSRM), começando na posição atual. */
+        async function osrmViagem(origem, destinos) {
+            const pontos = [origem, ...destinos].map(coord).join(';');
+            const res = await fetch(`${OSRM}/trip/v1/driving/${pontos}?source=first&roundtrip=false&destination=any&overview=false`);
+            const data = await res.json();
+            if (data.code !== 'Ok' || !data.trips.length) throw new Error('OSRM: ' + (data.message || data.code));
+            const ordem = destinos.map((_, i) => i).sort((a, b) => data.waypoints[a + 1].waypoint_index - data.waypoints[b + 1].waypoint_index);
+            return {
+                ordem: ordem,
+                trechos: data.trips[0].legs.map(l => ({ duracao: l.duration, distancia: l.distance }))
+            };
+        }
+
+        async function osrmRota(origem, destino) {
+            const res = await fetch(`${OSRM}/route/v1/driving/${coord(origem)};${coord(destino)}?overview=full&geometries=geojson`);
+            const data = await res.json();
+            if (data.code !== 'Ok' || !data.routes.length) throw new Error('OSRM: ' + (data.message || data.code));
+            const rota = data.routes[0];
+            return {
+                duracao: rota.duration,
+                distancia: rota.distance,
+                linha: rota.geometry.coordinates.map(c => [c[1], c[0]])
+            };
+        }
+
+        // ---------- linha da rota (contorno branco + cor da empresa) ----------
+        function criarLinhaRota(pontos) {
+            return L.featureGroup([
+                L.polyline(pontos, { color: '#ffffff', weight: 8, opacity: 0.8 }),
+                L.polyline(pontos, { color: COR_ROTA, weight: 5, opacity: 0.95 })
+            ]).addTo(map);
+        }
+
+        function atualizarLinhaRota(linha, pontos) {
+            linha.eachLayer(l => l.setLatLngs(pontos));
+        }
+
+        // ---------- mapa acompanha o entregador ----------
+        const BotaoCentralizar = L.Control.extend({
+            options: { position: 'bottomright' },
+            onAdd: function() {
+                const btn = L.DomUtil.create('button', 'leaflet-bar');
+                btn.type = 'button';
+                btn.id = 'btnCentralizar';
+                btn.title = 'Centralizar na minha localização';
+                btn.setAttribute('aria-label', 'Centralizar na minha localização');
+                btn.innerHTML = '📍 Centralizar';
+                btn.style.cssText = 'display:none;background:#fff;border:none;padding:8px 12px;font:700 12px Inter,sans-serif;color:#0F172A;cursor:pointer;';
+                L.DomEvent.disableClickPropagation(btn);
+                L.DomEvent.on(btn, 'click', recentralizar);
+                return btn;
+            }
+        });
+        new BotaoCentralizar().addTo(map);
+
+        function ativarSeguir(ligado) {
+            seguindo = ligado;
+            document.getElementById('btnCentralizar').style.display = ligado ? 'none' : 'block';
+        }
+
+        /** Altura ocupada pelo painel de previsão no topo do mapa (0 se escondido). */
+        function alturaPainel() {
+            const p = document.getElementById('etaPainel');
+            return p.classList.contains('hidden') ? 0 : p.offsetTop + p.offsetHeight;
+        }
+
+        /** Centro do mapa que deixa a posição no meio da área visível (abaixo do painel). */
+        function centroVisivel(posicao, zoom) {
+            const ponto = map.project(posicao, zoom).subtract([0, alturaPainel() / 2]);
+            return map.unproject(ponto, zoom);
+        }
+
+        function recentralizar() {
+            if (!currentUserPosition) {
+                alert('Aguardando sinal de GPS...');
+                return;
+            }
+            pausarSeguirAte = 0;
+            ativarSeguir(true);
+            const zoom = Math.max(map.getZoom(), ZOOM_SEGUINDO);
+            map.setView(centroVisivel(currentUserPosition, zoom), zoom);
+        }
+
+        function seguirEntregador() {
+            if (!currentUserPosition) return;
+            if (pausarSeguirAte && Date.now() >= pausarSeguirAte) {
+                pausarSeguirAte = 0;
+                ativarSeguir(true);
+            }
+            if (seguindo) map.panTo(centroVisivel(currentUserPosition, map.getZoom()), { animate: true });
+        }
+
+        // Arrastar o mapa = quer olhar outro lugar: para de seguir até tocar em "Centralizar"
+        map.on('dragstart', () => {
+            pausarSeguirAte = 0;
+            ativarSeguir(false);
+        });
+
+        // ---------- painel de previsão ----------
+        const painel = document.getElementById('etaPainel');
+
+        /** Horário previsto de cada parada do plano: chegada atual + tempo no local + trechos. */
+        function horariosPrevistos() {
+            const horarios = {};
+            if (!plano || !destinoAtual) return horarios;
+            const d = destinoAtual;
+            const local = plano.tempo_no_local_s || 120;
+            const restante = d.chegou ? 0 : Math.max(0, d.restanteS - (Date.now() - d.calculadoEm) / 1000);
+            let cursor = Date.now() + restante * 1000;
+            plano.paradas.forEach((parada, i) => {
+                if (i > 0) cursor += (local + parada.trecho_s) * 1000;
+                horarios[parada.id_pedido] = new Date(cursor);
+            });
+            return horarios;
+        }
+
+        function renderizarPainel() {
+            if (!destinoAtual) {
+                painel.classList.add('hidden');
+                return;
+            }
+            painel.classList.remove('hidden');
+            const d = destinoAtual;
+            document.getElementById('etaCliente').textContent = d.pedido.nome_cliente + ' · ' + d.pedido.endereco;
+
+            if (d.chegou) {
+                document.getElementById('etaTempo').textContent = 'Você chegou';
+                document.getElementById('etaDistancia').textContent = '';
+                document.getElementById('etaLinhaChegada').textContent = 'Toque em Concluir quando entregar o pedido.';
+            } else {
+                const restante = Math.max(0, d.restanteS - (Date.now() - d.calculadoEm) / 1000);
+                document.getElementById('etaTempo').textContent = formatarDuracao(restante);
+                document.getElementById('etaDistancia').textContent = formatarDistancia(d.distanciaM);
+                document.getElementById('etaLinhaChegada').innerHTML =
+                    'Chegada prevista às <b>' + formatarHora(new Date(Date.now() + restante * 1000)) + '</b>';
+            }
+
+            const v = d.viagem;
+            let fonte;
+            if (v.fonte === 'modelo') {
+                fonte = '🧠 Ajustado pelo histórico real de entregas do GUIAR';
+                if (v.modelo && v.modelo.amostras) {
+                    fonte += ` (modelo v${v.modelo.id_modelo}, ${v.modelo.amostras} entregas`;
+                    if (v.modelo.mape_modelo != null) fonte += `, erro médio ${Math.round(v.modelo.mape_modelo * 100)}%`;
+                    fonte += ')';
+                }
+            } else if (v.offline) {
+                fonte = '⚠️ Estimativa só pelas ruas (servidor de previsão indisponível)';
+            } else {
+                fonte = '🛣️ Estimativa pelas ruas, sem trânsito — o modelo aprende com cada entrega concluída';
+            }
+            document.getElementById('etaFonte').textContent = fonte;
+            renderizarParadas();
+        }
+
+        function renderizarParadas() {
+            const caixa = document.getElementById('etaParadas');
+            const lista = document.getElementById('etaListaParadas');
+            if (!plano || !destinoAtual || plano.paradas.length < 2) {
+                caixa.classList.add('hidden');
+                return;
+            }
+            const horarios = horariosPrevistos();
+            const itens = plano.paradas.slice(1).map(parada => {
+                const pedido = plano.pedidos.find(p => String(p.id_pedido) === String(parada.id_pedido));
+                return `
+                    <li class="flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full text-[11px] font-extrabold flex items-center justify-center flex-shrink-0"
+                            style="background-color: var(--emp-primary); color: var(--emp-primary-contrast);">${parada.ordem}</span>
+                        <span class="truncate text-slate-700">${escaparHtml(pedido ? pedido.nome_cliente : 'Pedido #' + parada.id_pedido)}</span>
+                        <span class="ml-auto font-bold text-slate-900 tabular-nums">${formatarHora(horarios[parada.id_pedido])}</span>
+                    </li>`;
+            });
+            const ultima = plano.paradas[plano.paradas.length - 1];
+            lista.innerHTML = itens.join('');
+            document.getElementById('etaParadasTitulo').textContent =
+                `Próximas paradas (${itens.length}) · fim às ${formatarHora(horarios[ultima.id_pedido])}`;
+            caixa.classList.remove('hidden');
+        }
+
+        setInterval(() => {
+            if (destinoAtual && !destinoAtual.chegou) {
+                renderizarPainel();
+                renderizarListaPedidos();
+            }
+        }, 15000);
+
+        // ---------- tela sempre ligada (Wake Lock) ----------
+        function mostrarAvisoTela() {
+            const el = document.getElementById('etaTela');
+            if (!percursoAtivo) { el.classList.add('hidden'); return; }
+            el.classList.remove('hidden');
+            if (telaLigada) {
+                el.className = 'mt-1 text-xs text-emerald-700';
+                el.textContent = '🔆 Tela mantida ligada durante o percurso';
+            } else {
+                el.className = 'mt-1 text-xs text-amber-700';
+                el.textContent = '⚠️ Mantenha a tela ligada para a previsão continuar atualizando';
+            }
+        }
+
+        async function manterTelaLigada() {
+            if ('wakeLock' in navigator && !telaLigada) {
+                try {
+                    telaLigada = await navigator.wakeLock.request('screen');
+                    telaLigada.addEventListener('release', () => { telaLigada = null; mostrarAvisoTela(); });
+                } catch (err) {
+                    console.warn('Não foi possível manter a tela ligada:', err.message);
+                }
+            }
+            mostrarAvisoTela();
+        }
+
+        function liberarTelaLigada() {
+            if (telaLigada) telaLigada.release();
+            telaLigada = null;
+            mostrarAvisoTela();
+        }
+
+        // O navegador solta o Wake Lock quando a aba fica em segundo plano: pede de novo ao voltar
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && percursoAtivo) manterTelaLigada();
+        });
+
+        // ---------- previsão ao vivo para o cliente e o gestor ----------
+        function enviarProgresso() {
+            const d = destinoAtual;
+            if (!d || d.chegou || d.viagem.offline) return;
+            postJson('apiEtaProgresso', {
+                id_pedido: d.pedido.id_pedido,
+                eta_restante_s: Math.round(d.restanteS),
+                distancia_restante_m: Math.round(d.distanciaM)
+            }).catch(err => console.error('Erro ao enviar previsão:', err));
+        }
+
+        // ---------- marcadores dos pedidos ----------
+        /** Número de cada parada: ordem da rota otimizada; sem rota, ordem da lista. */
+        function numeroParada(pedido) {
+            if (plano) {
+                const parada = plano.paradas.find(p => String(p.id_pedido) === String(pedido.id_pedido));
+                if (parada) return parada.ordem;
+            }
+            return pedidos.findIndex(p => String(p.id_pedido) === String(pedido.id_pedido)) + 1;
+        }
+
+        function ehProxima(pedido) {
+            return destinoAtual && String(destinoAtual.pedido.id_pedido) === String(pedido.id_pedido);
+        }
+
+        /** Pedidos na ordem da rota otimizada (os fora do plano vão para o fim). */
+        function pedidosOrdenados() {
+            return [...pedidos].sort((a, b) => numeroParada(a) - numeroParada(b));
+        }
+
+        function popupPedido(pedido, numero) {
+            return `
+                <div class="p-4 min-w-[240px]" style="font-family: 'Inter', sans-serif;">
+                    <div class="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-slate-100">
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold text-white"
+                            style="background-color: var(--emp-primary);">
+                            Entrega #${numero}
+                        </span>
+                        <span class="text-[11px] font-bold text-slate-400">ID #${Number(pedido.id_pedido)}</span>
+                    </div>
+
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Cliente</p>
+                    <p class="text-sm font-bold text-slate-900 mb-2.5">${escaparHtml(pedido.nome_cliente)}</p>
+
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Endereço</p>
+                    <p class="text-xs font-medium text-slate-600 mb-3.5 leading-relaxed">${escaparHtml(pedido.endereco)}</p>
+
+                    <button type="button" class="btn-concluir" data-id="${Number(pedido.id_pedido)}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Concluir Entrega
+                    </button>
+                </div>
+            `;
+        }
+
+        function atualizarMarcadores() {
+            pedidos.filter(temCoordenadas).forEach(pedido => {
+                const numero = numeroParada(pedido);
+                const icone = L.divIcon({
+                    className: 'delivery-marker-icon',
+                    html: `<div class="delivery-marker ${ehProxima(pedido) ? 'next-stop' : ''}" id="pinMarker_${Number(pedido.id_pedido)}">${numero}</div>`,
+                    iconSize: [26, 26],
+                    iconAnchor: [13, 26]
+                });
+                let marker = marcadores[pedido.id_pedido];
+                if (!marker) {
+                    marker = L.marker([pedido.latitude, pedido.longitude], { icon: icone }).addTo(map);
+                    marker.bindPopup('');
+                    marker.on('popupopen', e => {
+                        const btn = e.popup.getElement().querySelector('.btn-concluir');
+                        if (btn) btn.onclick = () => concluirEntrega(pedido.id_pedido, btn);
+                    });
+                    marcadores[pedido.id_pedido] = marker;
+                } else {
+                    marker.setIcon(icone);
+                }
+                marker.setPopupContent(popupPedido(pedido, numero));
+            });
+        }
+
+        // ---------- lista lateral de entregas ----------
         function renderizarListaPedidos() {
-            var container = document.getElementById('pedidosListContainer');
-            var total = pedidosCache.length;
+            const container = document.getElementById('pedidosListContainer');
+            const total = pedidos.length;
 
-            var badgePedidosCount = document.getElementById('badgePedidosCount');
+            const badgePedidosCount = document.getElementById('badgePedidosCount');
             if (badgePedidosCount) badgePedidosCount.textContent = total;
-
-            var totalPedidosBadge = document.getElementById('totalPedidosBadge');
+            const totalPedidosBadge = document.getElementById('totalPedidosBadge');
             if (totalPedidosBadge) totalPedidosBadge.textContent = total + (total === 1 ? ' pendente' : ' pendentes');
-
-            var mobileCountBadge = document.getElementById('mobileCountBadge');
+            const mobileCountBadge = document.getElementById('mobileCountBadge');
             if (mobileCountBadge) mobileCountBadge.textContent = total;
+
+            const footer = document.getElementById('routeStatusFooter');
+            if (footer) {
+                footer.textContent = destinoAtual
+                    ? `Destino: ${destinoAtual.pedido.nome_cliente.split(' ')[0]} (${formatarDistancia(destinoAtual.distanciaM)})`
+                    : (percursoAtivo ? 'Calculando rota…' : 'Aguardando percurso');
+            }
 
             if (!container) return;
 
-            var filtrados = pedidosCache.filter(p => {
+            const filtrados = pedidosOrdenados().filter(p => {
                 if (!termoBusca) return true;
-                var cliente = (p.nome_cliente || '').toLowerCase();
-                var endereco = (p.endereco || '').toLowerCase();
-                var idStr = String(p.id_pedido || '');
-                return cliente.includes(termoBusca) || endereco.includes(termoBusca) || idStr.includes(termoBusca);
+                return (p.nome_cliente || '').toLowerCase().includes(termoBusca) ||
+                    (p.endereco || '').toLowerCase().includes(termoBusca) ||
+                    String(p.id_pedido || '').includes(termoBusca);
             });
 
             if (filtrados.length === 0) {
                 container.innerHTML = `
                     <div class="flex flex-col items-center justify-center py-12 px-4 text-center">
-                        <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3 text-xl">
-                            📦
-                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3 text-xl">📦</div>
                         <h4 class="font-bold text-slate-700 text-sm">Nenhuma entrega encontrada</h4>
                         <p class="text-xs text-slate-400 mt-1 max-w-xs">
                             ${termoBusca ? 'Nenhum pedido corresponde à sua pesquisa.' : 'Você não possui entregas pendentes no momento.'}
@@ -820,53 +1118,48 @@
                 return;
             }
 
+            const horarios = horariosPrevistos();
             container.innerHTML = '';
 
-            filtrados.forEach((pedido) => {
-                var indexOriginal = pedidosCache.findIndex(item => item.id_pedido == pedido.id_pedido);
-                var numeroParada = indexOriginal >= 0 ? indexOriginal + 1 : 1;
-                var isProxima = (proximoPedidoId !== null && String(pedido.id_pedido) === String(proximoPedidoId));
+            filtrados.forEach(pedido => {
+                const id = Number(pedido.id_pedido);
+                const isProxima = ehProxima(pedido);
+                const chegou = isProxima && destinoAtual.chegou;
+                const horario = horarios[pedido.id_pedido];
 
-                var card = document.createElement('div');
-                card.id = 'pedidoCard_' + pedido.id_pedido;
+                const card = document.createElement('div');
+                card.id = 'pedidoCard_' + id;
                 card.className = 'delivery-card bg-white border border-slate-200 rounded-2xl p-4 shadow-sm border-l-4 cursor-pointer';
-                card.style.borderLeftColor = isProxima ? '#FFD400' : '#4F46E5';
+                card.style.borderLeftColor = isProxima ? 'var(--emp-secondary)' : 'var(--emp-primary)';
+                card.onclick = () => focarPedidoNoMapa(id, pedido.latitude, pedido.longitude);
 
-                card.onclick = function() {
-                    focarPedidoNoMapa(pedido.id_pedido, pedido.latitude, pedido.longitude);
-                };
+                const avatarStyle = isProxima
+                    ? 'background-color: var(--emp-secondary); color: var(--emp-secondary-contrast);'
+                    : 'background-color: var(--emp-primary); color: var(--emp-primary-contrast);';
+                const pillStyle = isProxima
+                    ? 'background-color: var(--emp-secondary-light); color: var(--emp-secondary-contrast); border-color: var(--emp-secondary);'
+                    : 'background-color: var(--emp-primary-light); color: var(--emp-primary); border-color: var(--emp-primary-light-border);';
+                const dotStyle = isProxima ? 'background-color: var(--emp-secondary-contrast);' : 'background-color: var(--emp-primary);';
 
-                var avatarStyle = isProxima
-                    ? 'background-color: #FFD400; color: #0F172A;'
-                    : 'background-color: #4F46E5; color: #ffffff;';
-
-                var pillStyle = isProxima
-                    ? 'background-color: #FEF9C3; color: #0F172A; border-color: #FFD400;'
-                    : 'background-color: #EEF2FF; color: #4F46E5; border-color: #C7D2FE;';
-
-                var dotStyle = isProxima
-                    ? 'background-color: #0F172A;'
-                    : 'background-color: #4F46E5;';
+                let previsao = '';
+                if (chegou) {
+                    previsao = '📍 Você chegou — conclua a entrega';
+                } else if (horario) {
+                    previsao = `🕒 ${isProxima ? 'Chegada' : 'Previsão'} às ${formatarHora(horario)}`;
+                }
 
                 card.innerHTML = `
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-9 h-9 rounded-xl font-extrabold text-xs flex items-center justify-center flex-shrink-0 shadow-sm"
-                                style="${avatarStyle}">
-                                ${numeroParada}
+                            <div class="w-9 h-9 rounded-xl font-extrabold text-xs flex items-center justify-center flex-shrink-0 shadow-sm" style="${avatarStyle}">
+                                ${numeroParada(pedido)}
                             </div>
                             <div class="min-w-0">
-                                <h3 class="font-bold text-slate-900 text-sm truncate">
-                                    ${pedido.nome_cliente}
-                                </h3>
-                                <p class="text-[11px] text-slate-400 font-medium">
-                                    Pedido #${pedido.id_pedido}
-                                </p>
+                                <h3 class="font-bold text-slate-900 text-sm truncate">${escaparHtml(pedido.nome_cliente)}</h3>
+                                <p class="text-[11px] text-slate-400 font-medium">Pedido #${id}</p>
                             </div>
                         </div>
-
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border"
-                            style="${pillStyle}">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border" style="${pillStyle}">
                             <span class="w-1.5 h-1.5 rounded-full ${isProxima ? 'animate-ping' : ''}" style="${dotStyle}"></span>
                             <span>${isProxima ? 'Próxima parada' : 'Pendente'}</span>
                         </span>
@@ -878,13 +1171,13 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                            <span>${pedido.endereco}</span>
+                            <span>${escaparHtml(pedido.endereco)}</span>
                         </p>
+                        ${previsao ? `<p class="mt-1.5 text-xs font-bold" style="color: var(--emp-primary);">${previsao}</p>` : ''}
                     </div>
 
                     <div class="mt-3.5 pt-1 flex items-center gap-2">
-                        <button type="button"
-                            onclick="event.stopPropagation(); focarPedidoNoMapa(${pedido.id_pedido}, ${pedido.latitude}, ${pedido.longitude});"
+                        <button type="button" data-acao="ver"
                             class="flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all flex items-center justify-center gap-1.5">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -892,8 +1185,7 @@
                             </svg>
                             Ver no mapa
                         </button>
-                        <button type="button"
-                            onclick="event.stopPropagation(); concluirEntregaPeloCard(${pedido.id_pedido}, this);"
+                        <button type="button" data-acao="concluir"
                             class="btn-emp-primary flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
@@ -902,199 +1194,262 @@
                         </button>
                     </div>
                 `;
-
+                card.querySelector('[data-acao=ver]').onclick = ev => {
+                    ev.stopPropagation();
+                    focarPedidoNoMapa(id, pedido.latitude, pedido.longitude);
+                };
+                card.querySelector('[data-acao=concluir]').onclick = function(ev) {
+                    ev.stopPropagation();
+                    concluirEntrega(id, this);
+                };
                 container.appendChild(card);
             });
         }
 
         function focarPedidoNoMapa(pedidoId, lat, lng) {
             document.querySelectorAll('.delivery-card').forEach(c => c.classList.remove('focused'));
-            var card = document.getElementById('pedidoCard_' + pedidoId);
+            const card = document.getElementById('pedidoCard_' + pedidoId);
             if (card) card.classList.add('focused');
 
-            if (window.innerWidth < 1024 && tabToggleMap) {
-                tabToggleMap.click();
-            }
+            if (window.innerWidth < 1024 && tabToggleMap) tabToggleMap.click();
 
             if (lat && lng) {
+                pausarSeguirAte = 0;
+                ativarSeguir(false); // olhando um pedido: o mapa para de seguir a moto
                 map.flyTo([lat, lng], 17, { duration: 0.9 });
-                if (marcadoresPedidos[pedidoId]) {
-                    marcadoresPedidos[pedidoId].openPopup();
-                }
+                if (marcadores[pedidoId]) marcadores[pedidoId].openPopup();
             }
         }
 
-        function concluirEntregaPeloCard(pedidoId, btn) {
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Processando...';
-            btn.disabled = true;
-            concluirEntrega(pedidoId, marcadoresPedidos[pedidoId], btn, originalText);
+        // ---------- pedidos ----------
+        function carregarPedidos() {
+            return fetch(API + 'apiPedidosMapa')
+                .then(r => r.json())
+                .then(data => {
+                    pedidos = Array.isArray(data) ? data : [];
+                    // remove marcadores de pedidos que não estão mais em aberto
+                    Object.keys(marcadores).forEach(id => {
+                        if (!pedidos.some(p => String(p.id_pedido) === id)) {
+                            map.removeLayer(marcadores[id]);
+                            delete marcadores[id];
+                        }
+                    });
+                    atualizarMarcadores();
+                    renderizarListaPedidos();
+                })
+                .catch(err => {
+                    console.error('Erro ao carregar pedidos:', err);
+                    renderizarListaPedidos();
+                });
         }
 
-        // FUNÇÃO PARA CALCULAR A ROTA MAIS CURTA ENTRE O USUÁRIO E OS PONTOS
-        function calcularMelhorRota() {
-            if (points.length === 0) {
-                alert("Todas as entregas foram concluídas!");
-                proximoPedidoId = null;
+        // ---------- percurso ----------
+        /** Calcula a rota otimizada com as entregas restantes e segue para a primeira parada. */
+        async function proximoDestino() {
+            limparRota();
+            const comCoordenadas = pedidos.filter(temCoordenadas);
+            if (comCoordenadas.length === 0) {
+                percursoAtivo = false;
+                plano = null;
+                liberarTelaLigada();
+                atualizarMarcadores();
                 renderizarListaPedidos();
-                var footerStatus = document.getElementById('routeStatusFooter');
-                if (footerStatus) footerStatus.textContent = 'Percurso finalizado';
-                if (shortestRouteControl) {
-                    map.removeControl(shortestRouteControl);
-                    shortestRouteControl = null;
-                }
+                alert(pedidos.length ? 'As entregas restantes não têm localização no mapa.' : 'Todas as entregas foram concluídas!');
                 return;
             }
 
-            var promises = points.map(ponto => {
-                if (!ponto.latitude || !ponto.longitude) return Promise.resolve(null);
+            const destinos = comCoordenadas.map(p => L.latLng(p.latitude, p.longitude));
+            const viagem = await osrmViagem(currentUserPosition, destinos);
+            const ordenados = viagem.ordem.map(i => comCoordenadas[i]);
+            const trechos = ordenados.map((p, k) => ({
+                id_pedido: p.id_pedido,
+                duracao_osrm_s: viagem.trechos[k].duracao,
+                distancia_osrm_m: viagem.trechos[k].distancia
+            }));
 
-                var waypoints = [
-                    currentUserPosition,
-                    L.latLng(ponto.latitude, ponto.longitude)
-                ];
+            try {
+                const resp = await postJson('apiEtaPlanejar', { trechos: trechos });
+                if (!resp.success) throw new Error(resp.error);
+                plano = resp;
+            } catch (err) {
+                console.error('Plano de rota sem o servidor de previsão:', err);
+                plano = {
+                    paradas: trechos.map((t, k) => ({ id_pedido: t.id_pedido, ordem: k + 1, trecho_s: Math.round(t.duracao_osrm_s) })),
+                    tempo_no_local_s: 120,
+                    fonte: 'osrm'
+                };
+            }
+            plano.pedidos = ordenados;
+            await iniciarRota(ordenados[0]);
+        }
 
-                return new Promise((resolve) => {
-                    var tempControl = L.Routing.control({
-                        waypoints: waypoints,
-                        router: L.Routing.osrmv1({
-                            serviceUrl: 'https://router.project-osrm.org/route/v1'
-                        }),
-                        show: false,
-                        lineOptions: {
-                            styles: [{
-                                color: 'rgba(0,0,0,0)',
-                                weight: 1
-                            }]
-                        },
-                        createMarker: function() {
-                            return null;
-                        }
-                    }).on('routesfound', function(e) {
-                        var routeLength = e.routes[0].summary.totalDistance;
-                        try { map.removeControl(tempControl); } catch (err) {}
-                        resolve({
-                            ponto: ponto,
-                            distance: routeLength
-                        });
-                    }).on('routingerror', function() {
-                        try { map.removeControl(tempControl); } catch (err) {}
-                        resolve(null);
-                    }).addTo(map);
+        async function iniciarRota(pedido) {
+            const destino = L.latLng(pedido.latitude, pedido.longitude);
+            const rota = await osrmRota(currentUserPosition, destino);
+
+            let viagem;
+            try {
+                const resp = await postJson('apiEtaIniciar', {
+                    id_pedido: pedido.id_pedido,
+                    origem_lat: currentUserPosition.lat,
+                    origem_lng: currentUserPosition.lng,
+                    duracao_osrm_s: rota.duracao,
+                    distancia_osrm_m: rota.distancia
                 });
+                if (!resp.success) throw new Error(resp.error);
+                viagem = resp;
+            } catch (err) {
+                console.error('Previsão de tempo indisponível:', err);
+                viagem = { fator: 1, fonte: 'osrm', offline: true };
+            }
+
+            destinoAtual = {
+                pedido: pedido,
+                destino: destino,
+                viagem: viagem,
+                linha: criarLinhaRota(rota.linha),
+                restanteS: rota.duracao * viagem.fator,
+                distanciaM: rota.distancia,
+                calculadoEm: Date.now(),
+                posCalculo: currentUserPosition,
+                chegou: currentUserPosition.distanceTo(destino) <= RAIO_CHEGADA_M
+            };
+
+            atualizarMarcadores();
+            renderizarPainel();
+            renderizarListaPedidos();
+
+            // Mostra a rota inteira (abaixo do painel) por alguns segundos e depois volta a seguir o entregador
+            map.fitBounds(destinoAtual.linha.getBounds().extend(currentUserPosition), {
+                paddingTopLeft: [40, alturaPainel() + 30],
+                paddingBottomRight: [40, 40]
             });
+            ativarSeguir(false);
+            pausarSeguirAte = Date.now() + VISAO_GERAL_ROTA_MS;
+            setTimeout(seguirEntregador, VISAO_GERAL_ROTA_MS + 50); // mesmo se o GPS não mandar posição nova
 
-            Promise.all(promises).then(results => {
-                results = results.filter(r => r !== null);
-                if (results.length === 0) return;
+            if (destinoAtual.chegou) registrarChegada();
+            else enviarProgresso();
+        }
 
-                if (shortestRouteControl) {
-                    map.removeControl(shortestRouteControl);
-                }
-
-                var melhorRota = results.reduce((acc, cur) => cur.distance < acc.distance ? cur : acc);
-                proximoPedidoId = melhorRota.ponto.id_pedido;
-
-                document.querySelectorAll('.delivery-marker').forEach(el => el.classList.remove('next-stop'));
-                var nextPin = document.getElementById('pinMarker_' + proximoPedidoId);
-                if (nextPin) nextPin.classList.add('next-stop');
-
-                var distKm = (melhorRota.distance / 1000).toFixed(1);
-                var footerStatus = document.getElementById('routeStatusFooter');
-                if (footerStatus) footerStatus.textContent = `Destino: #${proximoPedidoId} (${distKm} km)`;
-
+        async function recalcularRota() {
+            const d = destinoAtual;
+            if (!d || d.chegou || recalculando) return;
+            recalculando = true;
+            try {
+                const rota = await osrmRota(currentUserPosition, d.destino);
+                if (destinoAtual !== d) return; // destino mudou durante a consulta
+                atualizarLinhaRota(d.linha, rota.linha);
+                d.restanteS = rota.duracao * d.viagem.fator;
+                d.distanciaM = rota.distancia;
+                d.calculadoEm = Date.now();
+                d.posCalculo = currentUserPosition;
+                renderizarPainel();
                 renderizarListaPedidos();
-
-                shortestRouteControl = L.Routing.control({
-                    waypoints: [
-                        currentUserPosition,
-                        L.latLng(melhorRota.ponto.latitude, melhorRota.ponto.longitude)
-                    ],
-                    show: false,
-                    router: L.Routing.osrmv1({
-                        serviceUrl: 'https://router.project-osrm.org/route/v1'
-                    }),
-                    lineOptions: {
-                        styles: [
-                            { color: '#ffffff', weight: 8, opacity: 0.8 },
-                            { color: PRIMARY_COLOR, weight: 5, opacity: 0.95 }
-                        ]
-                    },
-                    createMarker: function() {
-                        return null;
-                    }
-                }).addTo(map);
-            });
-        }
-
-        // FUNÇÃO PARA CONCLUIR A ENTREGA
-        function concluirEntrega(pedidoId, marker, btn, originalText) {
-            fetch('<?= BASE_URL ?>/routes.php?action=concluirEntrega', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        id_pedido: pedidoId
-                    })
-                })
-                .then(response => response.text())
-                .then(text => {
-                    if (text.trim() === 'success') {
-                        if (marker) {
-                            map.removeLayer(marker);
-                        }
-                        alert("Entrega concluída com sucesso!");
-                        location.reload();
-                    } else {
-                        alert("Erro ao concluir a entrega.");
-                        if (btn) {
-                            btn.innerHTML = originalText;
-                            btn.disabled = false;
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error("Erro na requisição:", error);
-                    if (btn) {
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
-                    }
-                });
-        }
-
-        function rotaParaPontoProximo() {
-            calcularMelhorRota();
-        }
-
-        function MonitorarProgressoRota() {
-            if (!shortestRouteControl || !currentUserPosition) return;
-
-            var routeCoords = shortestRouteControl.getPlan().getWaypoints();
-            if (routeCoords.length < 2) return;
-
-            var destination = routeCoords[routeCoords.length - 1].latLng;
-            var distanceToDestination = currentUserPosition.distanceTo(destination);
-
-            if (distanceToDestination < 20) {
-                points = points.filter(p => p.latitude != destination.lat && p.longitude != destination.lng);
-                rotaParaPontoProximo();
+                enviarProgresso();
+            } catch (err) {
+                console.error('Erro ao recalcular rota:', err);
+            } finally {
+                recalculando = false;
             }
         }
 
-        // ===== GEOLOCALIZAÇÃO DO MOTOBOY =====
+        function registrarChegada() {
+            postJson('apiEtaChegada', { id_pedido: destinoAtual.pedido.id_pedido })
+                .catch(err => console.error('Erro ao registrar chegada:', err));
+        }
+
+        function acompanharProgresso() {
+            const d = destinoAtual;
+            if (!d || d.chegou) return;
+
+            if (currentUserPosition.distanceTo(d.destino) <= RAIO_CHEGADA_M) {
+                d.chegou = true;
+                registrarChegada();
+                renderizarPainel();
+                renderizarListaPedidos();
+                return;
+            }
+
+            const tempoDesdeCalculo = Date.now() - d.calculadoEm;
+            const andouDesdeCalculo = currentUserPosition.distanceTo(d.posCalculo);
+            if (tempoDesdeCalculo >= RECALCULO_MS || andouDesdeCalculo >= RECALCULO_DIST_M) {
+                recalcularRota();
+            }
+        }
+
+        function limparRota() {
+            if (destinoAtual && destinoAtual.linha) map.removeLayer(destinoAtual.linha);
+            destinoAtual = null;
+            renderizarPainel();
+        }
+
+        // ---------- concluir entrega (popup do mapa ou card da lista) ----------
+        function concluirEntrega(pedidoId, btn) {
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = 'Processando...';
+            btn.disabled = true;
+
+            const corpo = { id_pedido: pedidoId };
+            if (currentUserPosition) {
+                corpo.latitude = currentUserPosition.lat;
+                corpo.longitude = currentUserPosition.lng;
+            }
+
+            fetch(API + 'concluirEntrega', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(corpo)
+            })
+                .then(r => r.text())
+                .then(texto => {
+                    if (texto.trim() !== 'success') throw new Error(texto);
+
+                    map.closePopup();
+                    if (marcadores[pedidoId]) {
+                        map.removeLayer(marcadores[pedidoId]);
+                        delete marcadores[pedidoId];
+                    }
+                    pedidos = pedidos.filter(p => String(p.id_pedido) !== String(pedidoId));
+                    if (plano) {
+                        plano.paradas = plano.paradas.filter(p => String(p.id_pedido) !== String(pedidoId));
+                        plano.pedidos = plano.pedidos.filter(p => String(p.id_pedido) !== String(pedidoId));
+                    }
+
+                    const eraODestino = destinoAtual && String(destinoAtual.pedido.id_pedido) === String(pedidoId);
+                    if (eraODestino) limparRota();
+                    atualizarMarcadores();
+                    renderizarListaPedidos();
+
+                    alert('Entrega concluída com sucesso!');
+
+                    // Segue automaticamente para a próxima entrega
+                    if (percursoAtivo && (eraODestino || !destinoAtual) && currentUserPosition) {
+                        proximoDestino().catch(err => {
+                            console.error(err);
+                            alert('Não foi possível calcular a próxima rota. Tente "Começar Percurso" novamente.');
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error('Erro ao concluir entrega:', err);
+                    alert('Erro ao concluir a entrega.');
+                    btn.innerHTML = textoOriginal;
+                    btn.disabled = false;
+                });
+        }
+
+        // ---------- geolocalização ----------
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(function(position) {
-                let lat = position.coords.latitude;
-                let lng = position.coords.longitude;
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                currentUserPosition = L.latLng(lat, lng);
 
-                var userLatLng = L.latLng(lat, lng);
-                currentUserPosition = userLatLng;
-
-                var gpsBadge = document.getElementById('gpsStatusBadge');
-                var gpsPing = document.getElementById('gpsPing');
-                var gpsDot = document.getElementById('gpsDot');
-                var gpsText = document.getElementById('gpsStatusText');
+                const gpsBadge = document.getElementById('gpsStatusBadge');
+                const gpsPing = document.getElementById('gpsPing');
+                const gpsDot = document.getElementById('gpsDot');
+                const gpsText = document.getElementById('gpsStatusText');
                 if (gpsBadge && gpsText) {
                     gpsBadge.className = 'hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-xs font-semibold';
                     if (gpsPing) gpsPing.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75';
@@ -1102,81 +1457,73 @@
                     gpsText.textContent = 'GPS Ativo';
                 }
 
-                // ===== ENVIA LOCALIZAÇÃO PRO BANCO =====
-                fetch('<?= BASE_URL ?>/routes.php?action=apiLocalizacaoEntregador', {
+                fetch(API + 'apiLocalizacaoEntregador', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        latitude: lat,
-                        longitude: lng
-                    })
-                }).catch(err => console.error("Erro ao atualizar localização:", err));
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ latitude: lat, longitude: lng })
+                }).catch(err => console.error('Erro ao atualizar localização:', err));
 
-                // ===== ATUALIZA MARCADOR =====
                 if (userMarker) {
-                    userMarker.setLatLng(userLatLng);
+                    userMarker.setLatLng(currentUserPosition);
                 } else {
-                    userMarker = L.marker(userLatLng, {
-                            icon: emojiIcon
-                        }).addTo(map)
+                    userMarker = L.marker(currentUserPosition, { icon: emojiIcon }).addTo(map)
                         .bindPopup("<div class='p-3 text-center' style='font-family:Inter,sans-serif;'><strong class='text-xs font-bold text-slate-900'>Você está aqui 🚀</strong></div>");
+                    // Primeira localização: leva o mapa até o entregador
+                    map.setView(currentUserPosition, ZOOM_SEGUINDO);
                 }
 
-                // MONITORA ROTA
-                MonitorarProgressoRota();
-
+                seguirEntregador();
+                acompanharProgresso();
             }, function(error) {
-                console.error("Erro ao obter localização: " + error.message);
+                console.error('Erro ao obter localização: ' + error.message);
             }, {
                 enableHighAccuracy: true,
                 maximumAge: 0,
                 timeout: 5000
             });
-
         } else {
-            alert("Geolocalização não é suportada pelo seu navegador.");
+            alert('Geolocalização não é suportada pelo seu navegador.');
         }
 
-        // ===== BOTÃO CRIAR ROTA =====
-        document.getElementById('criarRota').addEventListener('click', function() {
+        // ---------- botão Começar Percurso ----------
+        document.getElementById('criarRota').addEventListener('click', async function() {
             if (!currentUserPosition) {
-                alert("Localização ainda não foi carregada. Aguarde...");
+                alert('Localização ainda não foi carregada. Aguarde...');
                 return;
             }
-
-            fetch('<?= BASE_URL ?>/routes.php?action=apiPedidosMapa')
-                .then(response => response.json())
-                .then(data => {
-                    if (!data || data.length === 0 || data.error) {
-                        alert("Nenhuma entrega disponível.");
-                        return;
-                    }
-
-                    points = data;
-                    rotaParaPontoProximo();
-                })
-                .catch(error => {
-                    console.error("Erro ao buscar pedidos:", error);
-                });
+            const botao = this;
+            botao.disabled = true;
+            try {
+                await carregarPedidos();
+                if (pedidos.length === 0) {
+                    alert('Nenhuma entrega disponível.');
+                    return;
+                }
+                percursoAtivo = true;
+                manterTelaLigada();
+                renderizarListaPedidos();
+                await proximoDestino();
+            } catch (err) {
+                console.error('Erro ao montar percurso:', err);
+                alert('Não foi possível calcular a rota agora. Verifique a conexão e tente novamente.');
+            } finally {
+                botao.disabled = false;
+            }
         });
 
         // ===== CONTROLES DE NAVEGAÇÃO DO MAPA E BUSCA =====
         document.getElementById('btnCentralizarMoto')?.addEventListener('click', function() {
-            if (currentUserPosition) {
-                map.flyTo(currentUserPosition, 17, { duration: 0.9 });
-                if (userMarker) userMarker.openPopup();
-            } else {
-                alert("Aguardando sinal de GPS...");
-            }
+            recentralizar();
+            if (userMarker) userMarker.openPopup();
         });
 
         document.getElementById('btnFitBounds')?.addEventListener('click', function() {
-            var bounds = [];
+            const bounds = [];
             if (currentUserPosition) bounds.push(currentUserPosition);
-            Object.values(marcadoresPedidos).forEach(m => bounds.push(m.getLatLng()));
+            Object.values(marcadores).forEach(m => bounds.push(m.getLatLng()));
 
+            pausarSeguirAte = 0;
+            ativarSeguir(false); // visão geral: o mapa para de seguir a moto
             if (bounds.length > 0) {
                 map.fitBounds(L.latLngBounds(bounds), { padding: [60, 60], maxZoom: 16 });
             } else {
@@ -1190,9 +1537,7 @@
         if (inputBusca) {
             inputBusca.addEventListener('input', function(e) {
                 termoBusca = (e.target.value || '').trim().toLowerCase();
-                if (btnClearSearch) {
-                    btnClearSearch.classList.toggle('hidden', termoBusca.length === 0);
-                }
+                if (btnClearSearch) btnClearSearch.classList.toggle('hidden', termoBusca.length === 0);
                 renderizarListaPedidos();
             });
         }
@@ -1266,6 +1611,8 @@
         window.addEventListener('resize', function() {
             map.invalidateSize();
         });
+
+        carregarPedidos();
     </script>
 </body>
 

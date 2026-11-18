@@ -204,6 +204,35 @@ class AdministradorController
         require_once __DIR__ . '/../Views/Administrador/mapa.php';
     }
 
+    /** Painel "Inteligência de entregas": desempenho real × previsto e o modelo de machine learning. */
+    public function inteligencia()
+    {
+        if (!isset($_SESSION['company_id'])) {
+            header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
+            exit;
+        }
+        if (!isset($_SESSION['nome_usuario'])) {
+            header("Location: " . BASE_URL . "/routes.php?action=escolherAdm&erro=" . urlencode("Administrador não identificado"));
+            exit;
+        }
+
+        $nomeAdmin = $_SESSION['nome_usuario'];
+        $company_id = (int)$_SESSION['company_id'];
+        $adminFotoUrl = $this->administradorModel->getPhotoUrlForCompany($_SESSION['id_adm'] ?? 0, $company_id);
+        $logoEmpresaSidebar = $this->empresaModel->getLogoUrlById($company_id);
+
+        $erroInteligencia = null;
+        try {
+            $painel = (new \mvc\Services\InteligenciaService($this->pdo))->painel($company_id);
+        } catch (\PDOException $ex) {
+            error_log('Inteligência: ' . $ex->getMessage());
+            $painel = null;
+            $erroInteligencia = 'Não foi possível carregar os dados. Verifique se as migrações em database/migrations foram aplicadas.';
+        }
+
+        require_once __DIR__ . '/../Views/Administrador/inteligencia.php';
+    }
+
     public function apiAcompanharEntregadores()
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -222,8 +251,23 @@ class AdministradorController
         $pedidoModel = new \mvc\Models\Pedido($this->pdo);
 
         $dados = [];
+        $etaService = new \mvc\Services\EtaService($this->pdo);
         foreach ($entregadores as $e) {
             $pedidos = $pedidoModel->getAllByEntregador($e['id_entregador']);
+
+            // Previsão de chegada de cada parada (mesma do link de rastreio do cliente)
+            try {
+                $previsoes = $etaService->previsoesDoEntregador((int)$e['id_entregador'], $pedidos);
+            } catch (\Throwable $ex) {
+                error_log('Previsões do mapa: ' . $ex->getMessage());
+                $previsoes = [];
+            }
+            foreach ($pedidos as &$p) {
+                $p['previsao'] = $previsoes[(int)$p['id_pedido']] ?? null;
+            }
+            unset($p);
+            usort($pedidos, fn($a, $b) => ($a['previsao']['ordem'] ?? PHP_INT_MAX) <=> ($b['previsao']['ordem'] ?? PHP_INT_MAX));
+
             $dados[] = [
                 'id_entregador' => $e['id_entregador'],
                 'nome_completo' => $e['nome_completo'],

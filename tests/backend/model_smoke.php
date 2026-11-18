@@ -52,7 +52,13 @@ CREATE TABLE pedido (
     id_adm INTEGER NOT NULL,
     latitude REAL,
     longitude REAL,
-    status TEXT NOT NULL
+    status TEXT NOT NULL,
+    telefone_cliente TEXT,
+    token_rastreio TEXT,
+    entregue_em TEXT,
+    rota_ordem INTEGER,
+    rota_trecho_s INTEGER,
+    id_entregador INTEGER
 );
 SQL);
 
@@ -92,5 +98,8 @@ check($pedido->create([
     'longitude' => -46.523,
 ]), 'Pedido::create não inseriu o registro.');
 check($pedido->getById(1)['nome_cliente'] === 'Cliente CI', 'Pedido::getById não retornou o registro.');
+check(preg_match('/^[a-f0-9]{32}$/', (string)$pedido->getById(1)['token_rastreio']) === 1, 'Pedido::create não gerou o token de rastreio.');
+check($pedido->getByTokenRastreio('nao-e-token') === false, 'Pedido::getByTokenRastreio aceitou token inválido.');
+check(\mvc\Models\Pedido::normalizarTelefone('(19) 99343-3297') === '19993433297', 'Pedido::normalizarTelefone não limpou o número.');
 
 fwrite(STDOUT, "Smoke tests dos Models concluídos.\n");

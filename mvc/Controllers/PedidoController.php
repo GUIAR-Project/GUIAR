@@ -43,7 +43,9 @@ class PedidoController
         $adminFotoUrl = $this->administradorModel->getPhotoUrlForCompany($_SESSION['id_adm'], $company_id);
         $logoEmpresaSidebar = $this->empresaModel->getLogoUrlById($company_id);
 
+        $this->pedidoModel->garantirTokens($company_id);
         $result = $this->pedidoModel->getAllByEmpresa($company_id, 'pendente');
+        $nomeEmpresa = $this->empresaModel->getById($company_id)['nome_empresa'] ?? '';
         $resultEntregadores = $this->entregadorModel->getAllByEmpresa($company_id);
         require_once __DIR__ . '/../Views/Administrador/pedidos.php';
     }
@@ -73,7 +75,8 @@ class PedidoController
                 'id_empresa' => $_SESSION['company_id'],
                 'id_adm' => $_SESSION['id_adm'],
                 'latitude' => $_POST['latitude'] ?? null,
-                'longitude' => $_POST['longitude'] ?? null
+                'longitude' => $_POST['longitude'] ?? null,
+                'telefone_cliente' => $_POST['telefone_cliente'] ?? null
             ];
 
             if ($this->pedidoModel->create($data)) {
@@ -96,7 +99,8 @@ class PedidoController
                 'bairro' => $_POST['bairro'] ?? '',
                 'descricao' => $_POST['descricao'] ?? '',
                 'latitude' => $_POST['latitude'] ?? null,
-                'longitude' => $_POST['longitude'] ?? null
+                'longitude' => $_POST['longitude'] ?? null,
+                'telefone_cliente' => $_POST['telefone_cliente'] ?? null
             ];
 
             if ($this->pedidoModel->update($id, $data)) {
@@ -153,12 +157,21 @@ class PedidoController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Suporta form-data ou json
             $id = $_POST['id_pedido'] ?? null;
+            $data = [];
             if (!$id) {
-                $data = json_decode(file_get_contents("php://input"), true);
+                $data = json_decode(file_get_contents("php://input"), true) ?: [];
                 $id = $data['id_pedido'] ?? null;
             }
 
             if ($id && $this->pedidoModel->updateStatus($id, 'entregue')) {
+                // Fecha o trajeto e alimenta o modelo de estimativa de tempo (nunca bloqueia a conclusão)
+                try {
+                    $lat = isset($data['latitude']) && is_numeric($data['latitude']) ? (float)$data['latitude'] : null;
+                    $lng = isset($data['longitude']) && is_numeric($data['longitude']) ? (float)$data['longitude'] : null;
+                    (new \mvc\Services\EtaService($this->pdo))->concluirViagem((int)$id, $lat, $lng);
+                } catch (\Throwable $e) {
+                    error_log('Estimativa de tempo (conclusão): ' . $e->getMessage());
+                }
                 echo "success";
             } else {
                 echo "error";
