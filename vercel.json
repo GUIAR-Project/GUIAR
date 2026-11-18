@@ -1,0 +1,9 @@
+
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "https://guiartccrotas.serv00.net/$1"
+    }
+  ]
+}
