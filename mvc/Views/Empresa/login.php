@@ -147,14 +147,14 @@
       position: relative;
       isolation: isolate;
       min-height: calc(100vh - 164px);
-      padding: 52px 24px !important;
+      padding: clamp(24px, 4vh, 52px) 24px !important;
       background: #eef5ff !important;
     }
 
     body > .flex-grow > div {
       width: 100% !important;
-      max-width: 1240px !important;
-      min-height: 510px !important;
+      max-width: 950px !important;
+      min-height: 580px !important;
       border-radius: 14px !important;
       box-shadow: 0 24px 60px rgb(31 91 166 / 16%) !important;
       animation: none !important;
@@ -163,7 +163,7 @@
 
     body > .flex-grow > div > div:first-child {
       position: relative !important;
-      width: 48% !important;
+      width: 45% !important;
       padding: 52px !important;
       background:
         linear-gradient(135deg, transparent 0 73%, rgb(10 42 151 / 88%) 73% 84%, transparent 84%),
@@ -215,8 +215,8 @@
     }
 
     body > .flex-grow > div > div:last-child {
-      width: 52% !important;
-      padding: 56px !important;
+      width: 55% !important;
+      padding: 56px 48px !important;
       background: #fff !important;
     }
 
@@ -378,6 +378,30 @@
       color: #0878f9 !important;
     }
 
+    @media (max-width: 1100px) {
+      body > .flex-grow > div {
+        max-width: 900px !important;
+      }
+
+      body > .flex-grow > div > div:first-child {
+        padding: 36px !important;
+      }
+
+      body > .flex-grow > div > div:last-child {
+        padding: 36px 40px !important;
+      }
+
+      body > .flex-grow > div > div:first-child h1 {
+        font-size: 26px !important;
+      }
+
+      body > .flex-grow form input:not([type='submit']),
+      body > .flex-grow form button[type='submit'] {
+        height: 52px;
+        min-height: 52px;
+      }
+    }
+
     @media (max-width: 767px) {
       body > header,
       body > header > div:first-child {
@@ -410,7 +434,7 @@
       }
 
       body > .flex-grow > div > div:first-child {
-        min-height: 340px;
+        display: none;
       }
 
       body > .flex-grow > div > div:first-child > div:last-child > div:first-child img {

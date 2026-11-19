@@ -197,7 +197,7 @@
 
     body > .flex-grow > div > div:last-child {
       width: 52% !important;
-      padding: 56px !important;
+      padding: 28px 56px !important;
       background: #fff !important;
     }
 
@@ -218,14 +218,242 @@
       color: #31567f !important;
     }
 
-     body > footer a:hover {
-      color: #0878f9 !important;
+    body > .flex-grow {
+      position: relative;
+      isolation: isolate;
+      min-height: calc(100vh - 164px);
+      padding: clamp(24px, 4vh, 52px) 24px !important;
+      background: #eef5ff !important;
     }
 
-    body > .flex-grow > div > div:first-child,
-      body > .flex-grow > div > div:last-child {
-        padding: 24px 20px !important;
+    body > .flex-grow > div {
+      width: 100% !important;
+      max-width: 1240px !important;
+      min-height: 510px !important;
+      height: auto !important;
+      border-radius: 14px !important;
+      box-shadow: 0 24px 60px rgb(31 91 166 / 16%) !important;
+      animation: none !important;
+      opacity: 1 !important;
+    }
+
+    body > .flex-grow > div > div:first-child {
+      width: 42% !important;
+      padding: 52px !important;
+    }
+
+    body > .flex-grow > div > div:first-child > div:last-child {
+      position: relative;
+      width: 100%;
+    }
+
+    body > .flex-grow > div > div:first-child > div:last-child > div:first-child {
+      margin-bottom: 40px !important;
+    }
+
+    body > .flex-grow > div > div:first-child > div:last-child > div:first-child img {
+      width: 230px !important;
+      height: 58px !important;
+      max-height: 58px;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    body > .flex-grow > div > div:first-child h1 {
+      color: #fff !important;
+      font-size: 29px !important;
+      line-height: 1.15 !important;
+    }
+
+    body > .flex-grow > div > div:first-child .h-1 {
+      width: 62px !important;
+      height: 4px !important;
+      margin: 0 !important;
+      background: #0878f9 !important;
+    }
+
+    body > .flex-grow > div > div:last-child {
+      width: 58% !important;
+      padding: 32px 48px !important;
+    }
+
+    .cadastro-form-content {
+      width: 100%;
+      max-width: 620px;
+    }
+
+    .cadastro-two-column {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    @media (min-width: 900px) {
+      .cadastro-two-column {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+    }
+
+    .login-form-heading {
+      display: block !important;
+      position: relative;
+      width: 100%;
+      max-width: 508px;
+      margin: 0 0 34px !important;
+      padding-top: 21px;
+    }
+
+    .login-form-heading > div:first-child {
+      display: none !important;
+    }
+
+    .login-form-title {
+      display: block !important;
+      visibility: visible !important;
+      position: static !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      color: #102b61 !important;
+      font-size: 24px !important;
+      letter-spacing: .025em;
+      text-transform: uppercase;
+      font-weight: 900 !important;
+      line-height: 1.25 !important;
+    }
+
+    .login-form-heading::before {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 46px;
+      height: 5px;
+      border-radius: 3px;
+      background: #111979;
+      content: '';
+    }
+
+    body > .flex-grow form {
+      gap: 8px !important;
+    }
+
+    body > .flex-grow form label {
+      color: #102b61 !important;
+      font-size: 16px !important;
+      font-weight: 500 !important;
+    }
+
+    body > .flex-grow form input:not([type='submit']) {
+      display: block;
+      width: 100%;
+      height: 60px;
+      min-height: 60px;
+      box-sizing: border-box;
+      border: 1px solid #c4d8ff !important;
+      border-radius: 11px !important;
+      background: #fff !important;
+      color: #102b61 !important;
+      padding: 0 16px !important;
+      box-shadow: 0 1px 3px rgb(16 43 97 / 5%);
+    }
+
+    body > .flex-grow form input[type='file'] {
+      height: 60px;
+      padding: 8px 10px !important;
+    }
+
+    body > .flex-grow form input:not([type='submit']):focus {
+      border-color: #1b42da !important;
+      box-shadow: 0 0 0 3px rgb(27 66 218 / 12%) !important;
+    }
+
+    body > .flex-grow form button[type='submit'] {
+      position: relative;
+      width: 100%;
+      height: 60px;
+      min-height: 60px;
+      box-sizing: border-box;
+      border: 0 !important;
+      border-radius: 11px !important;
+      background: #19179a !important;
+      color: #fff !important;
+      font-size: 16px !important;
+      box-shadow: none !important;
+    }
+
+    body > .flex-grow form button[type='submit']:hover {
+      background: #111078 !important;
+      transform: translateY(-1px) !important;
+    }
+
+    body > .flex-grow form [class*="bg-blue-50"] {
+      padding: 8px 12px !important;
+    }
+
+    body > footer {
+      border-color: #e1ebf8 !important;
+      background: #fff !important;
+      color: #58769f !important;
+      box-shadow: 0 -2px 12px rgb(16 43 97 / 4%) !important;
+    }
+
+    body > footer a {
+      color: #31567f !important;
+    }
+
+    @media (max-width: 1100px) {
+      body > .flex-grow > div {
+        max-width: 1080px !important;
+      }
+
+      body > .flex-grow > div > div:first-child {
+        padding: 36px !important;
+      }
+
+      body > .flex-grow > div > div:last-child {
+        padding: 28px 32px !important;
+      }
+
+      body > .flex-grow > div > div:first-child h1 {
+        font-size: 26px !important;
+      }
+
+      body > .flex-grow form input:not([type='submit']),
+      body > .flex-grow form button[type='submit'] {
+        height: 52px;
+        min-height: 52px;
+      }
+    }
+
+    @media (max-width: 767px) {
+      body > .flex-grow {
+        min-height: 0;
+        padding: 32px 18px !important;
+      }
+
+      body > .flex-grow > div {
+        max-width: 520px !important;
+        min-height: 0 !important;
+        border-radius: 12px !important;
+      }
+
+      body > .flex-grow > div > div:first-child,
+      body > .flex-grow > div > div:last-child {
+        width: 100% !important;
+        padding: 30px !important;
+      }
+
+      body > .flex-grow > div > div:first-child {
+        display: none;
+      }
+
+      .login-form-heading {
+        margin-bottom: 24px !important;
+      }
+    }
+
+    body > footer a:hover {
+      color: #0878f9 !important;
+    }
 
     body > main {
       position: relative;
@@ -334,10 +562,10 @@
     <div class="flex-grow flex items-center justify-center p-4 sm:p-8">
 
         <!-- Card Principal com Bordas Arredondadas -->
-        <div class="bg-white rounded-[2rem] shadow-2xl flex flex-col md:flex-row w-full max-w-[1080px] min-h-[260px] overflow-hidden opacity-0 animate-fade-in-up">
+        <div class="bg-white rounded-[14px] shadow-2xl flex flex-col md:flex-row w-full max-w-[1240px] min-h-[510px] overflow-hidden opacity-0 animate-fade-in-up">
 
             <!-- Painel Esquerdo (Azul) -->
-            <div class="bg-brand-blue w-full md:w-[40%] p-10 flex flex-col relative overflow-hidden">
+            <div class="bg-brand-blue w-full md:w-[42%] p-10 flex flex-col relative overflow-hidden">
                 <!-- Imagem do Mapa de Fundo -->
                   <img src="<?= BASE_URL ?>/img/Mapa.png" alt="Mapa Background" class="absolute inset-0 w-[150%] h-[150%] max-w-none -left-[20%] -top-[10%] object-contain opacity-40 pointer-events-none z-0 mix-blend-overlay animate-float">
 
@@ -356,7 +584,7 @@
                     <!-- Logo GUIAR -->
             <div class="mb-8">
             <img
-              src="<?= BASE_URL ?> /img/LogoGAzul.png"
+              src="<?= BASE_URL ?>/img/LogoGuiar.png"
               alt="Logo GUIAR"
               class="w-32 brightness-0 invert">
           </div>
@@ -372,24 +600,24 @@
             </div>
 
             <!-- Painel Direito (Formulário Cadastro) -->
-            <div class="w-full md:w-[60%] bg-white p-5 sm:p-8 flex flex-col justify-center items-center relative">
+            <div class="w-full md:w-[58%] bg-white p-5 sm:p-8 flex flex-col justify-center items-center relative">
 
-                <div class="w-full max-w-[520px]">
+                <div class="cadastro-form-content">
 
                     <!-- Cabeçalho: Ícone e Título -->
-                    <div class="flex items-center justify-center gap-3 mb-8">
+                    <div class="login-form-heading flex items-center justify-center gap-3 mb-8">
                         <div class="w-[4.5rem] h-[4.5rem] rounded-full bg-[#d6e0f5] flex items-center justify-center text-brand-blue shrink-0">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                             </svg>
                         </div>
-                        <h2 class="text-[1.8rem] font-bold text-gray-900 tracking-tight leading-none pt-2">Cadastro <span class="text-brand-blue font-semibold">| Empresa</span></h2>
+                        <h2 class="login-form-title text-[1.8rem] font-bold text-gray-900 tracking-tight leading-none pt-2">Cadastro Empresa</h2>
                     </div>
 
                     <!-- Formulário -->
                     <form class="flex flex-col gap-3" action="<?= BASE_URL ?>/routes.php?action=cadastroEmpresa" method="POST" id="cadaForm" enctype="multipart/form-data">
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="cadastro-two-column">
                             <!-- Email -->
                             <div>
                                 <label for="email" class="block text-[0.85rem] font-medium text-gray-700 mb-1 ml-1">Email</label>
@@ -405,21 +633,23 @@
                             </div>
                         </div>
 
-                        <!-- Nome da Empresa -->
-                        <div>
-                            <label for="inputAddress" class="block text-[0.85rem] font-medium text-gray-700 mb-1 ml-1">Nome da Empresa</label>
-                            <input type="text" id="inputAddress" name="nome_empresa" required
-                                class="w-full px-4 py-3 rounded-xl border border-brand-inputborder focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 transition-all text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                        <div class="cadastro-two-column">
+                            <!-- Nome da Empresa -->
+                            <div>
+                                <label for="inputAddress" class="block text-[0.85rem] font-medium text-gray-700 mb-1 ml-1">Nome da Empresa</label>
+                                <input type="text" id="inputAddress" name="nome_empresa" required
+                                    class="w-full px-4 py-3 rounded-xl border border-brand-inputborder focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 transition-all text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                            </div>
+
+                            <!-- Nome de Usuario -->
+                            <div>
+                                <label for="inputAddress2" class="block text-[0.85rem] font-medium text-gray-700 mb-1 ml-1">Nome de Usuário</label>
+                                <input type="text" id="inputAddress2" name="nome_usuario"
+                                    class="w-full px-4 py-3 rounded-xl border border-brand-inputborder focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 transition-all text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                            </div>
                         </div>
 
-                        <!-- Nome de Usuario -->
-                        <div>
-                            <label for="inputAddress2" class="block text-[0.85rem] font-medium text-gray-700 mb-1 ml-1">Nome de Usuário</label>
-                            <input type="text" id="inputAddress2" name="nome_usuario"
-                                class="w-full px-4 py-3 rounded-xl border border-brand-inputborder focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 transition-all text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="cadastro-two-column">
                             <!-- CNPJ -->
                             <div>
                                 <label for="inputCity" class="block text-[0.85rem] font-medium text-gray-700 mb-1 ml-1">CNPJ</label>

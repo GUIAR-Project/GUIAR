@@ -536,15 +536,34 @@
         @media (min-width: 769px) {
             .header-add-btn { display: flex; }
         }
-        @media (min-width: 769px) and (max-width: 1100px) {
+        @media (min-width: 769px) and (max-width: 1600px) {
             .entregadores-content { padding-right: 16px; padding-left: 16px; }
-            .entregadores-columns,
+            .entregadores-columns { display: none; }
             .entregador-card {
-                grid-template-columns: minmax(40px, .35fr) minmax(110px, 1.2fr) minmax(100px, .9fr) minmax(100px, .9fr) minmax(130px, 1.1fr) minmax(80px, .6fr) minmax(110px, .8fr);
-                gap: 9px;
-                padding-right: 14px;
-                padding-left: 14px;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 13px 16px;
+                padding: 16px;
             }
+            .entregador-cell {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+            .entregador-cell:last-child { grid-column: 1 / -1; }
+            .entregador-mobile-label {
+                display: block;
+                color: #8793a9;
+                font-size: 9px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: .04em;
+            }
+            .entregador-primary-text,
+            .entregador-secondary-text {
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+            .entregador-actions { flex-wrap: wrap; }
         }
         @media (max-width: 768px) {
             .entregadores-columns { display: none; }
@@ -554,6 +573,7 @@
                 padding: 15px 14px;
             }
             .entregador-cell { display: flex; flex-direction: column; gap: 4px; }
+            .entregador-cell:last-child { grid-column: 1 / -1; }
             .entregador-mobile-label {
                 display: block;
                 color: #8793a9;
