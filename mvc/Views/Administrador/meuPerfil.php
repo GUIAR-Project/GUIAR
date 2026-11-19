@@ -16,54 +16,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <style>
-        :root {
-            --emp-primary: #4F46E5;
-            --emp-primary-hover: #4338CA;
-            --emp-primary-active: #3730A3;
-            --emp-primary-dark: #312E81;
-            --emp-primary-light: #EEF2FF;
-            --emp-primary-light-border: #C7D2FE;
-            --emp-primary-ring: rgba(79, 70, 229, 0.25);
-            --emp-primary-contrast: #FFFFFF;
-
-            --emp-secondary: #FFD400;
-            --emp-secondary-hover: #E6BE00;
-            --emp-secondary-light: #FEF9C3;
-            --emp-secondary-contrast: #0F172A;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: radial-gradient(ellipse at 60% -10%, rgba(255, 255, 255, .98), transparent 48%), #f1f4fa;
-        }
-
-        .heading-font {
-            font-family: 'Outfit', 'Inter', sans-serif;
-        }
-
-        /* SIDEBAR MOBILE */
-        @media (max-width: 768px) {
-            #sidebar {
-                transform: translateX(-100%);
-                transition: transform .3s cubic-bezier(0.4, 0, 0.2, 1);
-                border-radius: 0 !important;
-                top: 0 !important;
-                left: 0 !important;
-                margin: 0 !important;
-                height: 100vh !important;
-                width: 280px !important;
-            }
-
-            #sidebar.mobile-open {
-                transform: translateX(0);
-            }
-
-            #overlay.active {
-                display: block;
-            }
-        }
-    </style>
 </head>
 
 <body class="sidebar-page bg-[#f1f4fa] text-slate-800 antialiased min-h-screen flex flex-col md:flex-row">

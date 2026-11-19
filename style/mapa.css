@@ -1,19 +1,214 @@
-#map{
-    border-radius: 15px;
-    border: 0px;
-    box-shadow: 1px 1px 30px 10px rgb(115, 115, 115);
-}
-#criarRota{
-    font-size: 23px;
-    width: 50%;
-    padding: 1%;
-    margin-bottom: 20px;
-    transition: 0.5s;
-}
-#criarRota:hover{
-    transform: scale(1.1);
-}
+/* MAPA */
+        #map {
+            height: 100%;
+            width: 100%;
+            z-index: 1;
+            background: #eef2f6;
+        }
 
-#map{
- height: 670px;
-}
+        .leaflet-routing-container {
+            display: none !important;
+        }
+
+        /* CUSTOM LEAFLET CONTROLS */
+        .leaflet-bar {
+            border: 0 !important;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12) !important;
+            border-radius: 12px !important;
+            overflow: hidden;
+        }
+
+        .leaflet-bar a {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            width: 36px !important;
+            height: 36px !important;
+            line-height: 36px !important;
+            font-weight: 700 !important;
+            transition: all 0.2s ease;
+        }
+
+        .leaflet-bar a:hover {
+            background-color: #f8fafc !important;
+            color: var(--emp-primary, #4F46E5) !important;
+        }
+
+        /* CUSTOM MODERN POPUP */
+        .leaflet-popup-content-wrapper {
+            background: #ffffff !important;
+            border-radius: 18px !important;
+            box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.2), 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+            border: 1px solid #edf2f7 !important;
+            padding: 0 !important;
+            overflow: hidden;
+        }
+
+        .leaflet-popup-content {
+            margin: 0 !important;
+            line-height: 1.45 !important;
+        }
+
+        .leaflet-popup-tip {
+            background: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+        }
+
+        .leaflet-container a.leaflet-popup-close-button {
+            top: 10px !important;
+            right: 12px !important;
+            color: #94a3b8 !important;
+            font-size: 17px !important;
+            padding: 4px !important;
+            border-radius: 999px !important;
+            transition: all 0.2s ease;
+        }
+
+        .leaflet-container a.leaflet-popup-close-button:hover {
+            color: #0f172a !important;
+            background: #f1f5f9;
+        }
+
+        /* MODERN MOTO MARKER */
+        .moto-marker {
+            background: none;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .moto-pin-bubble {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #ffffff;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
+            border: 2px solid var(--emp-primary, #4F46E5);
+            font-weight: 700;
+            font-size: 11px;
+            color: #0f172a;
+            white-space: nowrap;
+            transition: transform 0.2s ease;
+            z-index: 10;
+        }
+
+        .moto-pin-bubble.idle {
+            border-color: #10b981;
+        }
+
+        .moto-pin-bubble:hover {
+            transform: scale(1.08);
+        }
+
+        .moto-icon-box {
+            font-size: 15px;
+            line-height: 1;
+            display: inline-block;
+            animation: moto-bob 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes moto-bob {
+            from { transform: translateY(0); }
+            to { transform: translateY(-2px); }
+        }
+
+        .pulse-ring {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            border: 3px solid var(--emp-primary, #4F46E5);
+            border-radius: 999px;
+            animation: pulse-animation 1.6s infinite ease-out;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .pulse-ring-idle {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            border: 3px solid #10b981;
+            border-radius: 999px;
+            animation: pulse-animation 1.6s infinite ease-out;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes pulse-animation {
+            0% {
+                transform: scale(0.65);
+                opacity: 0.95;
+            }
+            100% {
+                transform: scale(1.75);
+                opacity: 0;
+            }
+        }
+
+        /* DELIVERY MARKER PIN */
+        .delivery-marker {
+            background: var(--emp-primary, #4F46E5);
+            border-radius: 999px;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            border: 2.5px solid #ffffff;
+            font-size: 11px;
+            font-weight: 800;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+            transition: transform 0.2s ease;
+        }
+
+        .delivery-marker:hover {
+            transform: scale(1.15);
+        }
+
+        /* CUSTOM SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* ACTIVE CARDS & TRANSITIONS */
+        .driver-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .driver-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px -6px rgba(15, 23, 42, 0.08);
+        }
+
+        .driver-card.focused {
+            border-color: var(--emp-primary, #4F46E5) !important;
+            box-shadow: 0 0 0 3px var(--emp-primary-ring, rgba(79, 70, 229, 0.18)) !important;
+        }
+
+        /* GLASS FLOATING CONTROLS */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+        }
