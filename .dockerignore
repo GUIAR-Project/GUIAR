@@ -1,0 +1,38 @@
+# Arquivos/pastas que NAO entram na imagem Docker do GUIAR.
+
+# Controle de versao
+.git
+.gitignore
+.github
+
+# Meta do proprio Docker (nao sao necessarios dentro da imagem)
+Dockerfile
+docker-compose.yml
+.dockerignore
+.env
+
+# Dependencias Node (nao usadas no runtime PHP - so servem para testes)
+node_modules
+package.json
+package-lock.json
+playwright.config.mjs
+playwright-report
+test-results
+
+# Dependencias PHP (sao reinstaladas via composer dentro da imagem)
+vendor
+
+# Testes automatizados (nao rodam no container web)
+tests
+
+# Copia/duplicada aninhada do projeto (nao e usada em runtime)
+/GUIAR
+
+# Prototipos, rascunhos e documentacao pesada
+Prototipo_GUIAR
+scratch
+*.docx
+
+# Lixo de sistema operacional
+Thumbs.db
+.DS_Store
