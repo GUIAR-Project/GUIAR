@@ -196,8 +196,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl --silent --fail http://127.0.0.1:8080/index.html | grep -q '<title>GUIAR</title>'
-          curl --silent --fail 'http://127.0.0.1:8080/routes.php?action=loginEmpresa' | grep -Eqi '<form|<!doctype html'
+          # Captura em variável para evitar SIGPIPE/exit-23 no pipe direto com grep -q
+          home_body="$(curl --silent --fail http://127.0.0.1:8080/index.html)"
+          echo "$home_body" | grep -q '<title>GUIAR</title>'
+          login_body="$(curl --silent --fail 'http://127.0.0.1:8080/routes.php?action=loginEmpresa')"
+          echo "$login_body" | grep -Eqi '<form|<!doctype html'
 
       - name: Smoke test de login (fluxo com banco real)
         shell: bash
