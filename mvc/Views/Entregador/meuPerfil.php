@@ -7,8 +7,10 @@
     <title>Meu Perfil | Entregador</title>
     <link rel="shortcut icon" type="image/png" href="<?= BASE_URL ?>/img/logoIcon.png">
 
-    <!-- Google Fonts: Inter para interface moderna e limpa -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -30,9 +32,76 @@
             src: url('<?= BASE_URL ?>/fonts/Brice-SemiBoldSemiCondensed.ttf');
         }
 
+        :root {
+            --emp-primary: #4F46E5;
+            --emp-primary-hover: #4338CA;
+            --emp-primary-active: #3730A3;
+            --emp-primary-dark: #312E81;
+            --emp-primary-light: #EEF2FF;
+            --emp-primary-light-border: #C7D2FE;
+            --emp-primary-ring: rgba(79, 70, 229, 0.25);
+            --emp-primary-contrast: #FFFFFF;
+
+            --emp-secondary: #FFD400;
+            --emp-secondary-hover: #E6BE00;
+            --emp-secondary-light: #FEF9C3;
+            --emp-secondary-contrast: #0F172A;
+        }
+
         body {
-            font-family: 'Inter', 'BasisGrotesque-Regular', sans-serif;
-            background-color: #F8FAFC;
+            font-family: 'Inter', 'BasisGrotesque-Regular', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: radial-gradient(ellipse at 60% -10%, rgba(255, 255, 255, .98), transparent 48%), #f1f4fa;
+        }
+
+        .heading-font {
+            font-family: 'Outfit', 'Inter', sans-serif;
+        }
+
+        /* COLORAÇÃO CLARA DA SIDEBAR */
+        #sidebar {
+            background-color: #FFFFFF !important;
+            color: #334155 !important;
+            border-right: 1px solid rgba(226, 232, 240, 0.8) !important;
+        }
+
+        #sidebar .menu-item {
+            transition: all 0.2s ease;
+        }
+
+        #sidebar .menu-item:not(.active) {
+            color: #64748B !important;
+        }
+
+        #sidebar .menu-item:not(.active):hover {
+            background-color: rgba(241, 245, 249, 0.8) !important;
+            color: #0F172A !important;
+        }
+
+        #sidebar .menu-item.active {
+            background-color: var(--emp-primary, #4F46E5) !important;
+            color: var(--emp-primary-contrast, #FFFFFF) !important;
+        }
+
+        /* SIDEBAR MOBILE */
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-100%);
+                transition: transform .3s cubic-bezier(0.4, 0, 0.2, 1);
+                border-radius: 0 !important;
+                top: 0 !important;
+                left: 0 !important;
+                margin: 0 !important;
+                height: 100vh !important;
+                width: 280px !important;
+            }
+
+            #sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            #overlay.active {
+                display: block;
+            }
         }
 
         /* Scrollbar estilizada */
@@ -54,30 +123,6 @@
             background: #94A3B8;
         }
 
-        .menu-item {
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .menu-item:hover {
-            background-color: rgba(233, 78, 0, 0.08);
-            transform: translateX(4px);
-            color: #E94E00 !important;
-        }
-
-        .menu-item:hover svg {
-            color: #E94E00 !important;
-        }
-
-        .active-menu {
-            background: linear-gradient(90deg, rgba(233, 78, 0, 0.12) 0%, rgba(233, 78, 0, 0.03) 100%);
-            border-left: 4px solid #E94E00;
-            color: #E94E00 !important;
-        }
-
-        .active-menu svg {
-            color: #E94E00 !important;
-        }
-
         .hover-card {
             transition: all 0.3s ease;
         }
@@ -89,75 +134,235 @@
     </style>
 </head>
 
-<body class="sidebar-page min-h-screen flex bg-[#F8FAFC] text-[#0F172A] overflow-x-hidden lg:pl-72">
+<body class="sidebar-page min-h-screen flex flex-col md:flex-row bg-[#f1f4fa] text-[#0F172A] overflow-x-hidden">
 
-    <!-- Overlay do Sidebar Mobile -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/50 z-40 hidden lg:hidden transition-opacity"></div>
+    <!-- OVERLAY MOBILE -->
+    <div id="overlay" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden transition-opacity"></div>
 
-    <!-- SIDEBAR -->
-    <aside id="sidebar" class="w-72 bg-white flex flex-col justify-between flex-shrink-0 h-screen min-h-screen text-slate-900 fixed top-0 left-0 z-50 shadow-2xl overflow-hidden transform -translate-x-full lg:translate-x-0 transition-transform duration-300 border-r border-slate-200">
+    <?php
+    if (session_status() === PHP_SESSION_NONE) {
+        @session_start();
+    }
 
-        <div class="flex min-h-0 flex-1 flex-col">
-            <div class="p-8">
-                <img src="<?= BASE_URL ?>/img/LogoGuiar.png" alt="Logo GUIAR" class="w-32 h-auto object-contain">
+    // 1. NOME DO ENTREGADOR
+    $nomeEntregador = trim((string)($entregador["nome_completo"]
+        ?? ($entregador["nome"]
+        ?? ($_SESSION['nome_entregador']
+        ?? ($_SESSION['nome_usuario'] ?? 'Entregador')))));
+    if ($nomeEntregador === '') {
+        $nomeEntregador = 'Entregador';
+    }
+
+    // 2. FOTO DO ENTREGADOR (USA foto_3x4 DO PERFIL SE DISPONÍVEL)
+    $entregadorFotoUrl = '';
+    if (!empty($entregador["foto_3x4"])) {
+        $rawFoto = trim((string)$entregador["foto_3x4"]);
+        if (preg_match('#^(https?:)?//#i', $rawFoto) || strpos($rawFoto, 'data:') === 0) {
+            $entregadorFotoUrl = $rawFoto;
+        } elseif (strpos($rawFoto, BASE_URL) === 0) {
+            $entregadorFotoUrl = $rawFoto;
+        } else {
+            $entregadorFotoUrl = rtrim(BASE_URL, '/') . '/public/uploads/entregadores/fotos/' . ltrim($rawFoto, '/');
+        }
+    }
+
+    // 3. LOGO E NOME DA EMPRESA
+    $logoEmpresaResolvida = '';
+    $candidatosLogo = [
+        $logoEmpresaSidebar ?? null,
+        $logoEmpresa ?? null,
+        $empresa['logo_url'] ?? null,
+        $empresa['logo'] ?? null,
+        $empresa['logo_empresa'] ?? null,
+        $entregador['logo_empresa'] ?? null,
+        $entregador['empresa_logo'] ?? null,
+        $_SESSION['logoEmpresaSidebar'] ?? null,
+        $_SESSION['logo_empresa'] ?? null,
+        $_SESSION['empresa_logo'] ?? null,
+        $_SESSION['empresa']['logo_url'] ?? null,
+        $_SESSION['empresa']['logo'] ?? null,
+    ];
+    foreach ($candidatosLogo as $candLogo) {
+        if (!empty($candLogo) && is_string($candLogo) && trim($candLogo) !== '') {
+            $logoEmpresaResolvida = trim($candLogo);
+            break;
+        }
+    }
+
+    $nomeEmpresaResolvido = '';
+    $candidatosEmpresaNome = [
+        $nomeEmpresaSidebar ?? null,
+        $nomeEmpresa ?? null,
+        $empresa['nome_empresa'] ?? null,
+        $empresa['nome_fantasia'] ?? null,
+        $empresa['nome'] ?? null,
+        $entregador['nome_empresa'] ?? null,
+        $_SESSION['nome_empresa'] ?? null,
+        $_SESSION['empresa_nome'] ?? null,
+        $_SESSION['empresa']['nome_empresa'] ?? null,
+        $_SESSION['empresa']['nome'] ?? null,
+    ];
+    foreach ($candidatosEmpresaNome as $candEmpNome) {
+        if (!empty($candEmpNome) && is_string($candEmpNome) && trim($candEmpNome) !== '') {
+            $nomeEmpresaResolvido = trim($candEmpNome);
+            break;
+        }
+    }
+
+    $normalizarUrlAsset = function ($path) {
+        if (empty($path)) return '';
+        if (preg_match('#^(https?:)?//#i', $path) || strpos($path, 'data:') === 0) {
+            return $path;
+        }
+        if (strpos($path, BASE_URL) === 0) {
+            return $path;
+        }
+        return rtrim(BASE_URL, '/') . '/' . ltrim($path, '/');
+    };
+
+    $precisaSincronizarEmpresa = ($logoEmpresaResolvida === '');
+    $logoEmpresaSidebar = $logoEmpresaResolvida !== ''
+        ? $normalizarUrlAsset($logoEmpresaResolvida)
+        : (BASE_URL . '/img/logoIcon.png');
+    $nomeEmpresaSidebar = $nomeEmpresaResolvido !== '' ? $nomeEmpresaResolvido : 'GUIAR Entregas';
+    ?>
+
+    <!-- SIDEBAR CLARA -->
+    <aside id="sidebar"
+        class="w-72 bg-white flex flex-col fixed top-0 left-0 text-slate-700 z-50 transition-all rounded-none overflow-hidden h-screen border-r border-slate-200/80 shadow-sm">
+
+        <div class="flex flex-col h-full">
+
+            <!-- BOTÃO FECHAR MOBILE -->
+            <button id="closeSidebar"
+                class="absolute top-5 right-5 md:hidden text-slate-500 hover:text-slate-800 text-xl font-bold p-1 rounded-lg transition-colors z-50">
+                ✕
+            </button>
+
+            <!-- LOGO DA EMPRESA -->
+            <div class="px-6 pt-7 pb-4 mb-2 flex justify-start items-center gap-3">
+                <div style="width: 58px; height: 58px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #fff; border: 2px solid var(--emp-primary-light-border, rgba(79,70,229,0.18)); box-shadow: 0 4px 14px var(--emp-primary-ring, rgba(79,70,229,0.12)); display: flex; align-items: center; justify-content: center; padding: 5px;">
+                    <img id="sidebarEmpresaLogo" src="<?= htmlspecialchars($logoEmpresaSidebar, ENT_QUOTES, 'UTF-8') ?>"
+                        alt="Logo da empresa"
+                        style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block;">
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Painel do Entregador</p>
+                    <p id="sidebarEmpresaNome" class="text-sm font-extrabold text-slate-800 truncate">
+                        <?= htmlspecialchars($nomeEmpresaSidebar, ENT_QUOTES, 'UTF-8') ?>
+                    </p>
+                </div>
             </div>
 
-            <nav class="sidebar-menu flex-1 px-4 space-y-1.5">
-                <a href="<?= BASE_URL ?>/routes.php?action=meusPedidosEntregador" class="menu-item flex items-center gap-3.5 px-5 py-3.5 rounded-xl font-semibold text-sm text-slate-600 transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <!-- MENU DE NAVEGAÇÃO -->
+            <nav class="sidebar-menu px-4 space-y-1.5 flex-grow">
+
+                <!-- MEUS PEDIDOS -->
+                <a href="<?= BASE_URL ?>/routes.php?action=meusPedidosEntregador"
+                    class="menu-item flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
                     Meus Pedidos
                 </a>
 
-                <a href="<?= BASE_URL ?>/routes.php?action=mapaEntregador" class="menu-item flex items-center gap-3.5 px-5 py-3.5 rounded-xl font-semibold text-sm text-slate-600 transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <!-- ABRIR MAPA -->
+                <a href="<?= BASE_URL ?>/routes.php?action=mapaEntregador"
+                    class="menu-item flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                     </svg>
                     Abrir Mapa
                 </a>
 
-                <a href="<?= BASE_URL ?>/routes.php?action=perfilEntregador" class="menu-item active-menu flex items-center gap-3.5 px-5 py-3.5 rounded-xl font-semibold text-sm text-[#A16207]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#A16207]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <!-- MEU PERFIL (ATIVO) -->
+                <a href="<?= BASE_URL ?>/routes.php?action=perfilEntregador"
+                    class="menu-item active flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold text-sm transition-all"
+                    style="background-color: var(--emp-primary, #4F46E5); color: var(--emp-primary-contrast, #ffffff); box-shadow: 0 8px 18px -4px var(--emp-primary-ring, rgba(79, 70, 229, 0.35));">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     Meu Perfil
                 </a>
             </nav>
-        </div>
 
-        <!-- Logout no rodapé da sidebar -->
-        <div class="px-4 pb-8">
-            <a href="<?= BASE_URL ?>/routes.php?action=logoutEntregador" class="flex items-center gap-3.5 px-5 py-3.5 rounded-xl font-semibold text-sm text-slate-600 hover:text-[#E94E00] hover:bg-[#E94E00]/10 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500 hover:text-[#E94E00]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                Sair
-            </a>
+            <!-- FOOTER SIDEBAR -->
+            <div class="p-4 mt-auto border-t border-slate-100">
+                <div class="px-2 pb-3.5 flex flex-col items-center gap-1">
+                    <img src="<?= BASE_URL ?>/img/LogoPreto.png" alt="GUIAR" class="w-20 h-auto object-contain opacity-90">
+                    <p class="text-[10px] text-slate-400 text-center leading-tight">
+                        Conectando você ao seu destino.
+                    </p>
+                </div>
+
+                <div id="driverSidebarCard" class="admin-user-card flex items-center gap-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                    <?php if (!empty($entregadorFotoUrl)): ?>
+                        <img id="driverSidebarPhoto" src="<?= htmlspecialchars($entregadorFotoUrl, ENT_QUOTES, 'UTF-8') ?>"
+                            alt="Foto de <?= htmlspecialchars($nomeEntregador, ENT_QUOTES, 'UTF-8') ?>"
+                            class="w-9 h-9 rounded-full object-cover shadow-sm ring-2 ring-white flex-shrink-0">
+                    <?php else: ?>
+                        <div id="driverSidebarAvatar" class="admin-user-avatar w-9 h-9 rounded-full font-black text-xs flex items-center justify-center shadow-sm flex-shrink-0"
+                            style="background-color: var(--emp-secondary, #FFD400); color: var(--emp-secondary-contrast, #0F172A);">
+                            <?= strtoupper(substr($nomeEntregador, 0, 2)) ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="flex-grow min-w-0">
+                        <p id="driverSidebarName" class="admin-user-name font-bold text-xs text-slate-800 truncate">
+                            <?= htmlspecialchars($nomeEntregador, ENT_QUOTES, 'UTF-8') ?>
+                        </p>
+                        <p class="admin-user-role text-[10px] text-slate-400 font-bold tracking-wider uppercase">
+                            Entregador
+                        </p>
+                    </div>
+
+                    <!-- LOGOUT -->
+                    <a href="<?= BASE_URL ?>/routes.php?action=logoutEntregador" title="Sair da conta" aria-label="Sair da conta"
+                        class="text-slate-400 hover:text-rose-500 transition-colors p-1.5 rounded-lg hover:bg-rose-50">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
         </div>
     </aside>
 
     <!-- CONTEÚDO PRINCIPAL -->
-     <div class="flex-1 min-w-0 flex flex-col min-h-screen">
+    <div class="flex-1 min-w-0 flex flex-col min-h-screen md:ml-72">
+
         <!-- HEADER DA PÁGINA -->
-        <header class="bg-white border-b border-[#E2E8F0] px-4 lg:px-8 py-5 flex items-center justify-between sticky top-0 z-30 shadow-sm">
-            <div class="flex items-center gap-4 min-w-0 flex-1">
-                <button id="mobileMenuBtn" class="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-4 md:px-8 py-4 flex items-center justify-between gap-4 sticky top-0 z-20">
+            <div class="flex items-center gap-3.5 min-w-0 flex-1">
+                <!-- BOTÃO HAMBURGER MOBILE -->
+                <button id="hamburger"
+                    class="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
+
+                <!-- ÍCONE DA ABA -->
+                <div class="hidden sm:flex items-center justify-center flex-shrink-0 transition-transform hover:scale-105"
+                    style="color: var(--emp-primary, #4F46E5);">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+
                 <div class="min-w-0 flex-1">
-                    <h1 class="page-heading truncate">
+                    <h1 class="heading-font text-lg md:text-xl font-extrabold text-slate-900 tracking-tight truncate">
                         <?= htmlspecialchars($entregador["nome_completo"]) ?>
                     </h1>
-                    <p class="page-subheading truncate">Meu Perfil - Gerencie suas informações pessoais</p>
+                    <p class="text-xs md:text-sm text-slate-500 font-medium truncate">
+                        Meu Perfil - Gerencie suas informações pessoais
+                    </p>
                 </div>
             </div>
         </header>
 
-        <!-- CONTEÚDO PRINCIPAL -->
-        <main class="flex-grow p-8 lg:px-12 xl:px-16 space-y-8">
+        <!-- MAIN -->
+        <main class="flex-grow p-4 sm:p-8 lg:px-12 xl:px-16 pb-24 lg:pb-12 space-y-8">
 
             <!-- Alerts -->
             <?php if ($sucesso): ?>
@@ -184,7 +389,7 @@
 
             <!-- Card de Perfil Entregador -->
             <div class="max-w-2xl mx-auto">
-                <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 space-y-6">
+                <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8 space-y-6">
 
                     <!-- Foto de Perfil -->
                     <div class="flex flex-col items-center space-y-4">
@@ -267,7 +472,42 @@
         </main>
 
     </div>
-    </div>
+
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/90 flex justify-around items-center h-16 z-30 shadow-lg">
+        <a href="<?= BASE_URL ?>/routes.php?action=meusPedidosEntregador"
+            class="flex flex-col items-center gap-0.5 text-[11px] text-slate-500 hover:text-slate-900 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 opacity-75" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            Pedidos
+        </a>
+
+        <a href="<?= BASE_URL ?>/routes.php?action=mapaEntregador"
+            class="flex flex-col items-center gap-0.5 text-[11px] text-slate-500 hover:text-slate-900 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 opacity-75" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            Mapa
+        </a>
+
+        <a href="<?= BASE_URL ?>/routes.php?action=perfilEntregador"
+            class="flex flex-col items-center gap-0.5 text-[11px] font-bold transition-colors"
+            style="color: var(--emp-primary, #4F46E5);">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            Perfil
+        </a>
+
+        <a href="<?= BASE_URL ?>/routes.php?action=logoutEntregador"
+            class="flex flex-col items-center gap-0.5 text-[11px] text-slate-500 hover:text-rose-500 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 opacity-75" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Sair
+        </a>
+    </nav>
 
     <!-- Modal de Edição -->
     <div id="editProfileModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
@@ -350,6 +590,9 @@
 
                         <!-- Foto 3x4 -->
                         <div class="relative">
+                            <label for="foto_3x4" class="block text-sm font-semibold text-slate-700 mb-2">
+                                Foto 3x4
+                            </label>
                             <input
                                 type="file"
                                 id="foto_3x4"
@@ -416,6 +659,7 @@
     </div>
 
     <script>
+        // Modal de edição
         const modal = document.getElementById("editProfileModal");
         const openBtn = document.getElementById("openEditModalBtn");
         const closeBtn = document.getElementById("closeEditModalBtn");
@@ -439,20 +683,67 @@
             }
         });
 
-        // Script para Sidebar Mobile
+        // Script da Sidebar Mobile
+        const menuBtn = document.getElementById('hamburger');
         const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const overlay = document.getElementById('overlay');
 
-        if (mobileMenuBtn && overlay && sidebar) {
-            function toggleSidebar() {
-                sidebar.classList.toggle('-translate-x-full');
-                overlay.classList.toggle('hidden');
-            }
-            mobileMenuBtn.addEventListener('click', toggleSidebar);
-            overlay.addEventListener('click', toggleSidebar);
+        if (menuBtn && sidebar && overlay) {
+            menuBtn.addEventListener('click', () => {
+                sidebar.classList.add('mobile-open');
+                overlay.classList.add('active');
+            });
         }
+
+        if (closeSidebar && sidebar && overlay) {
+            closeSidebar.addEventListener('click', () => {
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+            });
+        }
+
+        if (overlay && sidebar) {
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+            });
+        }
+
+        <?php if ($precisaSincronizarEmpresa): ?>
+        // Sincroniza logo e nome da empresa caso o controller desta rota não os tenha enviado
+        (function sincronizarEmpresaSidebar() {
+            fetch('<?= BASE_URL ?>/routes.php?action=meusPedidosEntregador')
+                .then(res => res.text())
+                .then(html => {
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    const remoteSidebar = doc.getElementById('sidebar');
+                    if (!remoteSidebar) return;
+
+                    const remoteLogo = remoteSidebar.querySelector('img[alt*="empresa" i], img[alt*="logo" i]');
+                    const localLogo = document.getElementById('sidebarEmpresaLogo');
+                    if (remoteLogo && remoteLogo.src && localLogo && !remoteLogo.src.includes('LogoGuiar') && !remoteLogo.src.includes('LogoPreto')) {
+                        localLogo.src = remoteLogo.src;
+                    }
+
+                    const remoteTitle = remoteSidebar.querySelector('p.font-extrabold, .empresa-nome');
+                    const localTitle = document.getElementById('sidebarEmpresaNome');
+                    if (remoteTitle && remoteTitle.textContent.trim() && localTitle) {
+                        localTitle.textContent = remoteTitle.textContent.trim();
+                    }
+                })
+                .catch(() => {});
+        })();
+        <?php endif; ?>
     </script>
+
+    <?php if (!empty($logoEmpresaSidebar) && strpos($logoEmpresaSidebar, 'LogoPreto.png') === false && strpos($logoEmpresaSidebar, 'logoIcon.png') === false): ?>
+    <!-- INTEGRAÇÃO COM A PALETA DINÂMICA DA EMPRESA -->
+    <script>
+        window.GUIAR_EMPRESA_LOGO = <?= json_encode($logoEmpresaSidebar) ?>;
+    </script>
+    <script src="<?= BASE_URL ?>/public/js/empresa-palette.js"></script>
+    <?php endif; ?>
 </body>
 
 </html>

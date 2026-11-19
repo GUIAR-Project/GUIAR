@@ -21,8 +21,6 @@
     <!-- Leaflet CSS & Routing Machine -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
-
-    
 </head>
 
 <body class="sidebar-page bg-[#f1f4fa] text-slate-800 antialiased h-screen overflow-hidden flex flex-col md:flex-row">
@@ -71,12 +69,15 @@
     $candidatosFoto = [
         $entregadorFotoUrl ?? null,
         $fotoEntregador ?? null,
+        $entregador['foto_3x4'] ?? null,
         $entregador['foto_url'] ?? null,
         $entregador['foto'] ?? null,
         $entregador['foto_perfil'] ?? null,
         $entregador['imagem'] ?? null,
+        $dadosEntregador['foto_3x4'] ?? null,
         $dadosEntregador['foto_url'] ?? null,
         $dadosEntregador['foto'] ?? null,
+        $_SESSION['entregador']['foto_3x4'] ?? null,
         $_SESSION['entregador']['foto_url'] ?? null,
         $_SESSION['entregador']['foto'] ?? null,
         $_SESSION['foto_entregador'] ?? null,
@@ -168,7 +169,7 @@
                         $nomeEntregadorResolvido = $rowEnt['nome_completo'] ?? ($rowEnt['nome'] ?? '');
                     }
                     if ($fotoEntregadorResolvida === '') {
-                        $fotoEntregadorResolvida = $rowEnt['foto'] ?? ($rowEnt['foto_perfil'] ?? ($rowEnt['imagem'] ?? ''));
+                        $fotoEntregadorResolvida = $rowEnt['foto_3x4'] ?? ($rowEnt['foto'] ?? ($rowEnt['foto_perfil'] ?? ($rowEnt['imagem'] ?? '')));
                     }
                     $idEmp = $rowEnt['id_empresa'] ?? ($rowEnt['empresa_id'] ?? ($_SESSION['id_empresa'] ?? null));
                     if (!empty($idEmp)) {
@@ -204,35 +205,41 @@
 
     $precisaSincronizarSidebar = ($nomeEntregadorResolvido === '' || $logoEmpresaResolvida === '');
     $nomeEntregador = $nomeEntregadorResolvido !== '' ? $nomeEntregadorResolvido : 'Entregador';
-    $entregadorFotoUrl = $normalizarUrlAsset($fotoEntregadorResolvida);
+
+    if ($fotoEntregadorResolvida !== '' && strpos($fotoEntregadorResolvida, '/') === false && strpos($fotoEntregadorResolvida, 'data:') !== 0) {
+        $entregadorFotoUrl = rtrim(BASE_URL, '/') . '/public/uploads/entregadores/fotos/' . ltrim($fotoEntregadorResolvida, '/');
+    } else {
+        $entregadorFotoUrl = $normalizarUrlAsset($fotoEntregadorResolvida);
+    }
+
     $logoEmpresaSidebar = $logoEmpresaResolvida !== ''
         ? $normalizarUrlAsset($logoEmpresaResolvida)
         : (BASE_URL . '/img/logoIcon.png');
     $nomeEmpresaSidebar = $nomeEmpresaResolvido !== '' ? $nomeEmpresaResolvido : 'GUIAR Entregas';
     ?>
 
-    <!-- SIDEBAR ESCURA (REFERÊNCIA) -->
+    <!-- SIDEBAR CLARA -->
     <aside id="sidebar"
-        class="w-72 bg-[#0F172A] flex flex-col fixed top-0 left-0 text-slate-200 z-50 transition-all rounded-none overflow-hidden h-screen border-r border-slate-800 shadow-xl">
+        class="w-72 bg-white flex flex-col fixed top-0 left-0 text-slate-700 z-50 transition-all rounded-none overflow-hidden h-screen border-r border-slate-200/80 shadow-sm">
 
         <div class="flex flex-col h-full">
 
             <!-- BOTÃO FECHAR MOBILE -->
             <button id="closeSidebar"
-                class="absolute top-5 right-5 md:hidden text-slate-400 hover:text-white text-xl font-bold p-1 rounded-lg transition-colors z-50">
+                class="absolute top-5 right-5 md:hidden text-slate-500 hover:text-slate-800 text-xl font-bold p-1 rounded-lg transition-colors z-50">
                 ✕
             </button>
 
             <!-- LOGO DA EMPRESA -->
             <div class="px-6 pt-7 pb-4 mb-2 flex justify-start items-center gap-3">
-                <div style="width: 58px; height: 58px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #fff; border: 2px solid var(--emp-primary-light-border, rgba(79,70,229,0.28)); box-shadow: 0 4px 14px var(--emp-primary-ring, rgba(79,70,229,0.25)); display: flex; align-items: center; justify-content: center; padding: 5px;">
+                <div style="width: 58px; height: 58px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #fff; border: 2px solid var(--emp-primary-light-border, rgba(79,70,229,0.18)); box-shadow: 0 4px 14px var(--emp-primary-ring, rgba(79,70,229,0.12)); display: flex; align-items: center; justify-content: center; padding: 5px;">
                     <img id="sidebarEmpresaLogo" src="<?= htmlspecialchars($logoEmpresaSidebar, ENT_QUOTES, 'UTF-8') ?>"
                         alt="Logo da empresa"
                         style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block;">
                 </div>
                 <div class="min-w-0">
                     <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Painel do Entregador</p>
-                    <p id="sidebarEmpresaNome" class="text-sm font-extrabold text-white truncate">
+                    <p id="sidebarEmpresaNome" class="text-sm font-extrabold text-slate-800 truncate">
                         <?= htmlspecialchars($nomeEmpresaSidebar, ENT_QUOTES, 'UTF-8') ?>
                     </p>
                 </div>
@@ -243,8 +250,8 @@
 
                 <!-- MEUS PEDIDOS -->
                 <a href="<?= BASE_URL ?>/routes.php?action=meusPedidosEntregador"
-                    class="menu-item flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold text-sm text-slate-300 hover:text-white hover:bg-white/10 transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    class="menu-item flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
                     Meus Pedidos
@@ -253,7 +260,7 @@
                 <!-- ABRIR MAPA (ATIVO) -->
                 <a href="<?= BASE_URL ?>/routes.php?action=mapaEntregador"
                     class="menu-item active flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold text-sm transition-all"
-                    style="background-color: var(--emp-primary, #4F46E5); color: var(--emp-primary-contrast, #ffffff); box-shadow: 0 8px 18px -4px var(--emp-primary-ring, rgba(79, 70, 229, 0.45));">
+                    style="background-color: var(--emp-primary, #4F46E5); color: var(--emp-primary-contrast, #ffffff); box-shadow: 0 8px 18px -4px var(--emp-primary-ring, rgba(79, 70, 229, 0.35));">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                     </svg>
@@ -262,8 +269,8 @@
 
                 <!-- MEU PERFIL -->
                 <a href="<?= BASE_URL ?>/routes.php?action=perfilEntregador"
-                    class="menu-item flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold text-sm text-slate-300 hover:text-white hover:bg-white/10 transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    class="menu-item flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     Meu Perfil
@@ -271,19 +278,19 @@
             </nav>
 
             <!-- FOOTER SIDEBAR -->
-            <div class="p-4 mt-auto border-t border-slate-800">
+            <div class="p-4 mt-auto border-t border-slate-100">
                 <div class="px-2 pb-3.5 flex flex-col items-center gap-1">
-                    <img src="<?= BASE_URL ?>/img/LogoBranco.png" onerror="this.onerror=null; this.src='<?= BASE_URL ?>/img/LogoGuiar.png';" alt="GUIAR" class="w-20 h-auto object-contain opacity-90">
+                    <img src="<?= BASE_URL ?>/img/LogoPreto.png" alt="GUIAR" class="w-20 h-auto object-contain opacity-90">
                     <p class="text-[10px] text-slate-400 text-center leading-tight">
                         Conectando você ao seu destino.
                     </p>
                 </div>
 
-                <div id="driverSidebarCard" class="admin-user-card flex items-center gap-3 p-2.5 rounded-2xl bg-slate-800/80 border border-slate-700/80">
+                <div id="driverSidebarCard" class="admin-user-card flex items-center gap-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-200/80">
                     <?php if (!empty($entregadorFotoUrl)): ?>
                         <img id="driverSidebarPhoto" src="<?= htmlspecialchars($entregadorFotoUrl, ENT_QUOTES, 'UTF-8') ?>"
                             alt="Foto de <?= htmlspecialchars($nomeEntregador, ENT_QUOTES, 'UTF-8') ?>"
-                            class="w-9 h-9 rounded-full object-cover shadow-sm ring-2 ring-slate-700 flex-shrink-0">
+                            class="w-9 h-9 rounded-full object-cover shadow-sm ring-2 ring-white flex-shrink-0">
                     <?php else: ?>
                         <div id="driverSidebarAvatar" class="admin-user-avatar w-9 h-9 rounded-full font-black text-xs flex items-center justify-center shadow-sm flex-shrink-0"
                             style="background-color: var(--emp-secondary, #FFD400); color: var(--emp-secondary-contrast, #0F172A);">
@@ -292,7 +299,7 @@
                     <?php endif; ?>
 
                     <div class="flex-grow min-w-0">
-                        <p id="driverSidebarName" class="admin-user-name font-bold text-xs text-white truncate">
+                        <p id="driverSidebarName" class="admin-user-name font-bold text-xs text-slate-800 truncate">
                             <?= htmlspecialchars($nomeEntregador, ENT_QUOTES, 'UTF-8') ?>
                         </p>
                         <p class="admin-user-role text-[10px] text-slate-400 font-bold tracking-wider uppercase">
@@ -302,7 +309,7 @@
 
                     <!-- LOGOUT -->
                     <a href="<?= BASE_URL ?>/routes.php?action=logoutEntregador" title="Sair da conta" aria-label="Sair da conta"
-                        class="text-slate-400 hover:text-rose-400 transition-colors p-1.5 rounded-lg hover:bg-rose-500/10">
+                        class="text-slate-400 hover:text-rose-500 transition-colors p-1.5 rounded-lg hover:bg-rose-50">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
@@ -1167,21 +1174,21 @@
                     if (!remoteSidebar) return;
 
                     // 1. Logo da empresa
-                    const remoteLogo = remoteSidebar.querySelector('img[alt*="empresa" i], img[alt*="logo" i]');
+                    const remoteLogo = remoteSidebar.querySelector('#sidebarEmpresaLogo, img[alt*="empresa" i], img[alt*="logo" i]');
                     const localLogo = document.getElementById('sidebarEmpresaLogo');
-                    if (remoteLogo && remoteLogo.src && localLogo && !remoteLogo.src.includes('LogoGuiar') && !remoteLogo.src.includes('LogoPreto')) {
+                    if (remoteLogo && remoteLogo.src && localLogo && !remoteLogo.src.includes('LogoGuiar') && !remoteLogo.src.includes('LogoPreto') && !remoteLogo.src.includes('logoIcon')) {
                         localLogo.src = remoteLogo.src;
                     }
 
                     // 2. Nome da empresa
-                    const remoteTitle = remoteSidebar.querySelector('p.font-extrabold, .empresa-nome');
+                    const remoteTitle = remoteSidebar.querySelector('#sidebarEmpresaNome, p.font-extrabold, .empresa-nome');
                     const localTitle = document.getElementById('sidebarEmpresaNome');
                     if (remoteTitle && remoteTitle.textContent.trim() && localTitle) {
                         localTitle.textContent = remoteTitle.textContent.trim();
                     }
 
                     // 3. Nome e foto/iniciais do entregador
-                    const remoteName = remoteSidebar.querySelector('.admin-user-name, .entregador-nome, .user-name');
+                    const remoteName = remoteSidebar.querySelector('#driverSidebarName, .admin-user-name, .entregador-nome, .user-name');
                     const localName = document.getElementById('driverSidebarName');
                     const localAvatar = document.getElementById('driverSidebarAvatar');
                     if (remoteName && remoteName.textContent.trim() && localName) {
@@ -1193,14 +1200,14 @@
                         }
                     }
 
-                    const remotePhoto = remoteSidebar.querySelector('.admin-user-card img');
+                    const remotePhoto = remoteSidebar.querySelector('#driverSidebarPhoto, .admin-user-card img');
                     const localCard = document.getElementById('driverSidebarCard');
                     if (remotePhoto && remotePhoto.src && localCard && !document.getElementById('driverSidebarPhoto')) {
                         const img = document.createElement('img');
                         img.id = 'driverSidebarPhoto';
                         img.src = remotePhoto.src;
                         img.alt = 'Foto do entregador';
-                        img.className = 'w-9 h-9 rounded-full object-cover shadow-sm ring-2 ring-slate-700 flex-shrink-0';
+                        img.className = 'w-9 h-9 rounded-full object-cover shadow-sm ring-2 ring-white flex-shrink-0';
                         if (localAvatar) localAvatar.replaceWith(img);
                     }
                 })
@@ -1208,6 +1215,14 @@
         })();
         <?php endif; ?>
     </script>
+
+    <?php if (!empty($logoEmpresaSidebar) && strpos($logoEmpresaSidebar, 'LogoPreto.png') === false && strpos($logoEmpresaSidebar, 'logoIcon.png') === false): ?>
+    <!-- INTEGRAÇÃO COM A PALETA DINÂMICA DA EMPRESA -->
+    <script>
+        window.GUIAR_EMPRESA_LOGO = <?= json_encode($logoEmpresaSidebar) ?>;
+    </script>
+    <script src="<?= BASE_URL ?>/public/js/empresa-palette.js"></script>
+    <?php endif; ?>
 </body>
 
 </html>
