@@ -166,16 +166,83 @@ jobs:
         shell: bash
         run: kill "$(cat /tmp/guiar-php-server.pid)" 2>/dev/null || true
 
+  docker:
+    name: Smoke test via Docker (PHP/Apache + MariaDB)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Construir imagem e subir a stack
+        run: docker compose up -d --build
+
+      - name: Aguardar a aplicação responder (HTTP)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail http://127.0.0.1:8080/index.html >/dev/null; then
+              echo "Aplicação respondendo em http://127.0.0.1:8080"
+              exit 0
+            fi
+            echo "tentativa $attempt/60 - aguardando containers..."
+            sleep 5
+          done
+          echo "A aplicação não respondeu a tempo." >&2
+          exit 1
+
+      - name: Smoke test HTTP (home e loginEmpresa)
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --silent --fail http://127.0.0.1:8080/index.html | grep -q '<title>GUIAR</title>'
+          curl --silent --fail 'http://127.0.0.1:8080/routes.php?action=loginEmpresa' | grep -Eqi '<form|<!doctype html'
+
+      - name: Smoke test de login (fluxo com banco real)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cookie_jar="$(mktemp)"
+          curl --silent --fail --cookie-jar "$cookie_jar" --cookie "$cookie_jar" \
+            'http://127.0.0.1:8080/routes.php?action=loginEmpresa' >/dev/null
+          response="$(curl --silent --fail --location --cookie-jar "$cookie_jar" --cookie "$cookie_jar" \
+            --data-urlencode 'username=bigboca01' --data-urlencode 'password=123' \
+            'http://127.0.0.1:8080/routes.php?action=loginEmpresa')"
+          echo "$response" | grep -q 'Big Boca'
+          echo "$response" | grep -q 'Administradores'
+          echo "Login contra o banco real funcionou."
+
+      - name: Logs em caso de falha
+        if: failure()
+        run: docker compose logs --no-color || true
+
+      - name: Encerrar containers
+        if: always()
+        run: docker compose down -v
+
   build:
     name: Gerar pacote do sistema
     runs-on: ubuntu-latest
     needs:
       - frontend
       - backend
+      - docker
 
     steps:
       - name: Baixar código
         uses: actions/checkout@v4
+
+      - name: Configurar PHP e Composer
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring
+          tools: composer:v2
+          coverage: none
+
+      - name: Instalar dependências (vendor atualizado)
+        run: composer install --no-interaction --no-progress --prefer-dist --optimize-autoloader
 
       - name: Gerar pacote ZIP
         shell: bash
@@ -195,8 +262,24 @@ jobs:
                './package.json' '*/package.json' \
                './package-lock.json' '*/package-lock.json' \
                './playwright.config.mjs' '*/playwright.config.mjs' \
-               './dist/*' '*/dist/*'
+               './dist/*' '*/dist/*' \
+               './Dockerfile' '*/Dockerfile' \
+               './docker-compose.yml' '*/docker-compose.yml' \
+               './.dockerignore' '*/.dockerignore' \
+               './.env' '*/.env' \
+               './guiartcc.sql' '*/guiartcc.sql' \
+               '*.log' '*/build.log' '*/up.log'
           unzip -t dist/guiar-build.zip
+
+      - name: Validar conteúdo do pacote (sem .env/dump/Docker/logs)
+        shell: bash
+        run: |
+          set -e
+          if unzip -l dist/guiar-build.zip | grep -E '\.env$|guiartcc\.sql$|Dockerfile$|docker-compose\.yml$|\.log$'; then
+            echo "Pacote contém arquivos que não deveria (.env/dump/Docker/logs)." >&2
+            exit 1
+          fi
+          echo "Pacote válido: sem .env, dump SQL, Dockerfiles ou logs."
 
       - name: Publicar pacote do sistema
         uses: actions/upload-artifact@v4

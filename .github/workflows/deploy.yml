@@ -1,35 +1,133 @@
 name: Deploy Serv00
 
+# 1o deploy em producao: MANUAL (workflow_dispatch), para voce confirmar
+# nomes das Variables/Secrets e detalhes do Serv00. Apos um deploy manual
+# bem-sucedido, descomente o bloco workflow_run abaixo para tornar automatico
+# (roda sempre que o workflow "Testes do GUIAR" passar no master).
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
+  # workflow_run:
+  #   workflows: ["Testes do GUIAR"]
+  #   types: [completed]
+  #   branches: [master]
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Validar chave SSH
+      - name: Baixar codigo
+        uses: actions/checkout@v4
+        with:
+          # Em workflow_run usa o commit que passou no CI; em dispatch, o ref selecionado.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Configurar PHP e Composer
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring
+          tools: composer:v2
+          coverage: none
+
+      - name: Instalar dependencias (vendor atualizado)
+        run: composer install --no-interaction --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Empacotar para envio (sem dev/credenciais/dump/Docker)
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip -r guiar-deploy.zip . \
+            -x './.git/*' '*/.git/*' \
+               './.github/*' '*/.github/*' \
+               './node_modules/*' '*/node_modules/*' \
+               './playwright-report/*' '*/playwright-report/*' \
+               './test-results/*' '*/test-results/*' \
+               './tests/*' '*/tests/*' \
+               './scratch/*' '*/scratch/*' \
+               './Prototipo_GUIAR/*' '*/Prototipo_GUIAR/*' \
+               './Documento_GUIAR*' '*/Documento_GUIAR*' \
+               './package.json' '*/package.json' \
+               './package-lock.json' '*/package-lock.json' \
+               './playwright.config.mjs' '*/playwright.config.mjs' \
+               './Dockerfile' '*/Dockerfile' \
+               './docker-compose.yml' '*/docker-compose.yml' \
+               './.dockerignore' '*/.dockerignore' \
+               './.env' '*/.env' \
+               './guiartcc.sql' '*/guiartcc.sql' \
+               '*.log' '*/build.log' '*/up.log' \
+               './guiar-deploy.zip'
+          unzip -t guiar-deploy.zip >/dev/null
+          ls -la guiar-deploy.zip
+
+      - name: Configurar chave SSH e known_hosts
         shell: bash
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERV00_HOST: ${{ vars.SERV00_HOST }}
+          SERV00_PORT: ${{ vars.SERV00_PORT || '22' }}
         run: |
-          set -euo pipefail
-          if [[ -z "${SSH_PRIVATE_KEY//[[:space:]]/}" ]]; then
-            echo "O secret SSH_PRIVATE_KEY não está configurado neste repositório." >&2
-            exit 1
-          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p "$SERV00_PORT" -H "$SERV00_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.2
+      - name: Enviar pacote ao Serv00 (SCP)
+        shell: bash
+        env:
+          SERV00_HOST: ${{ vars.SERV00_HOST }}
+          SERV00_USER: ${{ vars.SERV00_USER }}
+          SERV00_PORT: ${{ vars.SERV00_PORT || '22' }}
+        run: scp -P "$SERV00_PORT" guiar-deploy.zip "$SERV00_USER@$SERV00_HOST:guiar-deploy.zip"
+
+      - name: Publicar arquivos + migrations (migrate-then-deploy)
+        uses: appleboy/ssh-action@v1
         with:
-          host: repo11.serv00.com
-          username: GuiarTCCrotas
+          host: ${{ vars.SERV00_HOST }}
+          username: ${{ vars.SERV00_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          timeout: 30s
-          command_timeout: 5m
+          port: ${{ vars.SERV00_PORT || '22' }}
+          script_stop: true
+          envs: REMOTE_PATH,DB_NAME,DB_HOST,DB_USER,DB_PASS
           script: |
-            cd ~/domains
-            ls
+            bash <<'EOF'
+            set -euo pipefail
+            STAGE="$(mktemp -d)"
+            unzip -o guiar-deploy.zip -d "$STAGE" >/dev/null
+            # 1) Migrations ANTES do codigo (schema aditivo/backward-compatible).
+            #    Se falhar, o app segue no ar com o codigo antigo.
+            for m in "$STAGE/database/migrations/"*.sql; do
+              [ -e "$m" ] || continue
+              mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < "$m"
+            done
+            # 2) Publica o codigo preservando config.php e public/uploads do servidor
+            rm -f "$STAGE/config.php"
+            rm -rf "$STAGE/public/uploads"
+            rm -rf "$STAGE/.env" "$STAGE/guiartcc.sql" "$STAGE/Dockerfile" "$STAGE/docker-compose.yml" "$STAGE/.dockerignore"
+            mkdir -p "$REMOTE_PATH"
+            cp -Rp "$STAGE/." "$REMOTE_PATH/"
+            # 3) Limpeza
+            rm -rf "$STAGE" guiar-deploy.zip
+            echo "Deploy concluido no servidor."
+            EOF
+        env:
+          REMOTE_PATH: ${{ vars.SERV00_REMOTE_PATH }}
+          DB_NAME: ${{ vars.SERV00_DB_NAME || 'guiartcc' }}
+          DB_HOST: ${{ vars.SERV00_DB_HOST || 'localhost' }}
+          DB_USER: ${{ secrets.SERV00_DB_USER }}
+          DB_PASS: ${{ secrets.SERV00_DB_PASSWORD }}
+
+      - name: Health check
+        shell: bash
+        env:
+          PUBLIC_URL: ${{ vars.SERV00_PUBLIC_URL }}
+        run: |
+          if [ -z "$PUBLIC_URL" ]; then
+            echo "SERV00_PUBLIC_URL nao definido - pulando health check."
+            exit 0
+          fi
+          set -euo pipefail
+          curl --fail --silent --max-time 30 "$PUBLIC_URL" >/dev/null
+          echo "Health check OK: $PUBLIC_URL respondeu 2xx."

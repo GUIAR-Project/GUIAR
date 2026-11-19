@@ -1,0 +1,63 @@
+# =====================================================================
+#  GUIAR - ambiente de desenvolvimento com Docker
+#  Servicos:
+#    app -> PHP 8.2 + Apache (a aplicacao)
+#    db   -> MariaDB 10.11 (banco "guiartcc", populado pelo dump guiartcc.sql)
+#
+#  Uso:
+#    docker compose up -d --build
+#    Aplicacao:  http://localhost:8080
+#    MariaDB:    localhost:3307  (usuario guiar / guiarpass, ou root / rootpass)
+# =====================================================================
+services:
+  app:
+    build: .
+    container_name: guiar-app
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      DB_HOST: ${DB_HOST:-db}
+      DB_NAME: ${DB_NAME:-guiartcc}
+      DB_USER: ${DB_USER:-guiar}
+      DB_PASSWORD: ${DB_PASSWORD:-guiarpass}
+    volumes:
+      # Persiste os uploads entre reinicios do container
+      - ./public/uploads:/var/www/html/public/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - guiar
+
+  db:
+    image: mariadb:10.11
+    container_name: guiar-db
+    restart: unless-stopped
+    # Mesmo charset/collation do dump (utf8mb4 / utf8mb4_general_ci)
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      MYSQL_DATABASE: ${DB_NAME:-guiartcc}
+      MYSQL_USER: ${DB_USER:-guiar}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-guiarpass}
+    volumes:
+      - guiar-db-data:/var/lib/mysql
+      # Importa o dump automaticamente apenas na 1a inicializacao (data dir vazio)
+      - ./guiartcc.sql:/docker-entrypoint-initdb.d/01-guiartcc.sql:ro
+    ports:
+      - "${DB_PORT:-3307}:3306"
+    healthcheck:
+      # start_period tolera o tempo da 1a inicializacao (criar tabelas + importar dump)
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+    networks:
+      - guiar
+
+volumes:
+  guiar-db-data:
+
+networks:
+  guiar:

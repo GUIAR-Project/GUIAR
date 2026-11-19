@@ -7,13 +7,15 @@ $docRoot = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? '');
 $baseDir = str_replace($docRoot, '', $dir);
 define('BASE_URL', rtrim($protocol . $sys_host . $baseDir, '/'));
 
-$host = 'localhost';
-$dbname = 'guiartcc';
-$username = 'root';
-$password = '';
+// Credenciais lidas de variaveis de ambiente (Docker) com fallback
+// para os valores locais usados no XAMPP. Localmente nada muda.
+$host     = (getenv('DB_HOST')     !== false) ? getenv('DB_HOST')     : 'localhost';
+$dbname   = (getenv('DB_NAME')     !== false) ? getenv('DB_NAME')     : 'guiartcc';
+$username = (getenv('DB_USER')     !== false) ? getenv('DB_USER')     : 'root';
+$password = (getenv('DB_PASSWORD') !== false) ? getenv('DB_PASSWORD') : '';
 
 try{
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 }
