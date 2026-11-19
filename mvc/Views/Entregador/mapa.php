@@ -29,171 +29,9 @@
     <div id="overlay" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden transition-opacity"></div>
 
     <?php
-    if (session_status() === PHP_SESSION_NONE) {
-        @session_start();
-    }
-
-    // 1. RESOLUÇÃO DO NOME DO ENTREGADOR
-    $nomeEntregadorResolvido = '';
-    $candidatosNome = [
-        $nomeEntregador ?? null,
-        $nome_entregador ?? null,
-        $entregador['nome_completo'] ?? null,
-        $entregador['nome'] ?? null,
-        $entregador['nome_entregador'] ?? null,
-        $dadosEntregador['nome_completo'] ?? null,
-        $dadosEntregador['nome'] ?? null,
-        $dados['nome_completo'] ?? null,
-        $dados['nome'] ?? null,
-        $usuario['nome_completo'] ?? null,
-        $usuario['nome'] ?? null,
-        $_SESSION['entregador']['nome_completo'] ?? null,
-        $_SESSION['entregador']['nome'] ?? null,
-        $_SESSION['usuario']['nome_completo'] ?? null,
-        $_SESSION['usuario']['nome'] ?? null,
-        $_SESSION['nome_entregador'] ?? null,
-        $_SESSION['entregador_nome'] ?? null,
-        $_SESSION['nome_usuario'] ?? null,
-        $_SESSION['nome_completo'] ?? null,
-        $_SESSION['nome'] ?? null,
-    ];
-    foreach ($candidatosNome as $cand) {
-        if (!empty($cand) && is_string($cand) && trim($cand) !== '') {
-            $nomeEntregadorResolvido = trim($cand);
-            break;
-        }
-    }
-
-    // 2. RESOLUÇÃO DA FOTO DO ENTREGADOR
-    $fotoEntregadorResolvida = '';
-    $candidatosFoto = [
-        $entregadorFotoUrl ?? null,
-        $fotoEntregador ?? null,
-        $entregador['foto_3x4'] ?? null,
-        $entregador['foto_url'] ?? null,
-        $entregador['foto'] ?? null,
-        $entregador['foto_perfil'] ?? null,
-        $entregador['imagem'] ?? null,
-        $dadosEntregador['foto_3x4'] ?? null,
-        $dadosEntregador['foto_url'] ?? null,
-        $dadosEntregador['foto'] ?? null,
-        $_SESSION['entregador']['foto_3x4'] ?? null,
-        $_SESSION['entregador']['foto_url'] ?? null,
-        $_SESSION['entregador']['foto'] ?? null,
-        $_SESSION['foto_entregador'] ?? null,
-        $_SESSION['foto_usuario'] ?? null,
-        $_SESSION['foto'] ?? null,
-    ];
-    foreach ($candidatosFoto as $candFoto) {
-        if (!empty($candFoto) && is_string($candFoto) && trim($candFoto) !== '') {
-            $fotoEntregadorResolvida = trim($candFoto);
-            break;
-        }
-    }
-
-    // 3. RESOLUÇÃO DA LOGO E NOME DA EMPRESA
-    $logoEmpresaResolvida = '';
-    $candidatosLogo = [
-        $logoEmpresaSidebar ?? null,
-        $logoEmpresa ?? null,
-        $logo_empresa ?? null,
-        $empresa['logo_url'] ?? null,
-        $empresa['logo'] ?? null,
-        $empresa['logo_empresa'] ?? null,
-        $empresa['imagem'] ?? null,
-        $empresa['foto'] ?? null,
-        $dadosEmpresa['logo_url'] ?? null,
-        $dadosEmpresa['logo'] ?? null,
-        $entregador['logo_empresa'] ?? null,
-        $entregador['empresa_logo'] ?? null,
-        $_SESSION['logoEmpresaSidebar'] ?? null,
-        $_SESSION['logo_empresa'] ?? null,
-        $_SESSION['empresa_logo'] ?? null,
-        $_SESSION['empresa']['logo_url'] ?? null,
-        $_SESSION['empresa']['logo'] ?? null,
-    ];
-    foreach ($candidatosLogo as $candLogo) {
-        if (!empty($candLogo) && is_string($candLogo) && trim($candLogo) !== '') {
-            $logoEmpresaResolvida = trim($candLogo);
-            break;
-        }
-    }
-
-    $nomeEmpresaResolvido = '';
-    $candidatosEmpresaNome = [
-        $nomeEmpresaSidebar ?? null,
-        $nomeEmpresa ?? null,
-        $empresa['nome_empresa'] ?? null,
-        $empresa['nome_fantasia'] ?? null,
-        $empresa['nome'] ?? null,
-        $dadosEmpresa['nome_empresa'] ?? null,
-        $dadosEmpresa['nome'] ?? null,
-        $entregador['nome_empresa'] ?? null,
-        $_SESSION['nome_empresa'] ?? null,
-        $_SESSION['empresa_nome'] ?? null,
-        $_SESSION['empresa']['nome_empresa'] ?? null,
-        $_SESSION['empresa']['nome'] ?? null,
-    ];
-    foreach ($candidatosEmpresaNome as $candEmpNome) {
-        if (!empty($candEmpNome) && is_string($candEmpNome) && trim($candEmpNome) !== '') {
-            $nomeEmpresaResolvido = trim($candEmpNome);
-            break;
-        }
-    }
-
-    // 4. FALLBACK VIA BANCO DE DADOS SE ALGUMA INFORMAÇÃO NÃO ESTIVER NA SESSÃO/VIEW
-    $idEntregadorSessao = $_SESSION['id_entregador']
-        ?? $_SESSION['entregador_id']
-        ?? ($_SESSION['entregador']['id_entregador'] ?? ($_SESSION['id_usuario'] ?? ($_SESSION['usuario_id'] ?? null)));
-
-    if (($nomeEntregadorResolvido === '' || $logoEmpresaResolvida === '') && !empty($idEntregadorSessao)) {
-        try {
-            $dbConn = null;
-            if (isset($pdo) && $pdo instanceof PDO) {
-                $dbConn = $pdo;
-            } elseif (isset($conn) && $conn instanceof PDO) {
-                $dbConn = $conn;
-            } elseif (class_exists('Conexao') && method_exists('Conexao', 'getConexao')) {
-                $dbConn = Conexao::getConexao();
-            } elseif (class_exists('Database') && method_exists('Database', 'getConnection')) {
-                $dbConn = Database::getConnection();
-            }
-
-            if ($dbConn instanceof PDO) {
-                $stmt = $dbConn->prepare("SELECT * FROM entregadores WHERE id_entregador = :id LIMIT 1");
-                $stmt->execute([':id' => $idEntregadorSessao]);
-                $rowEnt = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                if ($rowEnt) {
-                    if ($nomeEntregadorResolvido === '') {
-                        $nomeEntregadorResolvido = $rowEnt['nome_completo'] ?? ($rowEnt['nome'] ?? '');
-                    }
-                    if ($fotoEntregadorResolvida === '') {
-                        $fotoEntregadorResolvida = $rowEnt['foto_3x4'] ?? ($rowEnt['foto'] ?? ($rowEnt['foto_perfil'] ?? ($rowEnt['imagem'] ?? '')));
-                    }
-                    $idEmp = $rowEnt['id_empresa'] ?? ($rowEnt['empresa_id'] ?? ($_SESSION['id_empresa'] ?? null));
-                    if (!empty($idEmp)) {
-                        $stmtEmp = $dbConn->prepare("SELECT * FROM empresas WHERE id_empresa = :id_emp LIMIT 1");
-                        $stmtEmp->execute([':id_emp' => $idEmp]);
-                        $rowEmp = $stmtEmp->fetch(PDO::FETCH_ASSOC);
-                        if ($rowEmp) {
-                            if ($logoEmpresaResolvida === '') {
-                                $logoEmpresaResolvida = $rowEmp['logo'] ?? ($rowEmp['logo_empresa'] ?? ($rowEmp['imagem'] ?? ($rowEmp['foto'] ?? '')));
-                            }
-                            if ($nomeEmpresaResolvido === '') {
-                                $nomeEmpresaResolvido = $rowEmp['nome_empresa'] ?? ($rowEmp['nome_fantasia'] ?? ($rowEmp['nome'] ?? ''));
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-            // Ignora erros opcionais de consulta
-        }
-    }
-
     $normalizarUrlAsset = function ($path) {
-        if (empty($path)) return '';
+        if (empty($path) || !is_string($path)) return '';
+        $path = trim($path);
         if (preg_match('#^(https?:)?//#i', $path) || strpos($path, 'data:') === 0) {
             return $path;
         }
@@ -203,19 +41,26 @@
         return rtrim(BASE_URL, '/') . '/' . ltrim($path, '/');
     };
 
-    $precisaSincronizarSidebar = ($nomeEntregadorResolvido === '' || $logoEmpresaResolvida === '');
-    $nomeEntregador = $nomeEntregadorResolvido !== '' ? $nomeEntregadorResolvido : 'Entregador';
+    $nomeEntregadorRecebido = trim((string)($nomeEntregador ?? ($entregador['nome_completo'] ?? ($entregador['nome'] ?? ''))));
+    $precisaSincronizarEntregador = ($nomeEntregadorRecebido === '');
+    $nomeEntregador = $nomeEntregadorRecebido !== '' ? $nomeEntregadorRecebido : 'Entregador';
 
-    if ($fotoEntregadorResolvida !== '' && strpos($fotoEntregadorResolvida, '/') === false && strpos($fotoEntregadorResolvida, 'data:') !== 0) {
-        $entregadorFotoUrl = rtrim(BASE_URL, '/') . '/public/uploads/entregadores/fotos/' . ltrim($fotoEntregadorResolvida, '/');
+    $fotoRaw = $entregadorFotoUrl ?? ($entregador['foto_3x4'] ?? '');
+    if (!empty($fotoRaw) && strpos($fotoRaw, '/') === false && strpos($fotoRaw, 'data:') !== 0) {
+        $entregadorFotoUrl = rtrim(BASE_URL, '/') . '/public/uploads/entregadores/fotos/' . ltrim($fotoRaw, '/');
     } else {
-        $entregadorFotoUrl = $normalizarUrlAsset($fotoEntregadorResolvida);
+        $entregadorFotoUrl = $normalizarUrlAsset($fotoRaw);
     }
 
-    $logoEmpresaSidebar = $logoEmpresaResolvida !== ''
-        ? $normalizarUrlAsset($logoEmpresaResolvida)
+    $logoRaw = $logoEmpresaSidebar ?? ($empresa['logo_url'] ?? ($empresa['logo'] ?? ''));
+    $logoEmpresaSidebar = !empty($logoRaw)
+        ? $normalizarUrlAsset($logoRaw)
         : (BASE_URL . '/img/logoIcon.png');
-    $nomeEmpresaSidebar = $nomeEmpresaResolvido !== '' ? $nomeEmpresaResolvido : 'GUIAR Entregas';
+
+    $nomeEmpresaSidebar = trim((string)($nomeEmpresaSidebar ?? ($empresa['nome_empresa'] ?? ($empresa['nome'] ?? 'GUIAR Entregas'))));
+    if ($nomeEmpresaSidebar === '') {
+        $nomeEmpresaSidebar = 'GUIAR Entregas';
+    }
     ?>
 
     <!-- SIDEBAR CLARA -->
@@ -1163,52 +1008,64 @@
             map.invalidateSize();
         });
 
-        <?php if ($precisaSincronizarSidebar): ?>
-        // Sincroniza nome do entregador e logo da empresa caso o controller desta rota não os tenha enviado
-        (function sincronizarDadosSidebarEntregador() {
-            fetch('<?= BASE_URL ?>/routes.php?action=meusPedidosEntregador')
+        <?php if ($precisaSincronizarEntregador): ?>
+        // Obtém nome e foto do entregador via rota MVC perfilEntregador quando não enviados diretamente por mapa()
+        (function carregarDadosEntregadorSidebar() {
+            fetch('<?= BASE_URL ?>/routes.php?action=perfilEntregador', {
+                credentials: 'same-origin'
+            })
                 .then(res => res.text())
                 .then(html => {
                     const doc = new DOMParser().parseFromString(html, 'text/html');
-                    const remoteSidebar = doc.getElementById('sidebar');
-                    if (!remoteSidebar) return;
 
-                    // 1. Logo da empresa
-                    const remoteLogo = remoteSidebar.querySelector('#sidebarEmpresaLogo, img[alt*="empresa" i], img[alt*="logo" i]');
-                    const localLogo = document.getElementById('sidebarEmpresaLogo');
-                    if (remoteLogo && remoteLogo.src && localLogo && !remoteLogo.src.includes('LogoGuiar') && !remoteLogo.src.includes('LogoPreto') && !remoteLogo.src.includes('logoIcon')) {
-                        localLogo.src = remoteLogo.src;
-                    }
+                    // 1. Nome completo do entregador
+                    const elNome = doc.querySelector('#driverSidebarName, main h2, header h1');
+                    const nomeReal = elNome ? elNome.textContent.trim() : '';
 
-                    // 2. Nome da empresa
-                    const remoteTitle = remoteSidebar.querySelector('#sidebarEmpresaNome, p.font-extrabold, .empresa-nome');
-                    const localTitle = document.getElementById('sidebarEmpresaNome');
-                    if (remoteTitle && remoteTitle.textContent.trim() && localTitle) {
-                        localTitle.textContent = remoteTitle.textContent.trim();
-                    }
+                    if (nomeReal && nomeReal.toLowerCase() !== 'entregador') {
+                        const localName = document.getElementById('driverSidebarName');
+                        if (localName) localName.textContent = nomeReal;
 
-                    // 3. Nome e foto/iniciais do entregador
-                    const remoteName = remoteSidebar.querySelector('#driverSidebarName, .admin-user-name, .entregador-nome, .user-name');
-                    const localName = document.getElementById('driverSidebarName');
-                    const localAvatar = document.getElementById('driverSidebarAvatar');
-                    if (remoteName && remoteName.textContent.trim() && localName) {
-                        const nomeReal = remoteName.textContent.trim();
-                        localName.textContent = nomeReal;
+                        const localAvatar = document.getElementById('driverSidebarAvatar');
                         if (localAvatar) {
-                            const iniciais = nomeReal.split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
-                            localAvatar.textContent = iniciais || nomeReal.slice(0, 2).toUpperCase();
+                            const partes = nomeReal.split(/\s+/).filter(Boolean);
+                            const iniciais = partes.length > 1
+                                ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+                                : nomeReal.slice(0, 2).toUpperCase();
+                            localAvatar.textContent = iniciais;
                         }
                     }
 
-                    const remotePhoto = remoteSidebar.querySelector('#driverSidebarPhoto, .admin-user-card img');
-                    const localCard = document.getElementById('driverSidebarCard');
-                    if (remotePhoto && remotePhoto.src && localCard && !document.getElementById('driverSidebarPhoto')) {
-                        const img = document.createElement('img');
-                        img.id = 'driverSidebarPhoto';
-                        img.src = remotePhoto.src;
-                        img.alt = 'Foto do entregador';
-                        img.className = 'w-9 h-9 rounded-full object-cover shadow-sm ring-2 ring-white flex-shrink-0';
-                        if (localAvatar) localAvatar.replaceWith(img);
+                    // 2. Foto 3x4 do entregador
+                    const elFoto = doc.querySelector('#driverSidebarPhoto, main img[src*="/uploads/entregadores/fotos/"]');
+                    if (elFoto && elFoto.getAttribute('src')) {
+                        const fotoSrc = elFoto.src;
+                        const localPhoto = document.getElementById('driverSidebarPhoto');
+                        const localAvatar = document.getElementById('driverSidebarAvatar');
+
+                        if (localPhoto) {
+                            localPhoto.src = fotoSrc;
+                        } else if (localAvatar) {
+                            const img = document.createElement('img');
+                            img.id = 'driverSidebarPhoto';
+                            img.src = fotoSrc;
+                            img.alt = nomeReal ? ('Foto de ' + nomeReal) : 'Foto do entregador';
+                            img.className = 'w-9 h-9 rounded-full object-cover shadow-sm ring-2 ring-white flex-shrink-0';
+                            localAvatar.replaceWith(img);
+                        }
+                    }
+
+                    // 3. Logo e nome da empresa
+                    const elLogoEmp = doc.querySelector('#sidebarEmpresaLogo');
+                    const localLogoEmp = document.getElementById('sidebarEmpresaLogo');
+                    if (elLogoEmp && elLogoEmp.src && localLogoEmp && !elLogoEmp.src.includes('logoIcon.png') && !elLogoEmp.src.includes('LogoPreto.png')) {
+                        localLogoEmp.src = elLogoEmp.src;
+                    }
+
+                    const elNomeEmp = doc.querySelector('#sidebarEmpresaNome');
+                    const localNomeEmp = document.getElementById('sidebarEmpresaNome');
+                    if (elNomeEmp && elNomeEmp.textContent.trim() && localNomeEmp) {
+                        localNomeEmp.textContent = elNomeEmp.textContent.trim();
                     }
                 })
                 .catch(() => {});
