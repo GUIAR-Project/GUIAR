@@ -42,7 +42,6 @@
     };
 
     $nomeEntregadorRecebido = trim((string)($nomeEntregador ?? ($entregador['nome_completo'] ?? ($entregador['nome'] ?? ''))));
-    $precisaSincronizarEntregador = ($nomeEntregadorRecebido === '');
     $nomeEntregador = $nomeEntregadorRecebido !== '' ? $nomeEntregadorRecebido : 'Entregador';
 
     $fotoRaw = $entregadorFotoUrl ?? ($entregador['foto_3x4'] ?? '');
@@ -52,15 +51,18 @@
         $entregadorFotoUrl = $normalizarUrlAsset($fotoRaw);
     }
 
-    $logoRaw = $logoEmpresaSidebar ?? ($empresa['logo_url'] ?? ($empresa['logo'] ?? ''));
+    $logoFallback = BASE_URL . '/img/LogoPreto.png';
+    $logoRaw = $logoEmpresaSidebar ?? ($logoEmpresa ?? ($empresa['logo_url'] ?? ($empresa['logo'] ?? '')));
     $logoEmpresaSidebar = !empty($logoRaw)
         ? $normalizarUrlAsset($logoRaw)
-        : (BASE_URL . '/img/logoIcon.png');
+        : $logoFallback;
 
-    $nomeEmpresaSidebar = trim((string)($nomeEmpresaSidebar ?? ($empresa['nome_empresa'] ?? ($empresa['nome'] ?? 'GUIAR Entregas'))));
+    $nomeEmpresaSidebar = trim((string)($nomeEmpresaSidebar ?? ($nomeEmpresa ?? ($empresa['nome_empresa'] ?? ($empresa['nome'] ?? 'GUIAR Entregas')))));
     if ($nomeEmpresaSidebar === '') {
         $nomeEmpresaSidebar = 'GUIAR Entregas';
     }
+
+    $precisaSincronizarSidebar = ($nomeEntregadorRecebido === '' || empty($logoRaw));
     ?>
 
     <!-- SIDEBAR CLARA -->
@@ -78,7 +80,9 @@
             <!-- LOGO DA EMPRESA -->
             <div class="px-6 pt-7 pb-4 mb-2 flex justify-start items-center gap-3">
                 <div style="width: 58px; height: 58px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #fff; border: 2px solid var(--emp-primary-light-border, rgba(79,70,229,0.18)); box-shadow: 0 4px 14px var(--emp-primary-ring, rgba(79,70,229,0.12)); display: flex; align-items: center; justify-content: center; padding: 5px;">
-                    <img id="sidebarEmpresaLogo" src="<?= htmlspecialchars($logoEmpresaSidebar, ENT_QUOTES, 'UTF-8') ?>"
+                    <img id="sidebarEmpresaLogo"
+                        src="<?= htmlspecialchars($logoEmpresaSidebar, ENT_QUOTES, 'UTF-8') ?>"
+                        onerror="this.onerror=null; this.src='<?= htmlspecialchars($logoFallback, ENT_QUOTES, 'UTF-8') ?>';"
                         alt="Logo da empresa"
                         style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block;">
                 </div>
@@ -310,7 +314,7 @@
 
                     <!-- TOPO DA LISTA -->
                     <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/50">
-                        <div>
+                        <div class="min-w-0">
                             <h2 class="heading-font text-base sm:text-lg font-bold text-slate-900">
                                 Entregas na Rota
                             </h2>
@@ -320,10 +324,10 @@
                         </div>
 
                         <!-- BADGE TOTAL -->
-                        <div class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border"
+                        <div class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border flex-shrink-0 whitespace-nowrap"
                             style="background-color: var(--emp-primary-light, #EEF2FF); color: var(--emp-primary, #4F46E5); border-color: var(--emp-primary-light-border, #C7D2FE);">
-                            <span class="w-2 h-2 rounded-full animate-pulse" style="background-color: var(--emp-primary, #4F46E5);"></span>
-                            <span id="totalPedidosBadge">0 pendentes</span>
+                            <span class="w-2 h-2 rounded-full animate-pulse flex-shrink-0" style="background-color: var(--emp-primary, #4F46E5);"></span>
+                            <span id="totalPedidosBadge" class="whitespace-nowrap">0 pendentes</span>
                         </div>
                     </div>
 
@@ -1008,78 +1012,122 @@
             map.invalidateSize();
         });
 
-        <?php if ($precisaSincronizarEntregador): ?>
-        // Obtém nome e foto do entregador via rota MVC perfilEntregador quando não enviados diretamente por mapa()
-        (function carregarDadosEntregadorSidebar() {
-            fetch('<?= BASE_URL ?>/routes.php?action=perfilEntregador', {
-                credentials: 'same-origin'
-            })
-                .then(res => res.text())
-                .then(html => {
-                    const doc = new DOMParser().parseFromString(html, 'text/html');
+        <?php if ($precisaSincronizarSidebar): ?>
+        // Sincroniza logo da empresa, nome e foto do entregador via rotas MVC existentes caso mapa() não os tenha enviado
+        (function sincronizarSidebarEntregador() {
+            const isLogoGenerica = (src) => {
+                if (!src) return true;
+                const s = src.toLowerCase();
+                return s.includes('logopreto.png') || s.includes('logoguiar') || s.includes('logoicon.png') || s.includes('/uploads/entregadores/');
+            };
 
-                    // 1. Nome completo do entregador
-                    const elNome = doc.querySelector('#driverSidebarName, main h2, header h1');
-                    const nomeReal = elNome ? elNome.textContent.trim() : '';
+            const aplicarLogoEmpresa = (novaSrc) => {
+                if (!novaSrc || isLogoGenerica(novaSrc)) return false;
+                const localLogo = document.getElementById('sidebarEmpresaLogo');
+                if (localLogo && localLogo.src !== novaSrc) {
+                    localLogo.src = novaSrc;
+                }
+                window.GUIAR_EMPRESA_LOGO = novaSrc;
 
-                    if (nomeReal && nomeReal.toLowerCase() !== 'entregador') {
-                        const localName = document.getElementById('driverSidebarName');
-                        if (localName) localName.textContent = nomeReal;
+                // Reaplica a paleta dinâmica da empresa com a logo real
+                const oldScript = document.querySelector('script[src*="empresa-palette.js"]');
+                if (oldScript) {
+                    const freshScript = document.createElement('script');
+                    freshScript.src = oldScript.src.split('?')[0] + '?v=' + Date.now();
+                    document.body.appendChild(freshScript);
+                }
+                return true;
+            };
 
-                        const localAvatar = document.getElementById('driverSidebarAvatar');
-                        if (localAvatar) {
-                            const partes = nomeReal.split(/\s+/).filter(Boolean);
-                            const iniciais = partes.length > 1
-                                ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
-                                : nomeReal.slice(0, 2).toUpperCase();
-                            localAvatar.textContent = iniciais;
-                        }
+            const extrairDaPagina = (doc) => {
+                // 1. Logo da empresa na sidebar (padrão mapa (1).php: alt="Logo da empresa" ou primeira img do #sidebar)
+                const remoteSidebar = doc.getElementById('sidebar') || doc;
+                const candidatasLogo = [
+                    remoteSidebar.querySelector('#sidebarEmpresaLogo'),
+                    remoteSidebar.querySelector('img[alt*="Logo da empresa" i]'),
+                    remoteSidebar.querySelector('img[alt*="empresa" i]'),
+                    remoteSidebar.querySelector('img[src*="/uploads/empresas/"]'),
+                    ...Array.from(remoteSidebar.querySelectorAll('img'))
+                ].filter(Boolean);
+
+                for (const img of candidatasLogo) {
+                    const rawSrc = img.getAttribute('src') || '';
+                    if (rawSrc && !isLogoGenerica(rawSrc)) {
+                        aplicarLogoEmpresa(img.src);
+                        break;
                     }
+                }
 
-                    // 2. Foto 3x4 do entregador
-                    const elFoto = doc.querySelector('#driverSidebarPhoto, main img[src*="/uploads/entregadores/fotos/"]');
-                    if (elFoto && elFoto.getAttribute('src')) {
-                        const fotoSrc = elFoto.src;
-                        const localPhoto = document.getElementById('driverSidebarPhoto');
-                        const localAvatar = document.getElementById('driverSidebarAvatar');
+                // 2. Nome da empresa
+                const elNomeEmp = remoteSidebar.querySelector('#sidebarEmpresaNome');
+                const localNomeEmp = document.getElementById('sidebarEmpresaNome');
+                if (elNomeEmp && elNomeEmp.textContent.trim() && localNomeEmp) {
+                    localNomeEmp.textContent = elNomeEmp.textContent.trim();
+                }
 
-                        if (localPhoto) {
-                            localPhoto.src = fotoSrc;
-                        } else if (localAvatar) {
-                            const img = document.createElement('img');
-                            img.id = 'driverSidebarPhoto';
-                            img.src = fotoSrc;
-                            img.alt = nomeReal ? ('Foto de ' + nomeReal) : 'Foto do entregador';
-                            img.className = 'w-9 h-9 rounded-full object-cover shadow-sm ring-2 ring-white flex-shrink-0';
-                            localAvatar.replaceWith(img);
-                        }
+                // 3. Nome completo do entregador
+                const elNome = doc.querySelector('#driverSidebarName, .admin-user-name, main h2, header h1');
+                const nomeReal = elNome ? elNome.textContent.trim() : '';
+                if (nomeReal && nomeReal.toLowerCase() !== 'entregador') {
+                    const localName = document.getElementById('driverSidebarName');
+                    if (localName) localName.textContent = nomeReal;
+
+                    const localAvatar = document.getElementById('driverSidebarAvatar');
+                    if (localAvatar) {
+                        const partes = nomeReal.split(/\s+/).filter(Boolean);
+                        const iniciais = partes.length > 1
+                            ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+                            : nomeReal.slice(0, 2).toUpperCase();
+                        localAvatar.textContent = iniciais;
                     }
+                }
 
-                    // 3. Logo e nome da empresa
-                    const elLogoEmp = doc.querySelector('#sidebarEmpresaLogo');
-                    const localLogoEmp = document.getElementById('sidebarEmpresaLogo');
-                    if (elLogoEmp && elLogoEmp.src && localLogoEmp && !elLogoEmp.src.includes('logoIcon.png') && !elLogoEmp.src.includes('LogoPreto.png')) {
-                        localLogoEmp.src = elLogoEmp.src;
-                    }
+                // 4. Foto 3x4 do entregador
+                const elFoto = doc.querySelector('#driverSidebarPhoto, img[src*="/uploads/entregadores/fotos/"]');
+                if (elFoto && elFoto.getAttribute('src')) {
+                    const fotoSrc = elFoto.src;
+                    const localPhoto = document.getElementById('driverSidebarPhoto');
+                    const localAvatar = document.getElementById('driverSidebarAvatar');
 
-                    const elNomeEmp = doc.querySelector('#sidebarEmpresaNome');
-                    const localNomeEmp = document.getElementById('sidebarEmpresaNome');
-                    if (elNomeEmp && elNomeEmp.textContent.trim() && localNomeEmp) {
-                        localNomeEmp.textContent = elNomeEmp.textContent.trim();
+                    if (localPhoto) {
+                        localPhoto.src = fotoSrc;
+                    } else if (localAvatar) {
+                        const img = document.createElement('img');
+                        img.id = 'driverSidebarPhoto';
+                        img.src = fotoSrc;
+                        img.alt = nomeReal ? ('Foto de ' + nomeReal) : 'Foto do entregador';
+                        img.className = 'w-9 h-9 rounded-full object-cover shadow-sm ring-2 ring-white flex-shrink-0';
+                        localAvatar.replaceWith(img);
                     }
-                })
-                .catch(() => {});
+                }
+            };
+
+            const buscarHtml = (action) =>
+                fetch('<?= BASE_URL ?>/routes.php?action=' + action, { credentials: 'same-origin' })
+                    .then(res => res.text())
+                    .then(html => {
+                        const doc = new DOMParser().parseFromString(html, 'text/html');
+                        extrairDaPagina(doc);
+                    })
+                    .catch(() => {});
+
+            // Consulta meusPedidosEntregador (onde a logo da empresa já costuma ser carregada) e perfilEntregador
+            buscarHtml('meusPedidosEntregador').then(() => {
+                const localLogo = document.getElementById('sidebarEmpresaLogo');
+                const localName = document.getElementById('driverSidebarName');
+                if ((localLogo && isLogoGenerica(localLogo.src)) || (localName && localName.textContent.trim() === 'Entregador')) {
+                    return buscarHtml('perfilEntregador');
+                }
+            });
         })();
         <?php endif; ?>
     </script>
 
-    <?php if (!empty($logoEmpresaSidebar) && strpos($logoEmpresaSidebar, 'LogoPreto.png') === false && strpos($logoEmpresaSidebar, 'logoIcon.png') === false): ?>
     <!-- INTEGRAÇÃO COM A PALETA DINÂMICA DA EMPRESA -->
     <script>
         window.GUIAR_EMPRESA_LOGO = <?= json_encode($logoEmpresaSidebar) ?>;
     </script>
     <script src="<?= BASE_URL ?>/public/js/empresa-palette.js"></script>
-    <?php endif; ?>
 </body>
 
 </html>
