@@ -25,9 +25,6 @@
 
 <body class="sidebar-page bg-[#f1f4fa] text-slate-800 antialiased h-screen overflow-hidden flex flex-col md:flex-row">
 
-    <!-- OVERLAY MOBILE -->
-    <div id="overlay" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden transition-opacity"></div>
-
     <?php
     $normalizarUrlAsset = function ($path) {
         if (empty($path) || !is_string($path)) return '';
@@ -63,19 +60,14 @@
     }
 
     $precisaSincronizarSidebar = ($nomeEntregadorRecebido === '' || empty($logoRaw));
+    $pedidosMapaIniciaisJson = json_encode($pedidosMapaIniciais ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '[]';
     ?>
 
-    <!-- SIDEBAR CLARA -->
+    <!-- SIDEBAR CLARA (DESKTOP) -->
     <aside id="sidebar"
-        class="w-72 bg-white flex flex-col fixed top-0 left-0 text-slate-700 z-50 transition-all rounded-none overflow-hidden h-screen border-r border-slate-200/80 shadow-sm">
+        class="hidden md:flex w-72 bg-white flex-col fixed top-0 left-0 text-slate-700 z-50 transition-all rounded-none overflow-hidden h-screen border-r border-slate-200/80 shadow-sm">
 
         <div class="flex flex-col h-full">
-
-            <!-- BOTÃO FECHAR MOBILE -->
-            <button id="closeSidebar"
-                class="absolute top-5 right-5 md:hidden text-slate-500 hover:text-slate-800 text-xl font-bold p-1 rounded-lg transition-colors z-50">
-                ✕
-            </button>
 
             <!-- LOGO DA EMPRESA -->
             <div class="px-6 pt-7 pb-4 mb-2 flex justify-start items-center gap-3">
@@ -172,37 +164,26 @@
     <main class="flex-1 flex flex-col h-screen min-w-0 md:ml-72 overflow-hidden">
 
         <!-- HEADER SUPERIOR MODERNO -->
-        <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-4 md:px-8 py-3.5 md:py-4 flex items-center justify-between gap-4 sticky top-0 z-20 flex-shrink-0">
+        <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-4 md:px-8 py-3 md:py-4 flex items-center justify-between gap-2.5 sm:gap-4 sticky top-0 z-20 flex-shrink-0">
 
-            <div class="flex items-center gap-3.5 min-w-0">
-                <!-- BOTÃO HAMBURGER MOBILE -->
-                <button id="hamburger"
-                    class="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex-shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
-
+            <div class="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
                 <!-- ÍCONE DA ABA -->
-                <div class="hidden sm:flex items-center justify-center flex-shrink-0 transition-transform hover:scale-105"
+                <div class="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto rounded-xl sm:rounded-none bg-indigo-50/80 sm:bg-transparent flex-shrink-0 transition-transform hover:scale-105"
                     style="color: var(--emp-primary, #4F46E5);">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                     </svg>
                 </div>
 
-                <div class="min-w-0">
-                    <h1 class="heading-font text-lg md:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2 truncate">
-                        <span>Mapa de Entregas</span>
+                <div class="min-w-0 flex-1">
+                    <h1 class="heading-font text-base sm:text-lg md:text-xl font-extrabold text-slate-900 tracking-tight truncate">
+                        Mapa
                     </h1>
-                    <p class="text-xs md:text-sm text-slate-500 font-medium truncate">
-                        Visualize a rota das suas entregas e sua localização em tempo real
-                    </p>
                 </div>
             </div>
 
             <!-- STATUS GPS & AÇÕES DE TOPO -->
-            <div class="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
+            <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
 
                 <!-- PULSO DE GPS AO VIVO -->
                 <div id="gpsStatusBadge" class="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-700 text-xs font-semibold">
@@ -224,7 +205,7 @@
 
                 <!-- BOTÃO ENQUADRAR MAPA -->
                 <button type="button" id="btnFitBounds" title="Enquadrar sua posição e todas as entregas no mapa"
-                    class="p-2 sm:px-3 sm:py-2 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 shadow-sm text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95">
+                    class="w-9 h-9 sm:w-auto sm:h-auto justify-center p-0 sm:px-3 sm:py-2 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 shadow-sm text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 flex-shrink-0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                     </svg>
@@ -233,8 +214,8 @@
 
                 <!-- BOTÃO PRINCIPAL: COMEÇAR PERCURSO -->
                 <button type="button" id="criarRota"
-                    class="btn-emp-primary flex items-center gap-2 font-bold text-xs sm:text-sm px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-all hover:scale-[1.02] active:scale-95">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    class="btn-emp-primary flex items-center justify-center gap-1.5 sm:gap-2 font-bold text-xs sm:text-sm px-3 sm:px-5 h-9 sm:h-auto sm:py-2.5 rounded-xl transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                     <span>Começar Percurso</span>
@@ -402,9 +383,59 @@
     <script src="https://rawgit.com/bbecquet/Leaflet.RotatedMarker/master/leaflet.rotatedMarker.js"></script>
 
     <script>
+        const PEDIDOS_MAPA_INICIAIS = <?= $pedidosMapaIniciaisJson ?>;
+
         function getEmpresaPrimaryColor() {
             var val = getComputedStyle(document.documentElement).getPropertyValue('--emp-primary').trim();
             return val || '#4F46E5';
+        }
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function parseCoord(value) {
+            if (value === null || value === undefined || value === '') return null;
+            var num = parseFloat(String(value).replace(',', '.'));
+            if (!Number.isFinite(num) || num === 0) return null;
+            return num;
+        }
+
+        function extrairListaPedidos(payload) {
+            if (!payload) return [];
+            if (Array.isArray(payload)) return payload;
+            if (Array.isArray(payload.pedidos)) return payload.pedidos;
+            if (Array.isArray(payload.entregas)) return payload.entregas;
+            if (Array.isArray(payload.data)) return payload.data;
+            if (payload.data && Array.isArray(payload.data.pedidos)) return payload.data.pedidos;
+            return [];
+        }
+
+        function normalizarPedido(raw, fallbackIndex) {
+            var id = raw.id_pedido ?? raw.id ?? raw.pedido_id ?? (fallbackIndex + 1);
+            var nomeCliente = (raw.nome_cliente ?? raw.cliente_nome ?? raw.cliente ?? raw.nome ?? 'Cliente').toString().trim() || 'Cliente';
+
+            var enderecoComp = [raw.rua || raw.logradouro, raw.numero, raw.bairro, raw.cidade, raw.estado || raw.uf, raw.cep]
+                .filter(Boolean)
+                .map(v => String(v).trim())
+                .join(', ');
+            var endereco = (raw.endereco ?? raw.endereco_entrega ?? enderecoComp ?? 'Endereço não informado').toString().trim() || 'Endereço não informado';
+
+            var latitude = parseCoord(raw.latitude ?? raw.lat ?? raw.latitude_entrega);
+            var longitude = parseCoord(raw.longitude ?? raw.lng ?? raw.lon ?? raw.longitude_entrega);
+
+            return {
+                id_pedido: id,
+                nome_cliente: nomeCliente,
+                endereco: endereco,
+                latitude: latitude,
+                longitude: longitude
+            };
         }
 
         // CRIA O MAPA
@@ -445,83 +476,192 @@
         var marcadoresPedidos = {};
         var proximoPedidoId = null;
         var termoBusca = '';
+        var mapaJaEnquadrado = false;
 
-        // CARREGA PEDIDOS DO MAPA
-        fetch('<?= BASE_URL ?>/routes.php?action=apiPedidosMapa')
-            .then(response => response.json())
-            .then(data => {
-                if (data && !data.error) {
-                    pedidosCache = Array.isArray(data) ? data : [];
+        function enquadrarTodosNoMapa(forcar) {
+            var bounds = [];
+            if (currentUserPosition) bounds.push(currentUserPosition);
+            Object.values(marcadoresPedidos).forEach(m => bounds.push(m.getLatLng()));
 
-                    pedidosCache.forEach((pedido, index) => {
-                        if (pedido.latitude && pedido.longitude) {
-                            var deliveryIcon = L.divIcon({
-                                className: 'delivery-marker-icon',
-                                html: `<div class="delivery-marker" id="pinMarker_${pedido.id_pedido}">${index + 1}</div>`,
-                                iconSize: [26, 26],
-                                iconAnchor: [13, 26]
-                            });
+            if (bounds.length > 0 && (forcar || !mapaJaEnquadrado)) {
+                map.fitBounds(L.latLngBounds(bounds), { padding: [60, 60], maxZoom: 16 });
+                mapaJaEnquadrado = true;
+            }
+        }
 
-                            var marker = L.marker([pedido.latitude, pedido.longitude], {
-                                icon: deliveryIcon
-                            }).addTo(map);
+        function criarOuAtualizarMarcadorPedido(pedido, index) {
+            if (pedido.latitude === null || pedido.longitude === null) return;
 
-                            marker.bindPopup(`
-                                <div class="p-4 min-w-[240px]" style="font-family: 'Inter', sans-serif;">
-                                    <div class="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-slate-100">
-                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold text-white"
-                                            style="background-color: var(--emp-primary, #4F46E5);">
-                                            Entrega #${index + 1}
-                                        </span>
-                                        <span class="text-[11px] font-bold text-slate-400">ID #${pedido.id_pedido}</span>
-                                    </div>
+            var key = String(pedido.id_pedido);
+            if (marcadoresPedidos[key]) {
+                marcadoresPedidos[key].setLatLng([pedido.latitude, pedido.longitude]);
+                marcadoresPedidos[key].latitude = pedido.latitude;
+                marcadoresPedidos[key].longitude = pedido.longitude;
+                return;
+            }
 
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Cliente</p>
-                                    <p class="text-sm font-bold text-slate-900 mb-2.5">${pedido.nome_cliente}</p>
+            var deliveryIcon = L.divIcon({
+                className: 'delivery-marker-icon',
+                html: `<div class="delivery-marker" id="pinMarker_${escapeHtml(key)}">${index + 1}</div>`,
+                iconSize: [26, 26],
+                iconAnchor: [13, 26]
+            });
 
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Endereço</p>
-                                    <p class="text-xs font-medium text-slate-600 mb-3.5 leading-relaxed">${pedido.endereco}</p>
+            var marker = L.marker([pedido.latitude, pedido.longitude], {
+                icon: deliveryIcon
+            }).addTo(map);
 
-                                    <button type="button" class="btn-concluir" data-id="${pedido.id_pedido}" data-lat="${pedido.latitude}" data-lng="${pedido.longitude}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        Concluir Entrega
-                                    </button>
-                                </div>
-                            `);
+            marker.bindPopup(`
+                <div class="p-4 min-w-[240px]" style="font-family: 'Inter', sans-serif;">
+                    <div class="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-slate-100">
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold text-white"
+                            style="background-color: var(--emp-primary, #4F46E5);">
+                            Entrega #${index + 1}
+                        </span>
+                        <span class="text-[11px] font-bold text-slate-400">ID #${escapeHtml(key)}</span>
+                    </div>
 
-                            marker.pedidoId = pedido.id_pedido;
-                            marker.latitude = pedido.latitude;
-                            marker.longitude = pedido.longitude;
-                            marcadoresPedidos[pedido.id_pedido] = marker;
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Cliente</p>
+                    <p class="text-sm font-bold text-slate-900 mb-2.5">${escapeHtml(pedido.nome_cliente)}</p>
 
-                            marker.on('popupopen', function(e) {
-                                var popupEl = e.popup.getElement();
-                                if (!popupEl) return;
-                                var btn = popupEl.querySelector('.btn-concluir');
-                                if (btn) {
-                                    btn.onclick = function() {
-                                        const originalText = btn.innerHTML;
-                                        btn.innerHTML = 'Processando...';
-                                        btn.disabled = true;
-                                        concluirEntrega(this.getAttribute('data-id'), marker, btn, originalText);
-                                    };
-                                }
-                            });
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Endereço</p>
+                    <p class="text-xs font-medium text-slate-600 mb-3.5 leading-relaxed">${escapeHtml(pedido.endereco)}</p>
+
+                    <button type="button" class="btn-concluir" data-id="${escapeHtml(key)}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Concluir Entrega
+                    </button>
+                </div>
+            `);
+
+            marker.pedidoId = pedido.id_pedido;
+            marker.latitude = pedido.latitude;
+            marker.longitude = pedido.longitude;
+            marcadoresPedidos[key] = marker;
+
+            marker.on('popupopen', function(e) {
+                var popupEl = e.popup.getElement();
+                if (!popupEl) return;
+                var btn = popupEl.querySelector('.btn-concluir');
+                if (btn) {
+                    btn.onclick = function() {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = 'Processando...';
+                        btn.disabled = true;
+                        concluirEntrega(this.getAttribute('data-id'), marker, btn, originalText);
+                    };
+                }
+            });
+        }
+
+        async function geocodificarPedidosSemCoordenadas(lista) {
+            var atualizouAlgum = false;
+            for (let i = 0; i < lista.length; i++) {
+                const p = lista[i];
+                if (p.latitude !== null && p.longitude !== null) continue;
+                if (!p.endereco || p.endereco === 'Endereço não informado') continue;
+
+                const cacheKey = 'guiar_geo_' + p.endereco.toLowerCase();
+                try {
+                    const cached = sessionStorage.getItem(cacheKey);
+                    if (cached) {
+                        const coords = JSON.parse(cached);
+                        if (coords && coords.lat && coords.lng) {
+                            p.latitude = coords.lat;
+                            p.longitude = coords.lng;
+                            criarOuAtualizarMarcadorPedido(p, i);
+                            atualizouAlgum = true;
+                            continue;
                         }
-                    });
+                    }
 
-                    renderizarListaPedidos();
-                } else {
-                    pedidosCache = [];
+                    const resp = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(p.endereco));
+                    const geoData = await resp.json();
+                    if (Array.isArray(geoData) && geoData.length > 0) {
+                        const lat = parseCoord(geoData[0].lat);
+                        const lng = parseCoord(geoData[0].lon);
+                        if (lat !== null && lng !== null) {
+                            p.latitude = lat;
+                            p.longitude = lng;
+                            sessionStorage.setItem(cacheKey, JSON.stringify({ lat, lng }));
+                            criarOuAtualizarMarcadorPedido(p, i);
+                            atualizouAlgum = true;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Falha ao geocodificar endereço do pedido #' + p.id_pedido, e);
+                }
+            }
+
+            if (atualizouAlgum) {
+                renderizarListaPedidos();
+                enquadrarTodosNoMapa(false);
+            }
+        }
+
+        function aplicarPedidosNoMapa(listaBruta) {
+            const listaNormalizada = listaBruta.map((item, idx) => normalizarPedido(item, idx));
+
+            // Remove marcadores de pedidos que não existem mais na lista atual
+            const idsAtivos = new Set(listaNormalizada.map(p => String(p.id_pedido)));
+            Object.keys(marcadoresPedidos).forEach(key => {
+                if (!idsAtivos.has(key)) {
+                    map.removeLayer(marcadoresPedidos[key]);
+                    delete marcadoresPedidos[key];
+                }
+            });
+
+            pedidosCache = listaNormalizada;
+
+            pedidosCache.forEach((pedido, index) => {
+                criarOuAtualizarMarcadorPedido(pedido, index);
+            });
+
+            renderizarListaPedidos();
+            enquadrarTodosNoMapa(false);
+            geocodificarPedidosSemCoordenadas(pedidosCache);
+        }
+
+        // 1) CARGA IMEDIATA DOS PEDIDOS ENVIADOS PELO CONTROLLER
+        if (Array.isArray(PEDIDOS_MAPA_INICIAIS) && PEDIDOS_MAPA_INICIAIS.length > 0) {
+            aplicarPedidosNoMapa(PEDIDOS_MAPA_INICIAIS);
+        }
+
+        // 2) SINCRONIZA COM A API DO MAPA
+        fetch('<?= BASE_URL ?>/routes.php?action=apiPedidosMapa', {
+            credentials: 'same-origin',
+            cache: 'no-store'
+        })
+            .then(response => response.text())
+            .then(rawText => {
+                const cleanText = (rawText || '').trim().replace(/^\uFEFF/, '');
+                if (!cleanText) return;
+
+                let data;
+                try {
+                    data = JSON.parse(cleanText);
+                } catch (parseErr) {
+                    console.error('Resposta inválida de apiPedidosMapa:', cleanText);
+                    if (pedidosCache.length === 0) renderizarListaPedidos();
+                    return;
+                }
+
+                if (data && !data.error) {
+                    const listaApi = extrairListaPedidos(data);
+                    if (listaApi.length > 0 || pedidosCache.length === 0) {
+                        aplicarPedidosNoMapa(listaApi);
+                    }
+                } else if (pedidosCache.length === 0) {
                     renderizarListaPedidos();
                 }
             })
             .catch(err => {
                 console.error("Erro ao carregar pedidos:", err);
-                pedidosCache = [];
-                renderizarListaPedidos();
+                if (pedidosCache.length === 0) {
+                    renderizarListaPedidos();
+                }
             });
 
         // RENDERIZA LISTA LATERAL DE PEDIDOS
@@ -566,19 +706,20 @@
             container.innerHTML = '';
 
             filtrados.forEach((pedido) => {
-                var indexOriginal = pedidosCache.findIndex(item => item.id_pedido == pedido.id_pedido);
+                var idStr = String(pedido.id_pedido);
+                var indexOriginal = pedidosCache.findIndex(item => String(item.id_pedido) === idStr);
                 var numeroParada = indexOriginal >= 0 ? indexOriginal + 1 : 1;
-                var isProxima = (proximoPedidoId !== null && String(pedido.id_pedido) === String(proximoPedidoId));
+                var isProxima = (proximoPedidoId !== null && idStr === String(proximoPedidoId));
 
                 var card = document.createElement('div');
-                card.id = 'pedidoCard_' + pedido.id_pedido;
+                card.id = 'pedidoCard_' + idStr;
                 card.className = 'delivery-card bg-white border border-slate-200 rounded-2xl p-4 shadow-sm border-l-4 cursor-pointer';
                 card.style.borderLeftColor = isProxima
                     ? 'var(--emp-secondary, #FFD400)'
                     : 'var(--emp-primary, #4F46E5)';
 
                 card.onclick = function() {
-                    focarPedidoNoMapa(pedido.id_pedido, pedido.latitude, pedido.longitude);
+                    focarPedidoNoMapa(pedido.id_pedido);
                 };
 
                 var avatarStyle = isProxima
@@ -602,15 +743,15 @@
                             </div>
                             <div class="min-w-0">
                                 <h3 class="font-bold text-slate-900 text-sm truncate">
-                                    ${pedido.nome_cliente}
+                                    ${escapeHtml(pedido.nome_cliente)}
                                 </h3>
                                 <p class="text-[11px] text-slate-400 font-medium">
-                                    Pedido #${pedido.id_pedido}
+                                    Pedido #${escapeHtml(idStr)}
                                 </p>
                             </div>
                         </div>
 
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border"
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border flex-shrink-0"
                             style="${pillStyle}">
                             <span class="w-1.5 h-1.5 rounded-full ${isProxima ? 'animate-ping' : ''}" style="${dotStyle}"></span>
                             <span>${isProxima ? 'Próxima parada' : 'Pendente'}</span>
@@ -623,13 +764,13 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                            <span>${pedido.endereco}</span>
+                            <span>${escapeHtml(pedido.endereco)}</span>
                         </p>
                     </div>
 
                     <div class="mt-3.5 pt-1 flex items-center gap-2">
                         <button type="button"
-                            onclick="event.stopPropagation(); focarPedidoNoMapa(${pedido.id_pedido}, ${pedido.latitude}, ${pedido.longitude});"
+                            onclick="event.stopPropagation(); focarPedidoNoMapa(${Number(pedido.id_pedido)});"
                             class="flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all flex items-center justify-center gap-1.5">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -638,7 +779,7 @@
                             Ver no mapa
                         </button>
                         <button type="button"
-                            onclick="event.stopPropagation(); concluirEntregaPeloCard(${pedido.id_pedido}, this);"
+                            onclick="event.stopPropagation(); concluirEntregaPeloCard(${Number(pedido.id_pedido)}, this);"
                             class="btn-emp-primary flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
@@ -652,20 +793,28 @@
             });
         }
 
-        function focarPedidoNoMapa(pedidoId, lat, lng) {
+        function focarPedidoNoMapa(pedidoId) {
+            var key = String(pedidoId);
             document.querySelectorAll('.delivery-card').forEach(c => c.classList.remove('focused'));
-            var card = document.getElementById('pedidoCard_' + pedidoId);
+            var card = document.getElementById('pedidoCard_' + key);
             if (card) card.classList.add('focused');
 
             if (window.innerWidth < 1024 && tabToggleMap) {
                 tabToggleMap.click();
             }
 
-            if (lat && lng) {
+            var pedido = pedidosCache.find(p => String(p.id_pedido) === key);
+            var marker = marcadoresPedidos[key];
+            var lat = marker ? marker.latitude : (pedido ? pedido.latitude : null);
+            var lng = marker ? marker.longitude : (pedido ? pedido.longitude : null);
+
+            if (lat !== null && lng !== null) {
                 map.flyTo([lat, lng], 17, { duration: 0.9 });
-                if (marcadoresPedidos[pedidoId]) {
-                    marcadoresPedidos[pedidoId].openPopup();
+                if (marker) {
+                    marker.openPopup();
                 }
+            } else {
+                alert("Não foi possível localizar as coordenadas deste endereço no mapa.");
             }
         }
 
@@ -673,7 +822,7 @@
             const originalText = btn.innerHTML;
             btn.innerHTML = 'Processando...';
             btn.disabled = true;
-            concluirEntrega(pedidoId, marcadoresPedidos[pedidoId], btn, originalText);
+            concluirEntrega(pedidoId, marcadoresPedidos[String(pedidoId)], btn, originalText);
         }
 
         // FUNÇÃO PARA CALCULAR A ROTA MAIS CURTA ENTRE O USUÁRIO E OS PONTOS
@@ -692,7 +841,7 @@
             }
 
             var promises = points.map(ponto => {
-                if (!ponto.latitude || !ponto.longitude) return Promise.resolve(null);
+                if (ponto.latitude === null || ponto.longitude === null) return Promise.resolve(null);
 
                 var waypoints = [
                     currentUserPosition,
@@ -731,7 +880,10 @@
 
             Promise.all(promises).then(results => {
                 results = results.filter(r => r !== null);
-                if (results.length === 0) return;
+                if (results.length === 0) {
+                    alert("Não foi possível traçar rota para os endereços disponíveis.");
+                    return;
+                }
 
                 if (shortestRouteControl) {
                     map.removeControl(shortestRouteControl);
@@ -867,6 +1019,7 @@
                             icon: emojiIcon
                         }).addTo(map)
                         .bindPopup("<div class='p-3 text-center' style='font-family:Inter,sans-serif;'><strong class='text-xs font-bold text-slate-900'>Você está aqui 🚀</strong></div>");
+                    enquadrarTodosNoMapa(false);
                 }
 
                 // MONITORA ROTA
@@ -891,20 +1044,13 @@
                 return;
             }
 
-            fetch('<?= BASE_URL ?>/routes.php?action=apiPedidosMapa')
-                .then(response => response.json())
-                .then(data => {
-                    if (!data || data.length === 0 || data.error) {
-                        alert("Nenhuma entrega disponível.");
-                        return;
-                    }
+            if (pedidosCache.length === 0) {
+                alert("Nenhuma entrega disponível.");
+                return;
+            }
 
-                    points = data;
-                    rotaParaPontoProximo();
-                })
-                .catch(error => {
-                    console.error("Erro ao buscar pedidos:", error);
-                });
+            points = pedidosCache.filter(p => p.latitude !== null && p.longitude !== null);
+            rotaParaPontoProximo();
         });
 
         // ===== CONTROLES DE NAVEGAÇÃO DO MAPA E BUSCA =====
@@ -981,33 +1127,6 @@
             });
         }
 
-        // ===== SCRIPT DA SIDEBAR MOBILE =====
-        const menuBtn = document.getElementById('hamburger');
-        const sidebar = document.getElementById('sidebar');
-        const closeSidebar = document.getElementById('closeSidebar');
-        const overlay = document.getElementById('overlay');
-
-        if (menuBtn && sidebar && overlay) {
-            menuBtn.addEventListener('click', () => {
-                sidebar.classList.add('mobile-open');
-                overlay.classList.add('active');
-            });
-        }
-
-        if (closeSidebar && sidebar && overlay) {
-            closeSidebar.addEventListener('click', () => {
-                sidebar.classList.remove('mobile-open');
-                overlay.classList.remove('active');
-            });
-        }
-
-        if (overlay && sidebar) {
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('mobile-open');
-                overlay.classList.remove('active');
-            });
-        }
-
         window.addEventListener('resize', function() {
             map.invalidateSize();
         });
@@ -1029,7 +1148,6 @@
                 }
                 window.GUIAR_EMPRESA_LOGO = novaSrc;
 
-                // Reaplica a paleta dinâmica da empresa com a logo real
                 const oldScript = document.querySelector('script[src*="empresa-palette.js"]');
                 if (oldScript) {
                     const freshScript = document.createElement('script');
@@ -1040,7 +1158,6 @@
             };
 
             const extrairDaPagina = (doc) => {
-                // 1. Logo da empresa na sidebar (padrão mapa (1).php: alt="Logo da empresa" ou primeira img do #sidebar)
                 const remoteSidebar = doc.getElementById('sidebar') || doc;
                 const candidatasLogo = [
                     remoteSidebar.querySelector('#sidebarEmpresaLogo'),
@@ -1058,14 +1175,12 @@
                     }
                 }
 
-                // 2. Nome da empresa
                 const elNomeEmp = remoteSidebar.querySelector('#sidebarEmpresaNome');
                 const localNomeEmp = document.getElementById('sidebarEmpresaNome');
                 if (elNomeEmp && elNomeEmp.textContent.trim() && localNomeEmp) {
                     localNomeEmp.textContent = elNomeEmp.textContent.trim();
                 }
 
-                // 3. Nome completo do entregador
                 const elNome = doc.querySelector('#driverSidebarName, .admin-user-name, main h2, header h1');
                 const nomeReal = elNome ? elNome.textContent.trim() : '';
                 if (nomeReal && nomeReal.toLowerCase() !== 'entregador') {
@@ -1082,7 +1197,6 @@
                     }
                 }
 
-                // 4. Foto 3x4 do entregador
                 const elFoto = doc.querySelector('#driverSidebarPhoto, img[src*="/uploads/entregadores/fotos/"]');
                 if (elFoto && elFoto.getAttribute('src')) {
                     const fotoSrc = elFoto.src;
@@ -1111,7 +1225,6 @@
                     })
                     .catch(() => {});
 
-            // Consulta meusPedidosEntregador (onde a logo da empresa já costuma ser carregada) e perfilEntregador
             buscarHtml('meusPedidosEntregador').then(() => {
                 const localLogo = document.getElementById('sidebarEmpresaLogo');
                 const localName = document.getElementById('driverSidebarName');
