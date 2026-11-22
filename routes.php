@@ -183,7 +183,7 @@ switch ($action) {
         break;
 
     case 'meusPedidosEntregador':
-        $controller = new \mvc\Controllers\PedidoController($pdo);
+        $controller = new \mvc\Controllers\EntregadorController($pdo);
         $controller->meusPedidos();
         break;
 
@@ -229,8 +229,8 @@ switch ($action) {
         break;
 
     case 'apiPedidosMapa':
-        $controller = new \mvc\Controllers\PedidoController($pdo);
-        $controller->getPedidosMapa();
+        $controller = new \mvc\Controllers\EntregadorController($pdo);
+        $controller->apiPedidosMapa();
         break;
 
     // --- Estimativa de tempo de entrega (machine learning) ---

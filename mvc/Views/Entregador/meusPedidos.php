@@ -121,10 +121,155 @@
 
     $precisaSincronizarSidebar = ($nomeEntregadorResolvido === '' || $logoEmpresaResolvida === '');
     $nomeEntregador = $nomeEntregadorResolvido !== '' ? $nomeEntregadorResolvido : 'Entregador';
+    $logoFallback = BASE_URL . '/img/LogoPreto.png';
     $logoEmpresaSidebar = $logoEmpresaResolvida !== ''
         ? $normalizarUrlAsset($logoEmpresaResolvida)
-        : (BASE_URL . '/img/logoIcon.png');
+        : $logoFallback;
     $nomeEmpresaSidebar = $nomeEmpresaResolvido !== '' ? $nomeEmpresaResolvido : 'GUIAR Entregas';
+
+    // 4. NORMALIZAÇÃO DOS PEDIDOS ATRIBUÍDOS ($result / $pedidos / PDOStatement / fallback)
+    if (!isset($result) && isset($pedidos)) {
+        $result = $pedidos;
+    }
+
+    if (isset($result) && $result instanceof \PDOStatement) {
+        $result = $result->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    if (!isset($result) && !empty($_SESSION['entregador_id'])) {
+        $pdoRef = $pdo ?? ($GLOBALS['pdo'] ?? null);
+        if ($pdoRef instanceof \PDO) {
+            try {
+                $entregadorSessId = (int) $_SESSION['entregador_id'];
+                $tables = $pdoRef->query("SHOW TABLES")->fetchAll(\PDO::FETCH_COLUMN) ?: [];
+                $tablesLower = array_map('strtolower', $tables);
+
+                $pedidoTable = null;
+                foreach (['pedido', 'pedidos', 'entrega', 'entregas'] as $candTable) {
+                    $idx = array_search($candTable, $tablesLower, true);
+                    if ($idx !== false) {
+                        $pedidoTable = $tables[$idx];
+                        break;
+                    }
+                }
+
+                if ($pedidoTable) {
+                    $pCols = $pdoRef->query("SHOW COLUMNS FROM `{$pedidoTable}`")->fetchAll(\PDO::FETCH_COLUMN) ?: [];
+                    $findCol = function (array $cols, array $candidates, ?string $contains = null): ?string {
+                        foreach ($candidates as $cand) {
+                            foreach ($cols as $col) {
+                                if (strcasecmp($col, $cand) === 0) return $col;
+                            }
+                        }
+                        if ($contains !== null) {
+                            foreach ($cols as $col) {
+                                if (stripos($col, $contains) !== false) return $col;
+                            }
+                        }
+                        return null;
+                    };
+
+                    $colId = $findCol($pCols, ['id_pedido', 'id']);
+                    $colEnt = $findCol($pCols, ['FK_ENTREGADOR_id_entregador', 'fk_entregador_id_entregador', 'id_entregador', 'entregador_id'], 'entregador');
+
+                    if ($colId && $colEnt) {
+                        $colStatus = $findCol($pCols, ['status', 'status_pedido', 'situacao'], 'status');
+                        $colCliente = $findCol($pCols, ['nome_cliente', 'cliente_nome', 'destinatario', 'nome']);
+                        $colClienteFk = $findCol($pCols, ['FK_CLIENTE_id_cliente', 'fk_cliente_id_cliente', 'id_cliente'], 'cliente');
+                        $colEndFk = $findCol($pCols, ['FK_ENDERECO_id_endereco', 'fk_endereco_id_endereco', 'id_endereco'], 'endereco');
+                        $colPreco = $findCol($pCols, ['preco', 'valor_total', 'valor', 'total', 'valor_pedido']);
+                        $colDesc = $findCol($pCols, ['descricao', 'observacao', 'observacoes', 'itens', 'detalhes']);
+                        $colEnd = $findCol($pCols, ['endereco', 'endereco_entrega', 'endereco_completo']);
+                        $colRua = $findCol($pCols, ['rua', 'logradouro']);
+                        $colNum = $findCol($pCols, ['numero', 'num']);
+                        $colBairro = $findCol($pCols, ['bairro']);
+                        $colCidade = $findCol($pCols, ['cidade', 'municipio']);
+
+                        $joins = [];
+                        $clienteExpr = $colCliente ? "p.`{$colCliente}`" : "'Cliente'";
+                        foreach (['cliente', 'clientes'] as $candCli) {
+                            $cIdx = array_search($candCli, $tablesLower, true);
+                            if ($cIdx !== false && $colClienteFk) {
+                                $cTable = $tables[$cIdx];
+                                $cCols = $pdoRef->query("SHOW COLUMNS FROM `{$cTable}`")->fetchAll(\PDO::FETCH_COLUMN) ?: [];
+                                $cId = $findCol($cCols, ['id_cliente', 'id']);
+                                $cNome = $findCol($cCols, ['nome_completo', 'nome', 'nome_cliente'], 'nome');
+                                if ($cId && $cNome) {
+                                    $joins[] = "LEFT JOIN `{$cTable}` c ON p.`{$colClienteFk}` = c.`{$cId}`";
+                                    $clienteExpr = $colCliente
+                                        ? "COALESCE(NULLIF(TRIM(p.`{$colCliente}`), ''), c.`{$cNome}`, 'Cliente')"
+                                        : "COALESCE(c.`{$cNome}`, 'Cliente')";
+                                }
+                                break;
+                            }
+                        }
+
+                        $endAlias = 'p';
+                        $eCols = $pCols;
+                        foreach (['endereco', 'enderecos'] as $candEnd) {
+                            $eIdx = array_search($candEnd, $tablesLower, true);
+                            if ($eIdx !== false && $colEndFk) {
+                                $eTable = $tables[$eIdx];
+                                $eColsCand = $pdoRef->query("SHOW COLUMNS FROM `{$eTable}`")->fetchAll(\PDO::FETCH_COLUMN) ?: [];
+                                $eId = $findCol($eColsCand, ['id_endereco', 'id']);
+                                if ($eId) {
+                                    $joins[] = "LEFT JOIN `{$eTable}` e ON p.`{$colEndFk}` = e.`{$eId}`";
+                                    $endAlias = 'e';
+                                    $eCols = $eColsCand;
+                                }
+                                break;
+                            }
+                        }
+
+                        if ($endAlias === 'e') {
+                            $colEnd = $findCol($eCols, ['endereco', 'endereco_completo', 'logradouro_completo']) ?? $colEnd;
+                            $colRua = $findCol($eCols, ['rua', 'logradouro']) ?? $colRua;
+                            $colNum = $findCol($eCols, ['numero', 'num']) ?? $colNum;
+                            $colBairro = $findCol($eCols, ['bairro']) ?? $colBairro;
+                            $colCidade = $findCol($eCols, ['cidade', 'municipio']) ?? $colCidade;
+                        }
+
+                        $partes = [];
+                        foreach ([$colRua, $colNum, $colCidade] as $cP) {
+                            if ($cP) $partes[] = "NULLIF(TRIM({$endAlias}.`{$cP}`), '')";
+                        }
+
+                        if ($colEnd && !empty($partes)) {
+                            $endExpr = "COALESCE(NULLIF(TRIM({$endAlias}.`{$colEnd}`), ''), CONCAT_WS(', ', " . implode(', ', $partes) . "), 'Endereço não informado')";
+                        } elseif ($colEnd) {
+                            $endExpr = "COALESCE(NULLIF(TRIM({$endAlias}.`{$colEnd}`), ''), 'Endereço não informado')";
+                        } elseif (!empty($partes)) {
+                            $endExpr = "COALESCE(CONCAT_WS(', ', " . implode(', ', $partes) . "), 'Endereço não informado')";
+                        } else {
+                            $endExpr = "'Endereço não informado'";
+                        }
+
+                        $bairroExpr = $colBairro ? "COALESCE(NULLIF(TRIM({$endAlias}.`{$colBairro}`), ''), '')" : "''";
+                        $precoExpr = $colPreco ? "COALESCE(p.`{$colPreco}`, '0,00')" : "'0,00'";
+                        $descExpr = $colDesc ? "COALESCE(NULLIF(TRIM(p.`{$colDesc}`), ''), 'Sem descrição')" : "'Sem descrição'";
+
+                        $where = ["p.`{$colEnt}` = :entregador_id"];
+                        if ($colStatus) {
+                            $where[] = "(p.`{$colStatus}` IS NULL OR LOWER(TRIM(p.`{$colStatus}`)) NOT IN ('entregue', 'entregues', 'concluido', 'concluído', 'finalizado', 'cancelado', 'cancelada'))";
+                        }
+
+                        $sqlFallback = "SELECT p.`{$colId}` AS id_pedido, {$clienteExpr} AS nome_cliente, {$precoExpr} AS preco, {$endExpr} AS endereco, {$bairroExpr} AS bairro, {$descExpr} AS descricao
+                                        FROM `{$pedidoTable}` p " . implode(' ', $joins) . "
+                                        WHERE " . implode(' AND ', $where) . "
+                                        ORDER BY p.`{$colId}` ASC";
+                        $stmtFallback = $pdoRef->prepare($sqlFallback);
+                        $stmtFallback->bindValue(':entregador_id', $entregadorSessId, \PDO::PARAM_INT);
+                        $stmtFallback->execute();
+                        $result = $stmtFallback->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+                    }
+                }
+            } catch (\Throwable $e) {
+                $result = [];
+            }
+        }
+    }
+
+    $listaPedidos = is_array($result ?? null) ? $result : [];
     ?>
 
     <!-- SIDEBAR CLARA -->
@@ -143,6 +288,7 @@
             <div class="px-6 pt-7 pb-4 mb-2 flex justify-start items-center gap-3">
                 <div style="width: 58px; height: 58px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #fff; border: 2px solid var(--emp-primary-light-border, rgba(79,70,229,0.18)); box-shadow: 0 4px 14px var(--emp-primary-ring, rgba(79,70,229,0.12)); display: flex; align-items: center; justify-content: center; padding: 5px;">
                     <img id="sidebarEmpresaLogo" src="<?= htmlspecialchars($logoEmpresaSidebar, ENT_QUOTES, 'UTF-8') ?>"
+                        onerror="this.onerror=null; this.src='<?= htmlspecialchars($logoFallback, ENT_QUOTES, 'UTF-8') ?>';"
                         alt="Logo da empresa"
                         style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block;">
                 </div>
@@ -276,8 +422,17 @@
             <!-- Cards de Pedidos -->
             <div class="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 <?php
-                if (!empty($result) && count($result) > 0) {
-                    foreach ($result as $row) {
+                if (count($listaPedidos) > 0) {
+                    foreach ($listaPedidos as $row) {
+                        $idPedido = (string)($row['id_pedido'] ?? $row['id'] ?? '');
+                        $nomeCliente = (string)($row['nome_cliente'] ?? $row['cliente_nome'] ?? $row['cliente'] ?? 'Cliente');
+                        $precoBruto = $row['preco'] ?? $row['valor_total'] ?? $row['valor'] ?? $row['total'] ?? '0,00';
+                        $precoFormatado = is_numeric($precoBruto)
+                            ? number_format((float)$precoBruto, 2, ',', '.')
+                            : (string)$precoBruto;
+                        $endereco = (string)($row['endereco'] ?? $row['endereco_entrega'] ?? 'Endereço não informado');
+                        $bairro = trim((string)($row['bairro'] ?? ''));
+                        $descricao = (string)($row['descricao'] ?? $row['observacao'] ?? $row['observacoes'] ?? $row['itens'] ?? 'Sem descrição adicional');
                 ?>
                         <div class="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col justify-between h-full relative overflow-hidden hover-card">
                             <!-- Borda Superior Colorida -->
@@ -285,11 +440,11 @@
 
                             <div>
                                 <div class="flex items-center justify-between mb-4 mt-2">
-                                    <h3 class="text-lg font-bold text-slate-900 truncate pr-4" title="<?= htmlspecialchars($row["nome_cliente"]) ?>">
-                                        <?= htmlspecialchars($row["nome_cliente"]) ?>
+                                    <h3 class="text-lg font-bold text-slate-900 truncate pr-4" title="<?= htmlspecialchars($nomeCliente, ENT_QUOTES, 'UTF-8') ?>">
+                                        <?= htmlspecialchars($nomeCliente, ENT_QUOTES, 'UTF-8') ?>
                                     </h3>
                                     <span class="bg-[#E94E00]/10 text-[#E94E00] text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                                        R$ <?= htmlspecialchars($row["preco"]) ?>
+                                        R$ <?= htmlspecialchars($precoFormatado, ENT_QUOTES, 'UTF-8') ?>
                                     </span>
                                 </div>
 
@@ -302,8 +457,10 @@
                                             </svg>
                                         </div>
                                         <div>
-                                            <p class="text-sm font-semibold text-slate-700"><?= htmlspecialchars($row["endereco"]) ?></p>
-                                            <p class="text-xs text-slate-500 font-medium mt-0.5"><?= htmlspecialchars($row["bairro"]) ?></p>
+                                            <p class="text-sm font-semibold text-slate-700"><?= htmlspecialchars($endereco, ENT_QUOTES, 'UTF-8') ?></p>
+                                            <?php if ($bairro !== ''): ?>
+                                                <p class="text-xs text-slate-500 font-medium mt-0.5"><?= htmlspecialchars($bairro, ENT_QUOTES, 'UTF-8') ?></p>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
 
@@ -314,14 +471,14 @@
                                             </svg>
                                         </div>
                                         <p class="text-sm text-slate-600 font-medium line-clamp-3 mt-1">
-                                            <?= htmlspecialchars($row["descricao"]) ?>
+                                            <?= htmlspecialchars($descricao, ENT_QUOTES, 'UTF-8') ?>
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="mt-6 pt-5 border-t border-slate-100">
-                                <button type="button" class="btn-delivered w-full flex items-center justify-center gap-2 bg-[#E94E00] hover:bg-[#c63f00] text-white font-bold text-sm px-4 py-3 rounded-2xl transition shadow-md hover:scale-[1.02]" data-id="<?= htmlspecialchars($row["id_pedido"]) ?>">
+                                <button type="button" class="btn-delivered w-full flex items-center justify-center gap-2 bg-[#E94E00] hover:bg-[#c63f00] text-white font-bold text-sm px-4 py-3 rounded-2xl transition shadow-md hover:scale-[1.02]" data-id="<?= htmlspecialchars($idPedido, ENT_QUOTES, 'UTF-8') ?>">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                     </svg>

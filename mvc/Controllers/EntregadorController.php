@@ -195,6 +195,51 @@ class EntregadorController
         exit;
     }
 
+    private function carregarContextoEntregador(int $entregadorId): array
+    {
+        $entregador = $this->entregadorModel->getById($entregadorId) ?: [];
+
+        $empresaId = $entregador['FK_EMPRESA_id_empresa']
+            ?? $entregador['fk_empresa_id_empresa']
+            ?? $entregador['id_empresa']
+            ?? ($_SESSION['company_id'] ?? null);
+
+        $empresa = $empresaId ? ($this->empresaModel->getById($empresaId) ?: []) : [];
+        $logoEmpresaSidebar = $empresaId ? $this->empresaModel->getLogoUrlById($empresaId) : '';
+        $nomeEmpresaSidebar = $empresa['nome_empresa'] ?? '';
+        $nomeEntregador = $entregador['nome_completo'] ?? ($entregador['nome_usuario'] ?? '');
+        $entregadorFotoUrl = $entregador['foto_3x4'] ?? '';
+
+        return [
+            'entregador' => $entregador,
+            'empresa' => $empresa,
+            'logoEmpresaSidebar' => $logoEmpresaSidebar,
+            'nomeEmpresaSidebar' => $nomeEmpresaSidebar,
+            'nomeEntregador' => $nomeEntregador,
+            'entregadorFotoUrl' => $entregadorFotoUrl,
+        ];
+    }
+
+    public function meusPedidos()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (!isset($_SESSION['entregador_id'])) {
+            header("Location: " . BASE_URL . "/routes.php?action=loginEntregador");
+            exit;
+        }
+
+        $entregadorId = (int) $_SESSION['entregador_id'];
+        $contexto = $this->carregarContextoEntregador($entregadorId);
+        extract($contexto);
+
+        $result = $this->buscarPedidosAtribuidosEntregador($entregadorId);
+
+        require_once __DIR__ . '/../Views/Entregador/meusPedidos.php';
+    }
+
     public function mapa()
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -207,18 +252,8 @@ class EntregadorController
         }
 
         $entregadorId = (int) $_SESSION['entregador_id'];
-        $entregador = $this->entregadorModel->getById($entregadorId) ?: [];
-
-        $empresaId = $entregador['FK_EMPRESA_id_empresa']
-            ?? $entregador['fk_empresa_id_empresa']
-            ?? $entregador['id_empresa']
-            ?? null;
-
-        $empresa = $empresaId ? ($this->empresaModel->getById($empresaId) ?: []) : [];
-        $logoEmpresaSidebar = $empresaId ? $this->empresaModel->getLogoUrlById($empresaId) : '';
-        $nomeEmpresaSidebar = $empresa['nome_empresa'] ?? '';
-        $nomeEntregador = $entregador['nome_completo'] ?? ($entregador['nome_usuario'] ?? '');
-        $entregadorFotoUrl = $entregador['foto_3x4'] ?? '';
+        $contexto = $this->carregarContextoEntregador($entregadorId);
+        extract($contexto);
 
         $pedidosMapaIniciais = $this->buscarPedidosAtribuidosEntregador($entregadorId);
 
@@ -232,11 +267,17 @@ class EntregadorController
             $tables = $tablesStmt ? $tablesStmt->fetchAll(\PDO::FETCH_COLUMN) : [];
             $tablesLower = array_map('strtolower', $tables);
 
-            $pedidoIdx = array_search('pedido', $tablesLower, true);
-            if ($pedidoIdx === false) {
+            $pedidoTable = null;
+            foreach (['pedido', 'pedidos', 'entrega', 'entregas'] as $candTable) {
+                $idx = array_search($candTable, $tablesLower, true);
+                if ($idx !== false) {
+                    $pedidoTable = $tables[$idx];
+                    break;
+                }
+            }
+            if (!$pedidoTable) {
                 return [];
             }
-            $pedidoTable = $tables[$pedidoIdx];
 
             $colsStmt = $this->pdo->query("SHOW COLUMNS FROM `{$pedidoTable}`");
             $pedidoCols = $colsStmt ? $colsStmt->fetchAll(\PDO::FETCH_COLUMN) : [];
@@ -267,6 +308,8 @@ class EntregadorController
 
             $colStatus = $findCol($pedidoCols, ['status', 'status_pedido', 'situacao'], 'status');
             $colClienteNome = $findCol($pedidoCols, ['nome_cliente', 'cliente_nome', 'destinatario', 'nome']);
+            $colPreco = $findCol($pedidoCols, ['preco', 'valor_total', 'valor', 'total', 'valor_pedido']);
+            $colDescricao = $findCol($pedidoCols, ['descricao', 'observacao', 'observacoes', 'itens', 'detalhes']);
             $colClienteFk = $findCol($pedidoCols, ['FK_CLIENTE_id_cliente', 'fk_cliente_id_cliente', 'id_cliente'], 'cliente');
             $colEnderecoFk = $findCol($pedidoCols, ['FK_ENDERECO_id_endereco', 'fk_endereco_id_endereco', 'id_endereco'], 'endereco');
 
@@ -283,31 +326,37 @@ class EntregadorController
             $joins = [];
             $clienteExpr = $colClienteNome ? "p.`{$colClienteNome}`" : "'Cliente'";
 
-            $clienteIdx = array_search('cliente', $tablesLower, true);
-            if ($clienteIdx !== false && $colClienteFk) {
-                $clienteTable = $tables[$clienteIdx];
-                $cCols = $this->pdo->query("SHOW COLUMNS FROM `{$clienteTable}`")->fetchAll(\PDO::FETCH_COLUMN);
-                $cId = $findCol($cCols, ['id_cliente', 'id']);
-                $cNome = $findCol($cCols, ['nome_completo', 'nome', 'nome_cliente'], 'nome');
-                if ($cId && $cNome) {
-                    $joins[] = "LEFT JOIN `{$clienteTable}` c ON p.`{$colClienteFk}` = c.`{$cId}`";
-                    $clienteExpr = $colClienteNome
-                        ? "COALESCE(NULLIF(TRIM(p.`{$colClienteNome}`), ''), c.`{$cNome}`, 'Cliente')"
-                        : "COALESCE(c.`{$cNome}`, 'Cliente')";
+            foreach (['cliente', 'clientes'] as $candCliente) {
+                $clienteIdx = array_search($candCliente, $tablesLower, true);
+                if ($clienteIdx !== false && $colClienteFk) {
+                    $clienteTable = $tables[$clienteIdx];
+                    $cCols = $this->pdo->query("SHOW COLUMNS FROM `{$clienteTable}`")->fetchAll(\PDO::FETCH_COLUMN);
+                    $cId = $findCol($cCols, ['id_cliente', 'id']);
+                    $cNome = $findCol($cCols, ['nome_completo', 'nome', 'nome_cliente'], 'nome');
+                    if ($cId && $cNome) {
+                        $joins[] = "LEFT JOIN `{$clienteTable}` c ON p.`{$colClienteFk}` = c.`{$cId}`";
+                        $clienteExpr = $colClienteNome
+                            ? "COALESCE(NULLIF(TRIM(p.`{$colClienteNome}`), ''), c.`{$cNome}`, 'Cliente')"
+                            : "COALESCE(c.`{$cNome}`, 'Cliente')";
+                    }
+                    break;
                 }
             }
 
             $endAlias = 'p';
             $eCols = $pedidoCols;
-            $enderecoIdx = array_search('endereco', $tablesLower, true);
-            if ($enderecoIdx !== false && $colEnderecoFk) {
-                $enderecoTable = $tables[$enderecoIdx];
-                $eColsCandidate = $this->pdo->query("SHOW COLUMNS FROM `{$enderecoTable}`")->fetchAll(\PDO::FETCH_COLUMN);
-                $eId = $findCol($eColsCandidate, ['id_endereco', 'id']);
-                if ($eId) {
-                    $joins[] = "LEFT JOIN `{$enderecoTable}` e ON p.`{$colEnderecoFk}` = e.`{$eId}`";
-                    $endAlias = 'e';
-                    $eCols = $eColsCandidate;
+            foreach (['endereco', 'enderecos'] as $candEnd) {
+                $enderecoIdx = array_search($candEnd, $tablesLower, true);
+                if ($enderecoIdx !== false && $colEnderecoFk) {
+                    $enderecoTable = $tables[$enderecoIdx];
+                    $eColsCandidate = $this->pdo->query("SHOW COLUMNS FROM `{$enderecoTable}`")->fetchAll(\PDO::FETCH_COLUMN);
+                    $eId = $findCol($eColsCandidate, ['id_endereco', 'id']);
+                    if ($eId) {
+                        $joins[] = "LEFT JOIN `{$enderecoTable}` e ON p.`{$colEnderecoFk}` = e.`{$eId}`";
+                        $endAlias = 'e';
+                        $eCols = $eColsCandidate;
+                    }
+                    break;
                 }
             }
 
@@ -340,18 +389,24 @@ class EntregadorController
                 $enderecoExpr = "'Endereço não informado'";
             }
 
+            $bairroExpr = $colBairro ? "COALESCE(NULLIF(TRIM({$endAlias}.`{$colBairro}`), ''), '')" : "''";
+            $precoExpr = $colPreco ? "COALESCE(p.`{$colPreco}`, '0,00')" : "'0,00'";
+            $descricaoExpr = $colDescricao ? "COALESCE(NULLIF(TRIM(p.`{$colDescricao}`), ''), 'Sem descrição')" : "'Sem descrição'";
             $latExpr = $colLat ? "{$endAlias}.`{$colLat}`" : "NULL";
             $lngExpr = $colLng ? "{$endAlias}.`{$colLng}`" : "NULL";
 
             $where = ["p.`{$colEntregador}` = :entregador_id"];
             if ($colStatus) {
-                $where[] = "(p.`{$colStatus}` IS NULL OR LOWER(TRIM(p.`{$colStatus}`)) NOT IN ('entregue', 'concluido', 'concluído', 'finalizado', 'cancelado'))";
+                $where[] = "(p.`{$colStatus}` IS NULL OR LOWER(TRIM(p.`{$colStatus}`)) NOT IN ('entregue', 'entregues', 'concluido', 'concluído', 'finalizado', 'cancelado', 'cancelada'))";
             }
 
             $sql = "SELECT
                         p.`{$colId}` AS id_pedido,
                         {$clienteExpr} AS nome_cliente,
+                        {$precoExpr} AS preco,
                         {$enderecoExpr} AS endereco,
+                        {$bairroExpr} AS bairro,
+                        {$descricaoExpr} AS descricao,
                         {$latExpr} AS latitude,
                         {$lngExpr} AS longitude
                     FROM `{$pedidoTable}` p
@@ -365,7 +420,7 @@ class EntregadorController
 
             return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
         } catch (\Throwable $e) {
-            error_log("Erro ao buscar pedidos atribuídos para o mapa: " . $e->getMessage());
+            error_log("Erro ao buscar pedidos atribuídos: " . $e->getMessage());
             return [];
         }
     }
