@@ -15,12 +15,20 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="<?= BASE_URL ?>/style/sidebar.css">
+    <style>
+        .btn-emp-primary {
+            background-color: var(--emp-primary, #4F46E5);
+            color: var(--emp-primary-contrast, #ffffff);
+            box-shadow: 0 8px 18px -4px var(--emp-primary-ring, rgba(79, 70, 229, 0.35));
+        }
+
+        .btn-emp-primary:hover {
+            filter: brightness(0.95);
+        }
+    </style>
 </head>
 
 <body class="sidebar-page min-h-screen flex flex-col md:flex-row bg-[#f1f4fa] text-[#0F172A] overflow-x-hidden">
-
-    <!-- OVERLAY MOBILE -->
-    <div id="overlay" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden transition-opacity"></div>
 
     <?php
     if (session_status() === PHP_SESSION_NONE) {
@@ -272,17 +280,11 @@
     $listaPedidos = is_array($result ?? null) ? $result : [];
     ?>
 
-    <!-- SIDEBAR CLARA -->
+    <!-- SIDEBAR CLARA (DESKTOP) -->
     <aside id="sidebar"
-        class="w-72 bg-white flex flex-col fixed top-0 left-0 text-slate-700 z-50 transition-all rounded-none overflow-hidden h-screen border-r border-slate-200/80 shadow-sm">
+        class="hidden md:flex w-72 bg-white flex-col fixed top-0 left-0 text-slate-700 z-50 transition-all rounded-none overflow-hidden h-screen border-r border-slate-200/80 shadow-sm">
 
         <div class="flex flex-col h-full">
-
-            <!-- BOTÃO FECHAR MOBILE -->
-            <button id="closeSidebar"
-                class="absolute top-5 right-5 md:hidden text-slate-500 hover:text-slate-800 text-xl font-bold p-1 rounded-lg transition-colors z-50">
-                ✕
-            </button>
 
             <!-- LOGO DA EMPRESA -->
             <div class="px-6 pt-7 pb-4 mb-2 flex justify-start items-center gap-3">
@@ -380,16 +382,8 @@
         <!-- HEADER DA PÁGINA -->
         <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-4 md:px-8 py-4 flex items-center justify-between gap-4 sticky top-0 z-20">
             <div class="flex items-center gap-3.5 min-w-0 flex-1">
-                <!-- BOTÃO HAMBURGER MOBILE -->
-                <button id="hamburger"
-                    class="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex-shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
-
                 <!-- ÍCONE DA ABA -->
-                <div class="hidden sm:flex items-center justify-center flex-shrink-0 transition-transform hover:scale-105"
+                <div class="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto rounded-xl sm:rounded-none bg-indigo-50/80 sm:bg-transparent flex-shrink-0 transition-transform hover:scale-105"
                     style="color: var(--emp-primary, #4F46E5);">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -434,16 +428,14 @@
                         $bairro = trim((string)($row['bairro'] ?? ''));
                         $descricao = (string)($row['descricao'] ?? $row['observacao'] ?? $row['observacoes'] ?? $row['itens'] ?? 'Sem descrição adicional');
                 ?>
-                        <div class="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col justify-between h-full relative overflow-hidden hover-card">
-                            <!-- Borda Superior Colorida -->
-                            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#E94E00] to-[#FFD400]"></div>
-
+                        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col justify-between h-full relative overflow-hidden hover-card">
                             <div>
-                                <div class="flex items-center justify-between mb-4 mt-2">
+                                <div class="flex items-center justify-between mb-4">
                                     <h3 class="text-lg font-bold text-slate-900 truncate pr-4" title="<?= htmlspecialchars($nomeCliente, ENT_QUOTES, 'UTF-8') ?>">
                                         <?= htmlspecialchars($nomeCliente, ENT_QUOTES, 'UTF-8') ?>
                                     </h3>
-                                    <span class="bg-[#E94E00]/10 text-[#E94E00] text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                                    <span class="text-xs font-bold px-3 py-1 rounded-full border whitespace-nowrap"
+                                        style="background-color: var(--emp-primary-light, #EEF2FF); color: var(--emp-primary, #4F46E5); border-color: var(--emp-primary-light-border, #C7D2FE);">
                                         R$ <?= htmlspecialchars($precoFormatado, ENT_QUOTES, 'UTF-8') ?>
                                     </span>
                                 </div>
@@ -478,7 +470,9 @@
                             </div>
 
                             <div class="mt-6 pt-5 border-t border-slate-100">
-                                <button type="button" class="btn-delivered w-full flex items-center justify-center gap-2 bg-[#E94E00] hover:bg-[#c63f00] text-white font-bold text-sm px-4 py-3 rounded-2xl transition shadow-md hover:scale-[1.02]" data-id="<?= htmlspecialchars($idPedido, ENT_QUOTES, 'UTF-8') ?>">
+                                <button type="button"
+                                    class="btn-delivered btn-emp-primary w-full flex items-center justify-center gap-2 font-bold text-sm px-4 py-3 rounded-2xl transition-all hover:scale-[1.02] active:scale-95"
+                                    data-id="<?= htmlspecialchars($idPedido, ENT_QUOTES, 'UTF-8') ?>">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                     </svg>
@@ -490,7 +484,7 @@
                     }
                 } else {
                     ?>
-                    <div class="col-span-full flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-100 shadow-sm p-12 text-center">
+                    <div class="col-span-full flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-200/80 shadow-sm p-12 text-center">
                         <div class="bg-slate-50 p-6 rounded-full mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -554,7 +548,7 @@
 
                 // Feedback visual de carregamento
                 const originalText = btn.innerHTML;
-                btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processando...';
+                btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processando...';
                 btn.disabled = true;
 
                 fetch('<?= BASE_URL ?>/routes.php?action=concluirEntrega', {
@@ -604,33 +598,6 @@
             }, 300);
         });
 
-        // Script da Sidebar Mobile
-        const menuBtn = document.getElementById('hamburger');
-        const sidebar = document.getElementById('sidebar');
-        const closeSidebar = document.getElementById('closeSidebar');
-        const overlay = document.getElementById('overlay');
-
-        if (menuBtn && sidebar && overlay) {
-            menuBtn.addEventListener('click', () => {
-                sidebar.classList.add('mobile-open');
-                overlay.classList.add('active');
-            });
-        }
-
-        if (closeSidebar && sidebar && overlay) {
-            closeSidebar.addEventListener('click', () => {
-                sidebar.classList.remove('mobile-open');
-                overlay.classList.remove('active');
-            });
-        }
-
-        if (overlay && sidebar) {
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('mobile-open');
-                overlay.classList.remove('active');
-            });
-        }
-
         <?php if ($precisaSincronizarSidebar): ?>
         // Sincroniza nome do entregador, foto e dados da empresa a partir do perfil
         (function sincronizarDadosSidebarEntregador() {
@@ -645,6 +612,14 @@
                     const localLogo = document.getElementById('sidebarEmpresaLogo');
                     if (remoteLogo && remoteLogo.src && localLogo && !remoteLogo.src.includes('LogoGuiar') && !remoteLogo.src.includes('LogoPreto') && !remoteLogo.src.includes('logoIcon')) {
                         localLogo.src = remoteLogo.src;
+                        window.GUIAR_EMPRESA_LOGO = remoteLogo.src;
+
+                        const oldScript = document.querySelector('script[src*="empresa-palette.js"]');
+                        if (oldScript) {
+                            const freshScript = document.createElement('script');
+                            freshScript.src = oldScript.src.split('?')[0] + '?v=' + Date.now();
+                            document.body.appendChild(freshScript);
+                        }
                     }
 
                     const remoteTitle = remoteSidebar.querySelector('#sidebarEmpresaNome, p.font-extrabold');
@@ -681,13 +656,11 @@
         <?php endif; ?>
     </script>
 
-    <?php if (!empty($logoEmpresaSidebar) && strpos($logoEmpresaSidebar, 'LogoPreto.png') === false && strpos($logoEmpresaSidebar, 'logoIcon.png') === false): ?>
     <!-- INTEGRAÇÃO COM A PALETA DINÂMICA DA EMPRESA -->
     <script>
         window.GUIAR_EMPRESA_LOGO = <?= json_encode($logoEmpresaSidebar) ?>;
     </script>
     <script src="<?= BASE_URL ?>/public/js/empresa-palette.js"></script>
-    <?php endif; ?>
 </body>
 
 </html>

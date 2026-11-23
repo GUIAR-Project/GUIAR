@@ -57,6 +57,17 @@
             font-family: 'Outfit', 'Inter', sans-serif;
         }
 
+        /* BOTÃO PRIMÁRIO NA PALETA DO PROJETO */
+        .btn-emp-primary {
+            background-color: var(--emp-primary, #4F46E5);
+            color: var(--emp-primary-contrast, #FFFFFF);
+            box-shadow: 0 8px 18px -4px var(--emp-primary-ring, rgba(79, 70, 229, 0.35));
+        }
+
+        .btn-emp-primary:hover {
+            background-color: var(--emp-primary-hover, #4338CA);
+        }
+
         /* COLORAÇÃO CLARA DA SIDEBAR */
         #sidebar {
             background-color: #FFFFFF !important;
@@ -80,28 +91,6 @@
         #sidebar .menu-item.active {
             background-color: var(--emp-primary, #4F46E5) !important;
             color: var(--emp-primary-contrast, #FFFFFF) !important;
-        }
-
-        /* SIDEBAR MOBILE */
-        @media (max-width: 768px) {
-            #sidebar {
-                transform: translateX(-100%);
-                transition: transform .3s cubic-bezier(0.4, 0, 0.2, 1);
-                border-radius: 0 !important;
-                top: 0 !important;
-                left: 0 !important;
-                margin: 0 !important;
-                height: 100vh !important;
-                width: 280px !important;
-            }
-
-            #sidebar.mobile-open {
-                transform: translateX(0);
-            }
-
-            #overlay.active {
-                display: block;
-            }
         }
 
         /* Scrollbar estilizada */
@@ -135,9 +124,6 @@
 </head>
 
 <body class="sidebar-page min-h-screen flex flex-col md:flex-row bg-[#f1f4fa] text-[#0F172A] overflow-x-hidden">
-
-    <!-- OVERLAY MOBILE -->
-    <div id="overlay" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden transition-opacity"></div>
 
     <?php
     if (session_status() === PHP_SESSION_NONE) {
@@ -227,17 +213,11 @@
     $nomeEmpresaSidebar = $nomeEmpresaResolvido !== '' ? $nomeEmpresaResolvido : 'GUIAR Entregas';
     ?>
 
-    <!-- SIDEBAR CLARA -->
+    <!-- SIDEBAR CLARA (DESKTOP) -->
     <aside id="sidebar"
-        class="w-72 bg-white flex flex-col fixed top-0 left-0 text-slate-700 z-50 transition-all rounded-none overflow-hidden h-screen border-r border-slate-200/80 shadow-sm">
+        class="hidden md:flex w-72 bg-white flex-col fixed top-0 left-0 text-slate-700 z-50 transition-all rounded-none overflow-hidden h-screen border-r border-slate-200/80 shadow-sm">
 
         <div class="flex flex-col h-full">
-
-            <!-- BOTÃO FECHAR MOBILE -->
-            <button id="closeSidebar"
-                class="absolute top-5 right-5 md:hidden text-slate-500 hover:text-slate-800 text-xl font-bold p-1 rounded-lg transition-colors z-50">
-                ✕
-            </button>
 
             <!-- LOGO DA EMPRESA -->
             <div class="px-6 pt-7 pb-4 mb-2 flex justify-start items-center gap-3">
@@ -334,16 +314,8 @@
         <!-- HEADER DA PÁGINA -->
         <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-4 md:px-8 py-4 flex items-center justify-between gap-4 sticky top-0 z-20">
             <div class="flex items-center gap-3.5 min-w-0 flex-1">
-                <!-- BOTÃO HAMBURGER MOBILE -->
-                <button id="hamburger"
-                    class="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex-shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
-
                 <!-- ÍCONE DA ABA -->
-                <div class="hidden sm:flex items-center justify-center flex-shrink-0 transition-transform hover:scale-105"
+                <div class="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto rounded-xl sm:rounded-none bg-indigo-50/80 sm:bg-transparent flex-shrink-0 transition-transform hover:scale-105"
                     style="color: var(--emp-primary, #4F46E5);">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -457,8 +429,9 @@
                     <div class="h-px bg-slate-100"></div>
 
                     <!-- Botão Editar -->
-                    <div class="flex items-center gap-3">
-                        <button id="openEditModalBtn" class="flex items-center gap-2 bg-[#E94E00] hover:bg-[#FFD400] hover:text-slate-900 text-white font-bold text-sm px-6 py-3 rounded-2xl transition shadow-md hover:scale-[1.02]">
+                    <div class="flex items-center justify-center gap-3">
+                        <button id="openEditModalBtn" type="button"
+                            class="btn-emp-primary flex items-center justify-center gap-2 font-bold text-sm px-6 py-3 rounded-2xl transition-all hover:scale-[1.02] active:scale-95">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
@@ -683,33 +656,6 @@
             }
         });
 
-        // Script da Sidebar Mobile
-        const menuBtn = document.getElementById('hamburger');
-        const sidebar = document.getElementById('sidebar');
-        const closeSidebar = document.getElementById('closeSidebar');
-        const overlay = document.getElementById('overlay');
-
-        if (menuBtn && sidebar && overlay) {
-            menuBtn.addEventListener('click', () => {
-                sidebar.classList.add('mobile-open');
-                overlay.classList.add('active');
-            });
-        }
-
-        if (closeSidebar && sidebar && overlay) {
-            closeSidebar.addEventListener('click', () => {
-                sidebar.classList.remove('mobile-open');
-                overlay.classList.remove('active');
-            });
-        }
-
-        if (overlay && sidebar) {
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('mobile-open');
-                overlay.classList.remove('active');
-            });
-        }
-
         <?php if ($precisaSincronizarEmpresa): ?>
         // Sincroniza logo e nome da empresa caso o controller desta rota não os tenha enviado
         (function sincronizarEmpresaSidebar() {
@@ -724,6 +670,14 @@
                     const localLogo = document.getElementById('sidebarEmpresaLogo');
                     if (remoteLogo && remoteLogo.src && localLogo && !remoteLogo.src.includes('LogoGuiar') && !remoteLogo.src.includes('LogoPreto')) {
                         localLogo.src = remoteLogo.src;
+                        window.GUIAR_EMPRESA_LOGO = remoteLogo.src;
+
+                        const oldScript = document.querySelector('script[src*="empresa-palette.js"]');
+                        if (oldScript) {
+                            const freshScript = document.createElement('script');
+                            freshScript.src = oldScript.src.split('?')[0] + '?v=' + Date.now();
+                            document.body.appendChild(freshScript);
+                        }
                     }
 
                     const remoteTitle = remoteSidebar.querySelector('p.font-extrabold, .empresa-nome');
@@ -737,13 +691,11 @@
         <?php endif; ?>
     </script>
 
-    <?php if (!empty($logoEmpresaSidebar) && strpos($logoEmpresaSidebar, 'LogoPreto.png') === false && strpos($logoEmpresaSidebar, 'logoIcon.png') === false): ?>
     <!-- INTEGRAÇÃO COM A PALETA DINÂMICA DA EMPRESA -->
     <script>
         window.GUIAR_EMPRESA_LOGO = <?= json_encode($logoEmpresaSidebar) ?>;
     </script>
     <script src="<?= BASE_URL ?>/public/js/empresa-palette.js"></script>
-    <?php endif; ?>
 </body>
 
 </html>
