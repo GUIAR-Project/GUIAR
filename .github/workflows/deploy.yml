@@ -1,29 +1,45 @@
 name: Deploy Serv00
 
-# 1o deploy em producao: MANUAL (workflow_dispatch), para voce confirmar
-# nomes das Variables/Secrets e detalhes do Serv00. Apos um deploy manual
-# bem-sucedido, descomente o bloco workflow_run abaixo para tornar automatico
-# (roda sempre que o workflow "Testes do GUIAR" passar no master).
+# Dispara automaticamente quando o workflow "Testes do GUIAR" conclui
+# no master. O job `deploy` só avança se a conclusão for 'success'.
+# Também pode ser disparado manualmente (workflow_dispatch) para um
+# deploy pontual sem aguardar o CI — útil para o primeiro deploy.
 on:
+  workflow_run:
+    workflows: ["Testes do GUIAR"]
+    types: [completed]
+    branches: [master]
   workflow_dispatch:
-  # workflow_run:
-  #   workflows: ["Testes do GUIAR"]
-  #   types: [completed]
-  #   branches: [master]
 
 permissions:
   contents: read
+  actions: read   # necessário para ler status/artefatos do workflow_run
 
 jobs:
   deploy:
+    name: Deploy no Serv00
     runs-on: ubuntu-latest
+
+    # Bloco de guarda: em workflow_run só executa se o CI passou.
+    # Em workflow_dispatch (manual) a condição é verdadeira e passa direto.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
     steps:
-      - name: Baixar codigo
+      # ------------------------------------------------------------------
+      # 1. CHECKOUT
+      # Em workflow_run usa o commit exato que passou no CI.
+      # Em workflow_dispatch usa o ref selecionado (padrão: master).
+      # ------------------------------------------------------------------
+      - name: Baixar código
         uses: actions/checkout@v4
         with:
-          # Em workflow_run usa o commit que passou no CI; em dispatch, o ref selecionado.
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
+      # ------------------------------------------------------------------
+      # 2. DEPENDÊNCIAS PHP (vendor atualizado pelo composer.lock)
+      # ------------------------------------------------------------------
       - name: Configurar PHP e Composer
         uses: shivammathur/setup-php@v2
         with:
@@ -32,102 +48,195 @@ jobs:
           tools: composer:v2
           coverage: none
 
-      - name: Instalar dependencias (vendor atualizado)
+      - name: Instalar dependências PHP
         run: composer install --no-interaction --no-progress --prefer-dist --optimize-autoloader
 
-      - name: Empacotar para envio (sem dev/credenciais/dump/Docker)
+      # ------------------------------------------------------------------
+      # 3. EMPACOTAR PARA PRODUÇÃO
+      # Exclui: dev, credenciais locais, dump SQL com dados reais,
+      # arquivos Docker (não usados no Serv00), testes, logs.
+      # Inclui: código, vendor (atualizado acima), database/migrations.
+      # ------------------------------------------------------------------
+      - name: Empacotar para produção
         shell: bash
         run: |
           set -euo pipefail
           zip -r guiar-deploy.zip . \
-            -x './.git/*' '*/.git/*' \
-               './.github/*' '*/.github/*' \
-               './node_modules/*' '*/node_modules/*' \
-               './playwright-report/*' '*/playwright-report/*' \
-               './test-results/*' '*/test-results/*' \
-               './tests/*' '*/tests/*' \
-               './scratch/*' '*/scratch/*' \
-               './Prototipo_GUIAR/*' '*/Prototipo_GUIAR/*' \
-               './Documento_GUIAR*' '*/Documento_GUIAR*' \
-               './package.json' '*/package.json' \
-               './package-lock.json' '*/package-lock.json' \
-               './playwright.config.mjs' '*/playwright.config.mjs' \
-               './Dockerfile' '*/Dockerfile' \
-               './docker-compose.yml' '*/docker-compose.yml' \
-               './.dockerignore' '*/.dockerignore' \
-               './.env' '*/.env' \
-               './guiartcc.sql' '*/guiartcc.sql' \
-               '*.log' '*/build.log' '*/up.log' \
+            -x './.git/*'               \
+               './.github/*'            \
+               './node_modules/*'       \
+               './playwright-report/*'  \
+               './test-results/*'       \
+               './tests/*'              \
+               './scratch/*'            \
+               './Prototipo_GUIAR/*'    \
+               './Documento_GUIAR*'     \
+               './package.json'         \
+               './package-lock.json'    \
+               './playwright.config.mjs' \
+               './Dockerfile'           \
+               './docker-compose.yml'   \
+               './.dockerignore'        \
+               './.env'                 \
+               './guiartcc.sql'         \
+               './dist/*'               \
+               '*.log'                  \
                './guiar-deploy.zip'
-          unzip -t guiar-deploy.zip >/dev/null
-          ls -la guiar-deploy.zip
+          unzip -t guiar-deploy.zip > /dev/null
+          echo "Pacote gerado: $(du -sh guiar-deploy.zip | cut -f1)"
 
-      - name: Configurar chave SSH e known_hosts
+      - name: Validar conteúdo do pacote
+        shell: bash
+        run: |
+          set -e
+          bad=$(unzip -l guiar-deploy.zip \
+            | grep -E '\.env$|guiartcc\.sql$|Dockerfile$|docker-compose\.yml$|\.log$' \
+            || true)
+          if [ -n "$bad" ]; then
+            echo "ERRO: pacote contém arquivos proibidos:" >&2
+            echo "$bad" >&2
+            exit 1
+          fi
+          echo "Pacote válido — sem .env, dump, Dockerfiles ou logs."
+
+      # ------------------------------------------------------------------
+      # 4. SSH — preparar chave e known_hosts
+      # ------------------------------------------------------------------
+      - name: Configurar chave SSH
         shell: bash
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SERV00_HOST: ${{ vars.SERV00_HOST }}
-          SERV00_PORT: ${{ vars.SERV00_PORT || '22' }}
+          SSH_HOST: ${{ vars.SSH_HOST }}
+          SSH_PORT: ${{ vars.SSH_PORT }}
         run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p "$SERV00_PORT" -H "$SERV00_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
-
-      - name: Enviar pacote ao Serv00 (SCP)
-        shell: bash
-        env:
-          SERV00_HOST: ${{ vars.SERV00_HOST }}
-          SERV00_USER: ${{ vars.SERV00_USER }}
-          SERV00_PORT: ${{ vars.SERV00_PORT || '22' }}
-        run: scp -P "$SERV00_PORT" guiar-deploy.zip "$SERV00_USER@$SERV00_HOST:guiar-deploy.zip"
-
-      - name: Publicar arquivos + migrations (migrate-then-deploy)
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ vars.SERV00_HOST }}
-          username: ${{ vars.SERV00_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ vars.SERV00_PORT || '22' }}
-          script_stop: true
-          envs: REMOTE_PATH,DB_NAME,DB_HOST,DB_USER,DB_PASS
-          script: |
-            bash <<'EOF'
-            set -euo pipefail
-            STAGE="$(mktemp -d)"
-            unzip -o guiar-deploy.zip -d "$STAGE" >/dev/null
-            # 1) Migrations ANTES do codigo (schema aditivo/backward-compatible).
-            #    Se falhar, o app segue no ar com o codigo antigo.
-            for m in "$STAGE/database/migrations/"*.sql; do
-              [ -e "$m" ] || continue
-              mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < "$m"
-            done
-            # 2) Publica o codigo preservando config.php e public/uploads do servidor
-            rm -f "$STAGE/config.php"
-            rm -rf "$STAGE/public/uploads"
-            rm -rf "$STAGE/.env" "$STAGE/guiartcc.sql" "$STAGE/Dockerfile" "$STAGE/docker-compose.yml" "$STAGE/.dockerignore"
-            mkdir -p "$REMOTE_PATH"
-            cp -Rp "$STAGE/." "$REMOTE_PATH/"
-            # 3) Limpeza
-            rm -rf "$STAGE" guiar-deploy.zip
-            echo "Deploy concluido no servidor."
-            EOF
-        env:
-          REMOTE_PATH: ${{ vars.SERV00_REMOTE_PATH }}
-          DB_NAME: ${{ vars.SERV00_DB_NAME || 'guiartcc' }}
-          DB_HOST: ${{ vars.SERV00_DB_HOST || 'localhost' }}
-          DB_USER: ${{ secrets.SERV00_DB_USER }}
-          DB_PASS: ${{ secrets.SERV00_DB_PASSWORD }}
-
-      - name: Health check
-        shell: bash
-        env:
-          PUBLIC_URL: ${{ vars.SERV00_PUBLIC_URL }}
-        run: |
-          if [ -z "$PUBLIC_URL" ]; then
-            echo "SERV00_PUBLIC_URL nao definido - pulando health check."
-            exit 0
-          fi
           set -euo pipefail
-          curl --fail --silent --max-time 30 "$PUBLIC_URL" >/dev/null
-          echo "Health check OK: $PUBLIC_URL respondeu 2xx."
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          # Registra o fingerprint do servidor para evitar prompt interativo
+          ssh-keyscan -p "${SSH_PORT:-22}" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          cat >> ~/.ssh/config <<CFG
+          Host serv00
+            HostName $SSH_HOST
+            User ${{ vars.SSH_USERNAME }}
+            Port ${SSH_PORT:-22}
+            IdentityFile ~/.ssh/id_deploy
+            StrictHostKeyChecking yes
+            BatchMode yes
+          CFG
+
+      # ------------------------------------------------------------------
+      # 5. ENVIAR PACOTE AO SERV00 (SCP)
+      # ------------------------------------------------------------------
+      - name: Enviar pacote ao Serv00
+        shell: bash
+        run: |
+          set -euo pipefail
+          scp -F ~/.ssh/config guiar-deploy.zip serv00:~/guiar-deploy.zip
+          echo "Pacote enviado."
+
+      # ------------------------------------------------------------------
+      # 6. DEPLOY REMOTO
+      # Ordem: migrations → publicar código → limpeza
+      # Preserva: config.php e public/uploads/ do servidor
+      # ------------------------------------------------------------------
+      - name: Executar deploy e migrations no Serv00
+        uses: appleboy/ssh-action@v1
+        env:
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DB_HOST:     ${{ vars.DB_HOST }}
+          DB_NAME:     ${{ vars.DB_NAME }}
+          DB_USER:     ${{ secrets.DB_USER }}
+          DB_PASS:     ${{ secrets.DB_PASSWORD }}
+        with:
+          host:            ${{ vars.SSH_HOST }}
+          username:        ${{ vars.SSH_USERNAME }}
+          key:             ${{ secrets.SSH_PRIVATE_KEY }}
+          port:            ${{ vars.SSH_PORT }}
+          script_stop:     true
+          envs:            DEPLOY_PATH,DB_HOST,DB_NAME,DB_USER,DB_PASS
+          script: |
+            set -euo pipefail
+
+            # --- Preparar diretório de stage ---
+            STAGE="$(mktemp -d)"
+            trap 'rm -rf "$STAGE" ~/guiar-deploy.zip' EXIT
+
+            unzip -o ~/guiar-deploy.zip -d "$STAGE" > /dev/null
+            echo "Pacote extraído em $STAGE"
+
+            # --- 6a. Migrations (idempotentes: IF NOT EXISTS) ---
+            # Executadas ANTES de publicar o código.
+            # Se falhar, o deploy é abortado e o código antigo continua no ar.
+            if [ -n "${DB_USER:-}" ] && [ -n "${DB_PASS:-}" ]; then
+              echo "Aplicando migrations..."
+              for sql_file in "$STAGE/database/migrations/"*.sql; do
+                [ -f "$sql_file" ] || continue
+                echo "  -> $(basename "$sql_file")"
+                mysql \
+                  -h "${DB_HOST:-localhost}" \
+                  -u "$DB_USER" \
+                  -p"$DB_PASS" \
+                  "${DB_NAME:-guiartcc}" \
+                  < "$sql_file"
+              done
+              echo "Migrations concluídas."
+            else
+              echo "AVISO: DB_USER ou DB_PASS não definidos — migrations puladas."
+              echo "       Defina os secrets DB_USER e DB_PASSWORD para aplicar migrations automaticamente."
+            fi
+
+            # --- 6b. Remover do stage o que NÃO deve sobrescrever no servidor ---
+            # config.php: contém credenciais reais do banco no Serv00
+            rm -f "$STAGE/config.php"
+            # public/uploads: arquivos enviados por usuários (logos, fotos)
+            rm -rf "$STAGE/public/uploads"
+
+            # --- 6c. Garantir que o diretório de destino existe ---
+            mkdir -p "$DEPLOY_PATH"
+            mkdir -p "$DEPLOY_PATH/public/uploads/empresas"
+            mkdir -p "$DEPLOY_PATH/public/uploads/entregadores"
+
+            # --- 6d. Publicar (rsync-style com cp) ---
+            # cp -Rp copia todos os arquivos do stage sem apagar os que
+            # já existem no destino mas não estão no pacote (ex.: uploads).
+            cp -Rp "$STAGE/." "$DEPLOY_PATH/"
+            echo "Arquivos publicados em $DEPLOY_PATH"
+
+            echo "Deploy concluído com sucesso."
+
+      # ------------------------------------------------------------------
+      # 7. HEALTH CHECK
+      # Verifica se a aplicação está respondendo após o deploy.
+      # Falha o job se a URL não responder HTTP 2xx em até ~90 s.
+      # ------------------------------------------------------------------
+      - name: Verificar aplicação após deploy
+        shell: bash
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APP_URL:-}" ]; then
+            echo "ERRO: a variável APP_URL não está definida." >&2
+            echo "      Cadastre APP_URL em Settings → Variables para habilitar o health check." >&2
+            exit 1
+          fi
+          echo "Verificando $APP_URL ..."
+          ok=0
+          for attempt in $(seq 1 6); do
+            http_status=$(curl --silent --output /dev/null \
+              --write-out '%{http_code}' \
+              --max-time 15 "$APP_URL" || true)
+            if [[ "$http_status" =~ ^2 ]]; then
+              echo "Health check OK: HTTP $http_status (tentativa $attempt)"
+              ok=1
+              break
+            fi
+            echo "Tentativa $attempt/6 — HTTP $http_status. Aguardando 15s..."
+            sleep 15
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo "FALHA: aplicação não respondeu com HTTP 2xx após 6 tentativas." >&2
+            exit 1
+          fi
