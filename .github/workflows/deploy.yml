@@ -115,7 +115,8 @@ jobs:
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
           # Registra o fingerprint do servidor para evitar prompt interativo
-          ssh-keyscan -p "${SSH_PORT:-22}" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          # || true: evita abort se o servidor demorar (fingerprint nao critico aqui)
+          ssh-keyscan -p "${SSH_PORT:-22}" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
           cat >> ~/.ssh/config <<CFG
           Host serv00
             HostName $SSH_HOST
@@ -153,7 +154,8 @@ jobs:
           host:            ${{ vars.SSH_HOST }}
           username:        ${{ vars.SSH_USERNAME }}
           key:             ${{ secrets.SSH_PRIVATE_KEY }}
-          port:            ${{ vars.SSH_PORT }}
+          # SSH_PORT com default 22: evita string vazia se a Variable nao for definida
+          port:            ${{ vars.SSH_PORT || '22' }}
           script_stop:     true
           envs:            DEPLOY_PATH,DB_HOST,DB_NAME,DB_USER,DB_PASS
           script: |
@@ -198,10 +200,13 @@ jobs:
             mkdir -p "$DEPLOY_PATH/public/uploads/empresas"
             mkdir -p "$DEPLOY_PATH/public/uploads/entregadores"
 
-            # --- 6d. Publicar (rsync-style com cp) ---
-            # cp -Rp copia todos os arquivos do stage sem apagar os que
-            # já existem no destino mas não estão no pacote (ex.: uploads).
-            cp -Rp "$STAGE/." "$DEPLOY_PATH/"
+            # --- 6d. Publicar ---
+            # find + cp arquivo por arquivo: garante que arquivos ocultos
+            # (.htaccess etc.) sejam copiados corretamente no FreeBSD (Serv00),
+            # onde `cp -Rp dir/.` nao expande dotfiles como no Linux.
+            find "$STAGE" -mindepth 1 -maxdepth 1 | while IFS= read -r item; do
+              cp -Rp "$item" "$DEPLOY_PATH/"
+            done
             echo "Arquivos publicados em $DEPLOY_PATH"
 
             echo "Deploy concluído com sucesso."
