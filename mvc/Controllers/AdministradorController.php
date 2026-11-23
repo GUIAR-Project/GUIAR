@@ -178,6 +178,10 @@ class AdministradorController
         // Pedidos recentes (últimos 8)
         $pedidosRecentes = $pedidoModel->getRecent($company_id, 8);
 
+        // Dados reais das entregas para o gráfico
+        $entregasPorDiaSemana = $pedidoModel->getDeliveryChartData($company_id, 7);
+        $entregasPorDiaMes = $pedidoModel->getDeliveryChartData($company_id, 30);
+
         // Entregadores com contagem de entregas (top 5)
         $entregadoresComContagem = $this->entregadorModel->getAllByEmpresaComContagem($company_id, 5);
         $totalEntregadores       = count($this->entregadorModel->getAllByEmpresa($company_id));

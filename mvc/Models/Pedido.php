@@ -212,6 +212,65 @@ class Pedido
     }
 
     /**
+     * Entregas concluídas agrupadas por dia para o gráfico do dashboard.
+     */
+    public function getDeliveryChartData($company_id, $days = 7)
+    {
+        $days = (int)$days;
+        if (!in_array($days, [7, 30], true)) {
+            $days = 7;
+        }
+
+        $timezone = new \DateTimeZone('America/Sao_Paulo');
+        $hoje = new \DateTimeImmutable('now', $timezone);
+        $inicio = $hoje->setTime(0, 0, 0)->modify('-' . ($days - 1) . ' days');
+        $fim = $hoje->setTime(0, 0, 0)->modify('+1 day');
+
+        $dados = [];
+        for ($data = $inicio; $data <= $hoje; $data = $data->modify('+1 day')) {
+            $dados[$data->format('Y-m-d')] = 0;
+        }
+
+        try {
+            $sql = "SELECT DATE(COALESCE(p.entregue_em, v.concluido_em)) AS dia,
+                           COUNT(DISTINCT p.id_pedido) AS total
+                    FROM pedido p
+                    LEFT JOIN entrega_viagem v ON v.id_pedido = p.id_pedido
+                    WHERE p.id_empresa = :company_id
+                      AND p.status = 'entregue'
+                      AND COALESCE(p.entregue_em, v.concluido_em) IS NOT NULL
+                      AND COALESCE(p.entregue_em, v.concluido_em) >= :inicio
+                      AND COALESCE(p.entregue_em, v.concluido_em) < :fim
+                    GROUP BY DATE(COALESCE(p.entregue_em, v.concluido_em))
+                    ORDER BY dia";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([
+                ':company_id' => $company_id,
+                ':inicio' => $inicio->format('Y-m-d H:i:s'),
+                ':fim' => $fim->format('Y-m-d H:i:s'),
+            ]);
+
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $dia = (string)$row['dia'];
+                if (array_key_exists($dia, $dados)) {
+                    $dados[$dia] = (int)$row['total'];
+                }
+            }
+        } catch (PDOException $e) {
+            error_log("Erro ao buscar entregas por dia: " . $e->getMessage());
+        }
+
+        $resultado = [];
+        foreach ($dados as $dia => $total) {
+            $resultado[] = [
+                'dia' => $dia,
+                'total' => $total,
+            ];
+        }
+        return $resultado;
+    }
+
+    /**
      * Retorna os pedidos mais recentes com o nome do entregador associado.
      */
     public function getRecent($company_id, $limit = 8)

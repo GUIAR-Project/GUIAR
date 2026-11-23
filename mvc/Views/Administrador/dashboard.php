@@ -2,6 +2,37 @@
 <html lang="pt-BR">
 
 <head>
+    <?php
+    $totalClientesDashboard = 0;
+    $totalPedidosDashboard = 0;
+    $pedidosEntreguesDashboard = 0;
+    $taxaEntregaDashboard = 0.0;
+
+    if (isset($company_id) && isset($this->pdo)) {
+        try {
+            $stmtMetricasDashboard = $this->pdo->prepare(
+                "SELECT
+                    COUNT(DISTINCT NULLIF(TRIM(nome_cliente), '')) AS total_clientes,
+                    COUNT(*) AS total_pedidos,
+                    SUM(CASE WHEN LOWER(status) = 'entregue' THEN 1 ELSE 0 END) AS total_entregues
+                 FROM pedido
+                 WHERE id_empresa = :company_id"
+            );
+            $stmtMetricasDashboard->execute([':company_id' => (int)$company_id]);
+            $metricasDashboard = $stmtMetricasDashboard->fetch(\PDO::FETCH_ASSOC) ?: [];
+
+            $totalClientesDashboard = (int)($metricasDashboard['total_clientes'] ?? 0);
+            $totalPedidosDashboard = (int)($metricasDashboard['total_pedidos'] ?? 0);
+            $pedidosEntreguesDashboard = (int)($metricasDashboard['total_entregues'] ?? 0);
+            $taxaEntregaDashboard = $totalPedidosDashboard > 0
+                ? round(($pedidosEntreguesDashboard / $totalPedidosDashboard) * 100, 1)
+                : 0.0;
+        } catch (\PDOException $e) {
+            error_log('Erro ao carregar metricas dos cards do dashboard: ' . $e->getMessage());
+        }
+    }
+    ?>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | GUIAR</title>
@@ -804,47 +835,31 @@
                     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-6">
                         <div class="flex items-center justify-between">
                             <h3 class="text-sm font-extrabold text-slate-900">Entregas por dia</h3>
-                            <select class="bg-[#F8FAFC] border border-slate-200 text-[10px] font-bold text-slate-600 rounded-xl px-2 py-1 outline-none">
-                                <option>Esta semana</option>
-                                <option>Este mês</option>
+                            <select id="deliveryChartPeriod" class="bg-[#F8FAFC] border border-slate-200 text-[10px] font-bold text-slate-600 rounded-xl px-2 py-1 outline-none">
+                                <option value="week">Esta semana</option>
+                                <option value="month">Este mês</option>
                             </select>
                         </div>
 
-                        <!-- Gráfico Linear Desenhado em SVG de Alta Qualidade -->
-                        <div class="relative py-2">
-                            <svg viewBox="0 0 300 130" class="w-full h-auto">
+                        <div class="relative py-2" id="deliveryChartContainer">
+                            <svg id="deliveryChart" viewBox="0 0 300 130" class="w-full h-auto" role="img" aria-label="Gráfico de entregas por dia">
                                 <defs>
                                     <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="0%" stop-color="#4F46E5" stop-opacity="0.15" />
                                         <stop offset="100%" stop-color="#4F46E5" stop-opacity="0" />
                                     </linearGradient>
                                 </defs>
-                                <!-- Grid Lines -->
-                                <line x1="0" y1="10" x2="300" y2="10" stroke="#F1F5F9" stroke-dasharray="2 2" stroke-width="1" />
-                                <line x1="0" y1="40" x2="300" y2="40" stroke="#F1F5F9" stroke-dasharray="2 2" stroke-width="1" />
-                                <line x1="0" y1="70" x2="300" y2="70" stroke="#F1F5F9" stroke-dasharray="2 2" stroke-width="1" />
-                                <line x1="0" y1="100" x2="300" y2="100" stroke="#F1F5F9" stroke-width="1" />
-
-                                <!-- Gradiente de Preenchimento -->
-                                <path d="M 0 100 L 0 55 Q 25 50 50 65 T 100 35 T 150 45 T 200 65 T 250 35 T 300 45 L 300 100 Z" fill="url(#chartGradient)" />
-
-                                <!-- Linha do Gráfico -->
-                                <path d="M 0 55 Q 25 50 50 65 T 100 35 T 150 45 T 200 65 T 250 35 T 300 45" fill="none" stroke="#4F46E5" stroke-width="2.5" />
-
-                                <!-- Marcadores -->
-                                <circle cx="100" cy="35" r="4.5" fill="#4F46E5" stroke="#FFFFFF" stroke-width="1.5" />
-                                <circle cx="250" cy="35" r="4.5" fill="#4F46E5" stroke="#FFFFFF" stroke-width="1.5" />
-
-                                <!-- Tooltip Mockup -->
-                                <g transform="translate(75, -5)">
-                                    <rect x="0" y="0" width="60" height="24" rx="6" fill="#0F172A" />
-                                    <text x="30" y="10" fill="#FFFFFF" font-size="7" font-weight="bold" text-anchor="middle">Qua, 15/05</text>
-                                    <text x="30" y="18" fill="#FFD400" font-size="7" font-weight="extrabold" text-anchor="middle">75 entregas</text>
+                                <g id="deliveryChartGrid"></g>
+                                <path id="deliveryChartArea" fill="url(#chartGradient)" />
+                                <path id="deliveryChartLine" fill="none" stroke="#F23B61" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                <g id="deliveryChartMarkers"></g>
+                                <g id="deliveryChartTooltip" class="hidden">
+                                    <rect id="deliveryChartTooltipBox" x="0" y="0" width="68" height="28" rx="6" fill="#0F172A" />
+                                    <text id="deliveryChartTooltipDate" x="34" y="10" fill="#FFFFFF" font-size="7" font-weight="bold" text-anchor="middle"></text>
+                                    <text id="deliveryChartTooltipValue" x="34" y="20" fill="#FFD400" font-size="7" font-weight="extrabold" text-anchor="middle"></text>
                                 </g>
                             </svg>
-                            <div class="flex justify-between text-[9px] text-slate-400 font-bold mt-2 uppercase px-1">
-                                <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
-                            </div>
+                            <div id="deliveryChartLabels" class="flex justify-between gap-1 text-[8px] text-slate-400 font-bold mt-2 uppercase px-1"></div>
                         </div>
 
                     </div>
@@ -903,12 +918,9 @@
                     </div>
                     <div>
                         <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Total de Clientes</p>
-                        <h4 class="text-xl font-black text-slate-900 mt-1">5.423</h4>
-                        <span class="text-[10px] font-bold text-emerald-500 flex items-center gap-0.5 mt-0.5">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                            </svg>
-                            10% <span class="text-slate-400 font-medium">vs mês passado</span>
+                        <h4 class="text-xl font-black text-slate-900 mt-1"><?= number_format($totalClientesDashboard, 0, ',', '.') ?></h4>
+                        <span class="text-[10px] font-medium text-slate-400 mt-0.5">
+                            clientes distintos com pedidos
                         </span>
                     </div>
                 </div>
@@ -922,12 +934,9 @@
                     </div>
                     <div>
                         <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Taxa de Entrega</p>
-                        <h4 class="text-xl font-black text-slate-900 mt-1">96.2%</h4>
-                        <span class="text-[10px] font-bold text-emerald-500 flex items-center gap-0.5 mt-0.5">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                            </svg>
-                            2.5% <span class="text-slate-400 font-medium">vs mês passado</span>
+                        <h4 class="text-xl font-black text-slate-900 mt-1"><?= number_format($taxaEntregaDashboard, 1, ',', '.') ?>%</h4>
+                        <span class="text-[10px] font-medium text-slate-400 mt-0.5">
+                            <?= $pedidosEntreguesDashboard ?> de <?= $totalPedidosDashboard ?> pedidos
                         </span>
                     </div>
                 </div>
@@ -1373,6 +1382,151 @@
         window.GUIAR_EMPRESA_LOGO = <?= json_encode($logoEmpresaDashboard) ?>;
     </script>
     <script src="<?= BASE_URL ?>/public/js/empresa-palette.js"></script>
+    <script>
+        (function () {
+            const chartData = {
+                week: <?= json_encode($entregasPorDiaSemana, JSON_UNESCAPED_UNICODE) ?>,
+                month: <?= json_encode($entregasPorDiaMes, JSON_UNESCAPED_UNICODE) ?>
+            };
+
+            const svg = document.getElementById('deliveryChart');
+            const line = document.getElementById('deliveryChartLine');
+            const area = document.getElementById('deliveryChartArea');
+            const grid = document.getElementById('deliveryChartGrid');
+            const markers = document.getElementById('deliveryChartMarkers');
+            const labels = document.getElementById('deliveryChartLabels');
+            const tooltip = document.getElementById('deliveryChartTooltip');
+            const tooltipBox = document.getElementById('deliveryChartTooltipBox');
+            const tooltipDate = document.getElementById('deliveryChartTooltipDate');
+            const tooltipValue = document.getElementById('deliveryChartTooltipValue');
+            const periodSelect = document.getElementById('deliveryChartPeriod');
+            if (!svg || !line || !area || !grid || !markers || !labels || !tooltip || !periodSelect) return;
+
+            const ns = 'http://www.w3.org/2000/svg';
+            const left = 12;
+            const right = 288;
+            const top = 10;
+            const bottom = 100;
+
+            function smoothPath(points) {
+                if (!points.length) return '';
+                if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+                let path = `M ${points[0].x} ${points[0].y}`;
+                for (let i = 0; i < points.length - 1; i++) {
+                    const p0 = points[i - 1] || points[i];
+                    const p1 = points[i];
+                    const p2 = points[i + 1];
+                    const p3 = points[i + 2] || p2;
+                    const cp1x = p1.x + (p2.x - p0.x) / 6;
+                    const cp1y = p1.y + (p2.y - p0.y) / 6;
+                    const cp2x = p2.x - (p3.x - p1.x) / 6;
+                    const cp2y = p2.y - (p3.y - p1.y) / 6;
+                    path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+                }
+                return path;
+            }
+
+            function formatDate(dateString) {
+                const date = new Date(dateString + 'T12:00:00');
+                return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+            }
+
+            function shortWeekday(dateString) {
+                const date = new Date(dateString + 'T12:00:00');
+                return date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+            }
+
+            function showTooltip(point, item) {
+                const boxWidth = 68;
+                let x = point.x - boxWidth / 2;
+                x = Math.max(2, Math.min(300 - boxWidth - 2, x));
+                let y = point.y - 38;
+                if (y < 2) y = point.y + 8;
+                tooltip.setAttribute('transform', `translate(${x}, ${y})`);
+                tooltip.classList.remove('hidden');
+                tooltipDate.textContent = formatDate(item.dia);
+                tooltipValue.textContent = `${item.total} ${item.total === 1 ? 'entrega' : 'entregas'}`;
+            }
+
+            function hideTooltip() {
+                tooltip.classList.add('hidden');
+            }
+
+            function render(period) {
+                const data = chartData[period] || [];
+                const maxValue = Math.max(1, ...data.map(item => item.total));
+                const step = data.length > 1 ? (right - left) / (data.length - 1) : 0;
+                const points = data.map((item, index) => ({
+                    x: data.length === 1 ? (left + right) / 2 : left + (step * index),
+                    y: bottom - ((item.total / maxValue) * (bottom - top)),
+                    item
+                }));
+
+                grid.replaceChildren();
+                [10, 40, 70, 100].forEach(y => {
+                    const lineGrid = document.createElementNS(ns, 'line');
+                    lineGrid.setAttribute('x1', '0');
+                    lineGrid.setAttribute('x2', '300');
+                    lineGrid.setAttribute('y1', String(y));
+                    lineGrid.setAttribute('y2', String(y));
+                    lineGrid.setAttribute('stroke', '#F1F5F9');
+                    lineGrid.setAttribute('stroke-width', '1');
+                    lineGrid.setAttribute('stroke-dasharray', y === 100 ? '0' : '2 2');
+                    grid.appendChild(lineGrid);
+                });
+
+                const path = smoothPath(points);
+                line.setAttribute('d', path);
+                area.setAttribute('d', points.length ? `${path} L ${points[points.length - 1].x} ${bottom} L ${points[0].x} ${bottom} Z` : '');
+
+                markers.replaceChildren();
+                points.forEach(point => {
+                    const circle = document.createElementNS(ns, 'circle');
+                    circle.setAttribute('cx', String(point.x));
+                    circle.setAttribute('cy', String(point.y));
+                    circle.setAttribute('r', '4');
+                    circle.setAttribute('fill', '#F23B61');
+                    circle.setAttribute('stroke', '#FFFFFF');
+                    circle.setAttribute('stroke-width', '1.5');
+                    circle.style.cursor = 'pointer';
+                    circle.addEventListener('mouseenter', () => showTooltip(point, point.item));
+                    circle.addEventListener('mouseleave', hideTooltip);
+                    circle.addEventListener('focus', () => showTooltip(point, point.item));
+                    circle.addEventListener('blur', hideTooltip);
+                    circle.setAttribute('tabindex', '0');
+                    markers.appendChild(circle);
+                });
+
+                labels.replaceChildren();
+                let labelIndexes = data.map((_, index) => index);
+                if (period === 'month' && data.length > 7) {
+                    labelIndexes = [0, 5, 10, 15, 20, 25, data.length - 1];
+                }
+                labelIndexes.forEach(index => {
+                    const item = data[index];
+                    if (!item) return;
+                    const span = document.createElement('span');
+                    span.textContent = period === 'week'
+                        ? shortWeekday(item.dia)
+                        : formatDate(item.dia);
+                    labels.appendChild(span);
+                });
+
+                if (points.length) {
+                    const destaque = points.reduce((maior, ponto) =>
+                        ponto.item.total > maior.item.total ? ponto : maior
+                    );
+                    if (destaque.item.total > 0) showTooltip(destaque, destaque.item);
+                    else hideTooltip();
+                } else {
+                    hideTooltip();
+                }
+            }
+
+            periodSelect.addEventListener('change', () => render(periodSelect.value));
+            render(periodSelect.value);
+        })();
+    </script>
 </body>
 
 </html>
