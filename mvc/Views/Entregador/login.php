@@ -11,6 +11,25 @@
   <link rel="stylesheet" href="<?= BASE_URL ?>/style/login.css">
   <link rel="Shortcut Icon" type="image/png" href="<?= BASE_URL ?>/img/logoIcon.png" class=" w-50 h-60 object-contain">
 
+  <style>
+    body > .flex-grow form input[name='email'] {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2358769f' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Cpath d='m3 7 9 6 9-6'/%3E%3C/svg%3E") !important;
+      background-repeat: no-repeat !important;
+      background-position: 16px center !important;
+      background-size: 22px !important;
+      padding-left: 50px !important;
+    }
+
+    body > .flex-grow form input[name='senha'] {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2358769f' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='10' width='16' height='11' rx='2'/%3E%3Cpath d='M8 10V7a4 4 0 0 1 8 0v3m-4 4v3'/%3E%3C/svg%3E") !important;
+      background-repeat: no-repeat !important;
+      background-position: 16px center !important;
+      background-size: 22px !important;
+      padding-left: 50px !important;
+      padding-right: 52px !important;
+    }
+  </style>
+
   <script>
     tailwind.config = {
       theme: {
@@ -147,8 +166,8 @@
               </svg>
             </div>
             <h2 class="login-form-title text-[1.8rem] font-bold text-gray-900 tracking-tight leading-none pt-2">
-  Login <br class="md:hidden"> <span class="block md:inline">Entregadores</span>
-</h2>
+              Login <br class="md:hidden"> <span class="block md:inline">Entregadores</span>
+            </h2>
           </div>
 
           <!-- Exibir mensagem de erro se houver -->
