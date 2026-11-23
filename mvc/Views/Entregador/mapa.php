@@ -377,12 +377,73 @@
         </a>
     </nav>
 
+    <!-- MODAL DE CONFIRMAÇÃO DE LOGOUT -->
+    <div id="logoutConfirmModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-2xl border border-slate-100 text-center space-y-5">
+            <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+            </div>
+            <div class="space-y-1.5">
+                <h3 class="heading-font text-xl font-extrabold text-slate-900">Sair da conta?</h3>
+                <p class="text-sm text-slate-500 font-medium">
+                    Tem certeza que deseja encerrar sua sessão? Você precisará entrar novamente para acompanhar suas entregas.
+                </p>
+            </div>
+            <div class="flex items-center gap-3 pt-1">
+                <button type="button" id="cancelLogoutBtn"
+                    class="flex-1 px-4 py-3 text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-2xl transition">
+                    Cancelar
+                </button>
+                <a id="confirmLogoutBtn" href="<?= BASE_URL ?>/routes.php?action=logoutEntregador"
+                    class="flex-1 px-4 py-3 text-sm font-bold text-white bg-rose-500 hover:bg-rose-600 rounded-2xl transition shadow-md shadow-rose-500/25 flex items-center justify-center">
+                    Sair
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts Leaflet -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
     <script src="https://rawgit.com/bbecquet/Leaflet.RotatedMarker/master/leaflet.rotatedMarker.js"></script>
 
     <script>
+        // Confirmação de logout
+        (function configurarConfirmacaoLogout() {
+            const logoutModal = document.getElementById('logoutConfirmModal');
+            const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+            const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+
+            if (!logoutModal || !cancelLogoutBtn || !confirmLogoutBtn) return;
+
+            document.querySelectorAll('a[href*="action=logoutEntregador"]').forEach(link => {
+                if (link.id === 'confirmLogoutBtn') return;
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    confirmLogoutBtn.href = this.getAttribute('href');
+                    logoutModal.classList.remove('hidden');
+                });
+            });
+
+            cancelLogoutBtn.addEventListener('click', () => {
+                logoutModal.classList.add('hidden');
+            });
+
+            logoutModal.addEventListener('click', (e) => {
+                if (e.target === logoutModal) {
+                    logoutModal.classList.add('hidden');
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !logoutModal.classList.contains('hidden')) {
+                    logoutModal.classList.add('hidden');
+                }
+            });
+        })();
+
         const PEDIDOS_MAPA_INICIAIS = <?= $pedidosMapaIniciaisJson ?>;
 
         function getEmpresaPrimaryColor() {
