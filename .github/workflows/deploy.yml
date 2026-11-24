@@ -123,19 +123,45 @@ jobs:
           rm /tmp/test_key
 
       # ------------------------------------------------------------------
-      # 5. ENVIAR PACOTE AO SERV00 (SCP via appleboy)
-      # Usa appleboy/scp-action para garantir processamento consistente da chave
+      # 5. ENVIAR PACOTE AO SERV00 (SCP nativo)
+      # Configuração manual mais robusta
       # ------------------------------------------------------------------
+      - name: Configurar SSH
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ vars.SSH_HOST }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          # Escrever chave
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          # Adicionar host ao known_hosts
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Testar conexão SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/id_ed25519 \
+              -o StrictHostKeyChecking=no \
+              -o BatchMode=yes \
+              ${{ vars.SSH_USERNAME }}@${{ vars.SSH_HOST }} \
+              "echo 'Conexão SSH OK'; hostname; whoami"
+
       - name: Enviar pacote ao Serv00
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ vars.SSH_HOST }}
-          username: ${{ vars.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ vars.SSH_PORT || '22' }}
-          source: "guiar-deploy.zip"
-          target: "~/"
-          strip_components: 0
+        shell: bash
+        run: |
+          set -euo pipefail
+          scp -i ~/.ssh/id_ed25519 \
+              -o StrictHostKeyChecking=no \
+              -o BatchMode=yes \
+              -P ${{ vars.SSH_PORT || '22' }} \
+              guiar-deploy.zip \
+              ${{ vars.SSH_USERNAME }}@${{ vars.SSH_HOST }}:~/guiar-deploy.zip
+          echo "✅ Pacote enviado com sucesso!"
 
       # ------------------------------------------------------------------
       # 6. DEPLOY REMOTO
