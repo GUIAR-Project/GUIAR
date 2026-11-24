@@ -112,8 +112,13 @@ jobs:
           set -euo pipefail
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          # Escrever a chave corretamente preservando quebras de linha
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
+          # Debug: verificar formato da chave
+          echo "Verificando chave SSH..."
+          head -n 1 ~/.ssh/id_deploy
+          wc -l ~/.ssh/id_deploy
           # Registra o fingerprint do servidor para evitar prompt interativo
           # || true: evita abort se o servidor demorar (fingerprint nao critico aqui)
           ssh-keyscan -p "${SSH_PORT:-22}" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
@@ -128,7 +133,18 @@ jobs:
           CFG
 
       # ------------------------------------------------------------------
-      # 5. ENVIAR PACOTE AO SERV00 (SCP)
+      # 5. TESTAR CONEXÃO SSH
+      # ------------------------------------------------------------------
+      - name: Testar conexão SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Testando conexão SSH..."
+          ssh -F ~/.ssh/config serv00 "echo 'Conexão SSH OK'; hostname; whoami"
+          echo "✅ SSH funcionando!"
+
+      # ------------------------------------------------------------------
+      # 6. ENVIAR PACOTE AO SERV00 (SCP)
       # ------------------------------------------------------------------
       - name: Enviar pacote ao Serv00
         shell: bash
@@ -138,7 +154,7 @@ jobs:
           echo "Pacote enviado."
 
       # ------------------------------------------------------------------
-      # 6. DEPLOY REMOTO
+      # 7. DEPLOY REMOTO
       # Ordem: migrations → publicar código → limpeza
       # Preserva: config.php e public/uploads/ do servidor
       # ------------------------------------------------------------------
@@ -212,7 +228,8 @@ jobs:
             echo "Deploy concluído com sucesso."
 
       # ------------------------------------------------------------------
-      # 7. HEALTH CHECK
+      # ------------------------------------------------------------------
+      # 8. HEALTH CHECK
       # Verifica se a aplicação está respondendo após o deploy.
       # Falha o job se a URL não responder HTTP 2xx em até ~90 s.
       # ------------------------------------------------------------------
