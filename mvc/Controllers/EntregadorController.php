@@ -260,6 +260,28 @@ class EntregadorController
         require_once __DIR__ . '/../Views/Entregador/mapa.php';
     }
 
+    /** Pedidos em aberto do entregador logado, em JSON (usado pelo mapa ao sincronizar e ao começar o percurso). */
+    public function apiPedidosMapa()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (!isset($_SESSION['entregador_id'])) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'Não autenticado']);
+            exit;
+        }
+
+        echo json_encode(
+            $this->buscarPedidosAtribuidosEntregador((int) $_SESSION['entregador_id']),
+            JSON_UNESCAPED_UNICODE
+        );
+        exit;
+    }
+
     private function buscarPedidosAtribuidosEntregador(int $entregadorId): array
     {
         try {
