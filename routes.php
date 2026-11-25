@@ -37,7 +37,7 @@ switch ($action) {
         header("Location: " . BASE_URL . "/index.html");
         break;
     case 'loginEmpresa':
-        $controller = new \mvc\Controllers\EmpresaController($pdo);
+        $controller = new \mvc\Controllers\AdministradorController($pdo);
         $controller->login();
         break;
 
@@ -74,9 +74,10 @@ switch ($action) {
         $controller = new \mvc\Controllers\EmpresaController($pdo);
         $controller->redefinirSenha();
         break;
+    case 'gerenciarAdms':
     case 'escolherAdm':
         $controller = new \mvc\Controllers\AdministradorController($pdo);
-        $controller->escolher();
+        $controller->gerenciar();
         break;
 
     case 'adicionarAdm':

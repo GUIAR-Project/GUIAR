@@ -535,7 +535,7 @@
             <!-- MENU DESKTOP -->
             <nav class="hidden md:flex items-center gap-12 font-semibold text-xl">
                 <a href="<?= BASE_URL ?>/index.html" class="text-white/90 hover:text-brand-yellow transition duration-300">Home</a>
-                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow underline decoration-2 underline-offset-4 transition duration-300">Empresa</a>
+                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow underline decoration-2 underline-offset-4 transition duration-300">Administrador</a>
                 <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90 hover:text-brand-yellow transition duration-300">Entregador</a>
             </nav>
 
@@ -551,7 +551,7 @@
         <div id="nav-menu" class="hidden w-full md:hidden pb-4">
             <div class="flex flex-col gap-4 text-lg font-semibold mt-4">
                 <a href="<?= BASE_URL ?>/index.html" class="text-white/90">Home</a>
-                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold">Empresa</a>
+                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold">Administrador</a>
                 <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90">Entregador</a>
             </div>
         </div>
@@ -627,7 +627,7 @@
 
                             <!-- Senha -->
                             <div>
-                                <label for="inputPassword4" class="block text-[0.85rem] font-medium text-gray-700 mb-1 ml-1">Senha</label>
+                                <label for="inputPassword4" class="block text-[0.85rem] font-medium text-gray-700 mb-1 ml-1">Senha do primeiro administrador</label>
                                 <input type="password" id="inputPassword4" name="senha" required
                                     class="w-full px-4 py-3 rounded-xl border border-brand-inputborder focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 transition-all text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                             </div>
@@ -643,10 +643,16 @@
 
                             <!-- Nome de Usuario -->
                             <div>
-                                <label for="inputAddress2" class="block text-[0.85rem] font-medium text-gray-700 mb-1 ml-1">Nome de Usuário</label>
-                                <input type="text" id="inputAddress2" name="nome_usuario"
+                                <label for="inputAddress2" class="block text-[0.85rem] font-medium text-gray-700 mb-1 ml-1">Usuário do primeiro administrador</label>
+                                <input type="text" id="inputAddress2" name="nome_usuario" required
                                     class="w-full px-4 py-3 rounded-xl border border-brand-inputborder focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 transition-all text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                             </div>
+                        </div>
+
+                        <div>
+                            <label for="nomeAdm" class="block text-[0.85rem] font-medium text-gray-700 mb-1 ml-1">Nome do primeiro administrador</label>
+                            <input type="text" id="nomeAdm" name="nome_adm" required
+                                class="w-full px-4 py-3 rounded-xl border border-brand-inputborder focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 transition-all text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                         </div>
 
                         <div class="cadastro-two-column">

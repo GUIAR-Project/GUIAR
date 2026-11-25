@@ -3,6 +3,7 @@
 namespace mvc\Controllers;
 
 use mvc\Models\Empresa;
+use mvc\Models\Administrador;
 use mvc\Services\EmailService;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -20,27 +21,7 @@ class EmpresaController
 
     public function login()
     {
-        if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            $nome_usuario = $_POST['username'] ?? '';
-            $senha = $_POST['password'] ?? '';
-
-            $empresa = $this->empresaModel->login($nome_usuario, $senha);
-
-            if ($empresa) {
-                $_SESSION['company_id'] = $empresa['id_empresa'];
-                header("Location: " . BASE_URL . "/routes.php?action=escolherAdm");
-                exit;
-            } else {
-                $erro = 'Nome de usuário ou senha incorretos';
-                // Redireciona com erro (usaremos o roteador)
-                header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa&erro=" . urlencode($erro));
-                exit();
-            }
-        }
-
-        // Se for GET, renderiza a View
-        $erro = $_GET['erro'] ?? null;
-        require_once __DIR__ . '/../Views/Empresa/login.php';
+        (new AdministradorController($this->pdo))->login();
     }
 
     public function termosUso()
@@ -120,10 +101,17 @@ class EmpresaController
     {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $nome_empresa = $_POST['nome_empresa'] ?? '';
+            $nome_adm = $_POST['nome_adm'] ?? '';
             $cnpj = $_POST['cnpj'] ?? '';
             $nome_usuario = $_POST['nome_usuario'] ?? '';
             $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
             $senha = $_POST['senha'] ?? '';
+
+            if (trim($nome_adm) === '' || trim($nome_usuario) === '' || $senha === '') {
+                $erro = 'Informe o nome, o usuário e a senha do primeiro administrador.';
+                require_once __DIR__ . '/../Views/Empresa/cadastro.php';
+                return;
+            }
 
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $erro = "E-mail inválido!";
@@ -155,6 +143,7 @@ class EmpresaController
 
             // Iniciar sessão para salvar temporariamente os dados do cadastro
             $_SESSION['nome_empresa'] = $nome_empresa;
+            $_SESSION['nome_adm_cadastro'] = $nome_adm;
             $_SESSION['cnpj'] = $cnpj;
             $_SESSION['nome_usuario'] = $nome_usuario;
             $_SESSION['email'] = $email;
@@ -299,12 +288,25 @@ class EmpresaController
                     'nome_arquivo' => $_SESSION['nome_imagem'] ?? ''
                 ];
 
-                if ($this->empresaModel->create($data)) {
+                $this->pdo->beginTransaction();
+                $empresaCriada = $this->empresaModel->create($data);
+                $empresaId = (int)$this->pdo->lastInsertId();
+                $administradorCriado = $empresaCriada && (new Administrador($this->pdo))->create([
+                    'nome_adm' => $_SESSION['nome_adm_cadastro'] ?? '',
+                    'nome_usuario' => $_SESSION['nome_usuario'] ?? '',
+                    'nome_foto' => '',
+                    'senha' => $_SESSION['senha'] ?? '',
+                    'company_id' => $empresaId
+                ]);
+
+                if ($administradorCriado) {
+                    $this->pdo->commit();
                     session_unset(); // Limpar a sessão após o sucesso
                     header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
                     exit();
                 } else {
-                    $erro = 'Erro ao cadastrar a empresa.';
+                    $this->pdo->rollBack();
+                    $erro = 'Erro ao cadastrar a empresa e o primeiro administrador.';
                     require_once __DIR__ . '/../Views/Empresa/verificarCodigo.php';
                 }
             } else {

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Administradores | GUIAR</title>
+  <title>Gerenciar Administradores | GUIAR</title>
   <link rel="Shortcut Icon" type="image/png" href="img/logoIcon.png" class=" w-50 h-60 object-contain">
 
   <!-- Scripts para os Modais funcionarem (jQuery e Bootstrap JS) -->
@@ -280,9 +280,9 @@
       <!-- TÍTULO -->
       <div>
         <h1 class="page-heading">
-          Administradores
+          Gerenciar administradores
         </h1>
-        <p class="page-subheading">Gerencie os administradores com acesso ao sistema.</p>
+        <p class="page-subheading">Cadastre e consulte os administradores da sua empresa.</p>
       </div>
 
       <!-- DIREITA: empresa + sino + logout -->
@@ -375,20 +375,19 @@
         </div>
 
 
-        <!-- Botão Logout -->
-        <button type="button" data-logout-trigger
+        <a href="<?= BASE_URL ?>/routes.php?action=dashboardAdm"
           class="border border-[#E2E8F0] text-[#475569] bg-white px-5 py-2.5 rounded-2xl text-sm font-bold shadow-sm hover:bg-[#F8FAFC] hover:text-[#0F172A] transition duration-200">
-          Logout
-        </button>
+          Voltar ao dashboard
+        </a>
 
       </div>
     </div>
   </header>
 
   <?php
-  $logoutAction = 'logoutEmpresa';
-  $logoutConfirmationTitle = 'Sair da conta da empresa?';
-  $logoutConfirmationMessage = 'Tem certeza de que deseja sair da conta da empresa?';
+  $logoutAction = 'logoutAdm';
+  $logoutConfirmationTitle = 'Sair da conta?';
+  $logoutConfirmationMessage = 'Tem certeza de que deseja sair da conta do administrador?';
   require __DIR__ . '/partials/logout-confirmation.php';
   ?>
 
@@ -469,30 +468,10 @@
                 </span>
               </div>
 
-              <!-- Ícone de 3 pontos decorativo (Igual ao layout de exemplo) -->
-              <button class="text-[#94A3B8] hover:text-[#64748B] transition p-1 -mt-1 flex-shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <circle cx="12" cy="5" r="1.5" />
-                  <circle cx="12" cy="12" r="1.5" />
-                  <circle cx="12" cy="19" r="1.5" />
-                </svg>
-              </button>
-
             </div>
 
             <!-- Divisor elegante -->
             <div class="border-t border-[#F1F5F9] my-5"></div>
-
-            <!-- Botão Entrar com estilo Outline roxo/azul premium -->
-            <div class="flex justify-center">
-              <button
-                class="w-[150px] py-2 border-2 border-[#4F46E5] text-[#4F46E5] hover:bg-[#4F46E5] hover:text-white rounded-2xl font-bold text-sm transition-all duration-200 text-center flex justify-center items-center bg-transparent cursor-pointer"
-                data-toggle="modal"
-                data-target="#loginModal"
-                data-username="<?= $nome_usuario ?>">
-                Entrar
-              </button>
-            </div>
 
           </div>
       <?php
@@ -512,42 +491,6 @@
     </div>
 
   </main>
-
-  <!-- ======= MODAL DE LOGIN ======= -->
-  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="loginModalLabel">Login do Administrador</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <form action="<?= BASE_URL ?>/routes.php?action=loginAdm" method="post" id="adminLoginForm">
-          <div class="modal-body">
-            <div class="form-group">
-              <label for="adminUsername">Nome de Usuário</label>
-              <input type="text" class="modal-input bg-slate-100 cursor-not-allowed" id="adminUsername" name="adminUsername" readonly>
-            </div>
-            <div class="form-group mt-3">
-              <label for="adminPassword">Senha</label>
-              <input type="password" class="modal-input" id="adminPassword" name="adminPassword" required placeholder="Digite sua senha">
-            </div>
-          </div>
-          <div class="modal-footer d-flex align-items-center justify-content-between">
-            <p id="error-message" class="mr-auto mb-0 text-red-600 font-bold text-xs" style="display: none;"></p>
-            <div class="flex items-center gap-2">
-              <button type="button" class="border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#475569] font-bold px-5 py-2.5 rounded-2xl text-sm transition mr-2" data-dismiss="modal">Cancelar</button>
-              <button type="submit"
-                class="bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold px-6 py-2.5 rounded-2xl text-sm transition duration-200 shadow-sm border-0 cursor-pointer">
-                Entrar
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
 
   <!-- ======= MODAL ADICIONAR ADMINISTRADOR ======= -->
   <div class="modal fade" id="addAdminModal" tabindex="-1" aria-labelledby="addAdminModalLabel" aria-hidden="true">
@@ -750,34 +693,6 @@
       if (empresaNomeDisplay) empresaNomeDisplay.textContent = localNome;
       if (empresaNomeInputCard) empresaNomeInputCard.value = localNome;
     }
-
-    // Preenche o campo de username ao abrir o modal de login
-    $('#loginModal').on('show.bs.modal', function(event) {
-      var button = $(event.relatedTarget);
-      var username = button.data('username');
-      var modal = $(this);
-      modal.find('.modal-body #adminUsername').val(username);
-    });
-
-    // Envio do formulário via AJAX para não recarregar a página desnecessariamente
-    $('#adminLoginForm').submit(function(event) {
-      event.preventDefault();
-      var form = $(this);
-      $.ajax({
-        type: form.attr('method'),
-        url: form.attr('action'),
-        data: form.serialize(),
-        success: function(response) {
-          response = response.trim();
-          if (response === 'success') {
-            window.location.href = '<?= BASE_URL ?>/routes.php?action=dashboardAdm';
-          } else {
-            $('#error-message').text('Senha incorreta. Tente novamente.').show();
-            document.getElementById('adminPassword').value = '';
-          }
-        }
-      });
-    });
 
     // Barra de Busca Inteligente em Tempo Real
     document.getElementById('searchInput').addEventListener('input', function() {

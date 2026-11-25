@@ -353,27 +353,13 @@
                     border-color: var(--emp-primary-light-border) !important;
                 }
 
-                /* Botão Entrar dos Cards */
-                .admin-card button[data-target="#loginModal"] {
-                    border-color: var(--emp-primary) !important;
-                    color: var(--emp-primary) !important;
-                    background-color: transparent !important;
-                    transition: all 0.2s ease !important;
-                }
-                .admin-card button[data-target="#loginModal"]:hover {
-                    background-color: var(--emp-primary) !important;
-                    color: var(--emp-primary-contrast) !important;
-                }
-
-                /* Botões Principais dos Modais (Login e Adicionar) */
-                #adminLoginForm button[type="submit"],
+                /* Botão de cadastro de administrador */
                 #addAdminModal button[type="submit"] {
                     background-color: var(--emp-primary) !important;
                     color: var(--emp-primary-contrast) !important;
                     border: none !important;
                     transition: all 0.2s ease !important;
                 }
-                #adminLoginForm button[type="submit"]:hover,
                 #addAdminModal button[type="submit"]:hover {
                     background-color: var(--emp-primary-hover) !important;
                 }
