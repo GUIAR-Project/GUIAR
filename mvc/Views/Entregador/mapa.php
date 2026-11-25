@@ -267,7 +267,7 @@
                     <div id="map"></div>
 
                     <!-- PAINEL DE PREVISÃO DE CHEGADA (estilo navegação) -->
-                    <div id="etaPainel" class="hidden absolute z-[1000] left-3 right-3 top-16 sm:left-4 sm:right-auto sm:w-[23rem] max-w-[calc(100%-1.5rem)] bg-white/95 backdrop-blur rounded-2xl shadow-xl border border-slate-200 px-5 py-4" role="status" aria-live="polite">
+                    <div id="etaPainel" class="hidden absolute z-[1000] left-3 right-3 top-16 sm:left-4 sm:right-auto sm:w-[23rem] max-w-[calc(100%-1.5rem)] bg-white/95 backdrop-blur rounded-2xl shadow-xl border border-slate-200 px-5 py-4" role="status" aria-live="polite" style="display: none;">
                         <div class="flex items-baseline gap-3">
                             <span id="etaTempo" class="heading-font text-3xl font-extrabold leading-none" style="color: var(--emp-primary, #4F46E5);"></span>
                             <span id="etaDistancia" class="text-base font-semibold text-slate-500"></span>
@@ -651,7 +651,6 @@
                             style="background-color: var(--emp-primary, #4F46E5);">
                             Entrega #${numero}
                         </span>
-                        <span class="text-[11px] font-bold text-slate-400">ID #${escapeHtml(key)}</span>
                     </div>
 
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Cliente</p>
@@ -661,9 +660,7 @@
                     <p class="text-xs font-medium text-slate-600 mb-3.5 leading-relaxed">${escapeHtml(pedido.endereco)}</p>
 
                     <button type="button" class="btn-concluir" data-id="${escapeHtml(key)}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                        </svg>
+
                         Concluir Entrega
                     </button>
                 </div>
@@ -867,8 +864,8 @@
                     : 'background-color: var(--emp-primary, #4F46E5); color: var(--emp-primary-contrast, #ffffff);';
 
                 var pillStyle = isProxima
-                    ? 'background-color: var(--emp-secondary-light, #FEF9C3); color: var(--emp-secondary-contrast, #0F172A); border-color: var(--emp-secondary, #FFD400);'
-                    : 'background-color: var(--emp-primary-light, #EEF2FF); color: var(--emp-primary, #4F46E5); border-color: var(--emp-primary-light-border, #C7D2FE);';
+                    ? 'background-color: var(--emp-secondary-light, #fdf16d); color: var(--emp-secondary-contrast, #0F172A); border-color: var(--emp-secondary, #FFD400);'
+                    : 'background-color: var(--emp-primary-light, rgb(154, 175, 245)); color: var(--emp-primary, #4F46E5); border-color: var(--emp-primary-light-border, #C7D2FE);';
 
                 var dotStyle = isProxima
                     ? 'background-color: var(--emp-secondary-contrast, #0F172A);'
