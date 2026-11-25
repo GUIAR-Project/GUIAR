@@ -891,7 +891,7 @@
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border flex-shrink-0"
                             style="${pillStyle}">
                             <span class="w-1.5 h-1.5 rounded-full ${isProxima ? 'animate-ping' : ''}" style="${dotStyle}"></span>
-                            <span>${isProxima ? 'Próxima parada' : 'Pendente'}</span>
+                            <span class="${isProxima ? 'text-red-600' : ''}">${isProxima ? 'Próxima parada' : 'Pendente'}</span>
                         </span>
                     </div>
 

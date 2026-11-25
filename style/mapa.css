@@ -35,39 +35,101 @@
         }
 
         /* CUSTOM MODERN POPUP */
-        .leaflet-popup-content-wrapper {
-            background: #ffffff !important;
-            border-radius: 18px !important;
-            box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.2), 0 4px 12px rgba(15, 23, 42, 0.08) !important;
-            border: 1px solid #edf2f7 !important;
-            padding: 0 !important;
-            overflow: hidden;
-        }
+.leaflet-popup {
+    margin-bottom: 14px !important;
+}
 
-        .leaflet-popup-content {
-            margin: 0 !important;
-            line-height: 1.45 !important;
-        }
+.leaflet-popup-content-wrapper {
+    background: #ffffff !important;
+    border-radius: 18px !important;
+    box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.2), 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+    border: 1px solid #edf2f7 !important;
+    padding: 0 !important;
+    overflow: hidden;
+    width: auto !important;
+    max-width: 290px !important;
+}
 
-        .leaflet-popup-tip {
-            background: #ffffff !important;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
-        }
+.leaflet-popup-content {
+    margin: 0 !important;
+    width: 268px !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    line-height: 1.45 !important;
+}
 
-        .leaflet-container a.leaflet-popup-close-button {
-            top: 10px !important;
-            right: 12px !important;
-            color: #94a3b8 !important;
-            font-size: 17px !important;
-            padding: 4px !important;
-            border-radius: 999px !important;
-            transition: all 0.2s ease;
-        }
+.leaflet-popup-content * {
+    box-sizing: border-box;
+}
 
-        .leaflet-container a.leaflet-popup-close-button:hover {
-            color: #0f172a !important;
-            background: #f1f5f9;
-        }
+.leaflet-popup-tip-container {
+    width: 24px;
+    height: 12px;
+    margin-left: -12px;
+}
+
+.leaflet-popup-tip {
+    width: 12px !important;
+    height: 12px !important;
+    margin: -6px auto 0 !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+    top: 10px !important;
+    right: 12px !important;
+    width: 24px !important;
+    height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #94a3b8 !important;
+    font-size: 17px !important;
+    line-height: 1 !important;
+    padding: 0 !important;
+    border-radius: 999px !important;
+    transition: all 0.2s ease;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+    color: #0f172a !important;
+    background: #f1f5f9;
+}
+
+.delivery-popup-card {
+    width: 100%;
+    padding: 16px;
+    font-family: 'Inter', sans-serif;
+}
+
+.delivery-popup-card .btn-concluir {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 12px;
+    background-color: var(--emp-primary, #4F46E5);
+    color: var(--emp-primary-contrast, #ffffff);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 16px -4px var(--emp-primary-ring, rgba(79, 70, 229, 0.35));
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.delivery-popup-card .btn-concluir:hover:not(:disabled) {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+.delivery-popup-card .btn-concluir:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
 
         /* MODERN MOTO MARKER */
         .moto-marker {
