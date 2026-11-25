@@ -196,6 +196,13 @@
               Entrar
             </button>
 
+            <!-- Link Esqueceu a Senha -->
+            <div class="text-center mt-4">
+              <a href="<?= BASE_URL ?>/routes.php?action=esqueceuSenhaEntregador" class="text-brand-link hover:text-blue-700 text-sm font-medium transition-colors">
+                Esqueceu sua senha?
+              </a>
+            </div>
+
           </form>
 
         </div>

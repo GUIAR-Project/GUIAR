@@ -183,6 +183,16 @@ switch ($action) {
         $controller->logout();
         break;
 
+    case 'esqueceuSenhaEntregador':
+        $controller = new \mvc\Controllers\EntregadorController($pdo);
+        $controller->esqueceuSenha();
+        break;
+
+    case 'redefinirSenhaEntregador':
+        $controller = new \mvc\Controllers\EntregadorController($pdo);
+        $controller->redefinirSenha();
+        break;
+
     case 'meusPedidosEntregador':
         $controller = new \mvc\Controllers\EntregadorController($pdo);
         $controller->meusPedidos();
