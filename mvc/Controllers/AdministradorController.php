@@ -308,20 +308,6 @@ class AdministradorController
         return isset($_SESSION['company_id'], $_SESSION['id_adm'], $_SESSION['nome_usuario']);
     }
 
-    public function simuladorGPS()
-    {
-        if (!$this->simuladorAdminAutenticado()) {
-            header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
-            exit;
-        }
-        if (empty($_SESSION['gps_simulator_csrf'])) {
-            $_SESSION['gps_simulator_csrf'] = bin2hex(random_bytes(32));
-        }
-        $entregadores = $this->entregadorModel->getAllByEmpresa((int)$_SESSION['company_id']);
-        $csrfToken = $_SESSION['gps_simulator_csrf'];
-        require __DIR__ . '/../Views/Administrador/simuladorGPS.php';
-    }
-
     public function apiSimuladorGPS()
     {
         header('Content-Type: application/json; charset=utf-8');
