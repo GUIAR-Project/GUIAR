@@ -404,7 +404,6 @@
 
     <!-- SCRIPT DO MAPA E CONTROLE DE ROTAS -->
     <script>
-        // Função auxiliar para capturar a cor primária da empresa em tempo real
         function getEmpresaPrimaryColor() {
             var val = getComputedStyle(document.documentElement).getPropertyValue('--emp-primary').trim();
             return val || '#4F46E5';
@@ -415,10 +414,89 @@
             return val || '#EEF2FF';
         }
 
-        // Paleta harmoniosa de rotas: primeiro elemento usa a cor primária da empresa
         function getRotasPalette() {
             var primary = getEmpresaPrimaryColor();
             return [primary, '#0d9488', '#8b5cf6', '#e11d48', '#f59e0b', '#0284c7', '#10b981'];
+        }
+
+        function parseCoord(value) {
+            if (value === null || value === undefined || value === '') return null;
+            var num = parseFloat(String(value).replace(',', '.'));
+            return Number.isFinite(num) ? num : null;
+        }
+
+        function isPedidoPendente(pedido) {
+            var status = String(pedido?.status ?? '').trim().toLowerCase();
+            return status !== 'entregue' && status !== 'cancelado';
+        }
+
+        function extrairListaEntregadores(payload) {
+            if (Array.isArray(payload)) return payload;
+            if (Array.isArray(payload?.entregadores)) return payload.entregadores;
+            if (Array.isArray(payload?.data)) return payload.data;
+            return [];
+        }
+
+        function formatarDuracaoTreino(segundos) {
+            if (segundos === null || segundos === undefined || segundos === '' || Number.isNaN(Number(segundos))) {
+                return '—';
+            }
+            var sec = Number(segundos);
+            if (sec < 60) return Math.round(sec) + 's';
+            var min = (sec / 60).toFixed(1).replace('.', ',');
+            return min + ' min';
+        }
+
+        function renderizarResumoTreinamentoNoContainer(container) {
+            var t = dadosTreinamentoCache;
+            if (!t) return;
+
+            var box = document.createElement('div');
+            box.id = 'mlTrainingSummaryCard';
+            box.className = 'rounded-2xl border border-slate-200/90 bg-slate-50/90 p-3.5 space-y-2.5';
+
+            var amostrasTexto = (t.amostras !== null && t.amostras !== undefined)
+                ? escHtml(t.amostras) + ' entregas'
+                : '—';
+            var erroMedioTexto = formatarDuracaoTreino(t.mae_segundos);
+            var precisaoTexto = (t.r2 !== null && t.r2 !== undefined && !Number.isNaN(Number(t.r2)))
+                ? (Number(t.r2) * 100).toFixed(1).replace('.', ',') + '%'
+                : '—';
+            var atualizadoTexto = t.treinado_em ? escHtml(t.treinado_em) : '—';
+
+            box.innerHTML = `
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                        Modelo de Duração (ML)
+                    </span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                        style="background-color: var(--emp-primary-light, #EEF2FF); color: var(--emp-primary, #4F46E5); border-color: var(--emp-primary-light-border, #C7D2FE);">
+                        ${escHtml(t.status || 'Ativo')}
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="bg-white rounded-xl border border-slate-200/80 p-2">
+                        <p class="text-[10px] font-semibold text-slate-400">Amostras</p>
+                        <p id="mlAmostrasValor" class="text-xs font-extrabold text-slate-800 mt-0.5 truncate">${amostrasTexto}</p>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200/80 p-2">
+                        <p class="text-[10px] font-semibold text-slate-400">Erro médio (MAE)</p>
+                        <p id="mlMaeValor" class="text-xs font-extrabold text-slate-800 mt-0.5 truncate">${escHtml(erroMedioTexto)}</p>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200/80 p-2">
+                        <p class="text-[10px] font-semibold text-slate-400">Score (R²)</p>
+                        <p id="mlR2Valor" class="text-xs font-extrabold text-slate-800 mt-0.5 truncate">${escHtml(precisaoTexto)}</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                    <span>Último treino</span>
+                    <span id="mlTreinadoEmValor" class="font-bold text-slate-700">${atualizadoTexto}</span>
+                </div>
+            `;
+
+            container.appendChild(box);
         }
 
         // INICIALIZA O MAPA LEAFLET
@@ -426,35 +504,34 @@
             zoomControl: false
         }).setView([-22.3674, -46.9428], 14);
 
-        // CONTROLE DE ZOOM NO CANTO INFERIOR DIREITO
         L.control.zoom({
             position: 'bottomright'
         }).addTo(map);
 
-        // CAMADA DE TILES MODERNA (CartoDB Voyager)
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_3p8m_1_09944103c911a8c84b986e32', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
             subdomains: 'abcd',
             maxZoom: 20
         }).addTo(map);
 
-        // CONTROLE DE INSTÂNCIAS ATIVAS
         var marcadoresEntregadores = {};
         var marcadoresPedidos = {};
         var rotasEntregadores = {};
         var estadoEntregadores = {};
         var dadosEntregadoresCache = [];
-        var filtroAtivo = 'all'; // 'all', 'in_route', 'idle'
+        var dadosTreinamentoCache = null;
+        var filtroAtivo = 'all';
         var termoBusca = '';
 
-        // FUNÇÃO PARA CALCULAR MELHOR ROTA OSRM
         function calcularMelhorRotaParaEntregador(id_entregador, startLatLng, pedidos, corRota) {
             var promises = pedidos.map(ponto => {
-                if (!ponto.latitude || !ponto.longitude) return Promise.resolve(null);
+                var lat = parseCoord(ponto.latitude);
+                var lng = parseCoord(ponto.longitude);
+                if (lat === null || lng === null) return Promise.resolve(null);
 
                 var waypoints = [
                     startLatLng,
-                    L.latLng(ponto.latitude, ponto.longitude)
+                    L.latLng(lat, lng)
                 ];
 
                 return new Promise((resolve) => {
@@ -477,7 +554,7 @@
                         var routeLength = e.routes[0].summary.totalDistance;
                         try { map.removeControl(tempControl); } catch (err) {}
                         resolve({
-                            ponto: ponto,
+                            ponto: Object.assign({}, ponto, { latitude: lat, longitude: lng }),
                             distance: routeLength
                         });
                     }).on('routingerror', function () {
@@ -533,19 +610,33 @@
             });
         }
 
-        // CARREGA DADOS VIA API
         function atualizarRastreamento() {
-            fetch('<?= BASE_URL ?>/routes.php?action=apiAcompanharEntregadores')
-                .then(response => response.json())
+            fetch('<?= BASE_URL ?>/routes.php?action=apiAcompanharEntregadores', {
+                credentials: 'same-origin',
+                cache: 'no-store'
+            })
+                .then(async response => {
+                    const rawText = await response.text();
+                    const jsonStart = rawText.search(/[\[\{]/);
+                    if (jsonStart === -1) {
+                        throw new Error('Resposta inválida da API: ' + rawText.slice(0, 200));
+                    }
+                    return JSON.parse(rawText.slice(jsonStart));
+                })
                 .then(data => {
                     if (data && !data.error) {
-                        dadosEntregadoresCache = data;
+                        dadosEntregadoresCache = extrairListaEntregadores(data);
+                        if (data.treinamento) {
+                            dadosTreinamentoCache = data.treinamento;
+                        }
                         renderizarInterface();
                         atualizarTimestamp();
+                    } else if (data && data.error) {
+                        console.error('Erro da API de rastreamento:', data.error);
                     }
                 })
                 .catch(error => {
-                    console.warn("Aviso ao carregar dados de rastreamento:", error);
+                    console.error('Falha ao carregar dados de rastreamento:', error);
                 });
         }
 
@@ -558,7 +649,6 @@
             }
         }
 
-        // PREVISÃO DE CHEGADA (mesma do link de rastreio do cliente)
         function escHtml(t) {
             const d = document.createElement('div');
             d.textContent = t == null ? '' : String(t);
@@ -590,26 +680,11 @@
             return `<p class="text-[11px] font-bold mt-1 ${extraClasse || ''}" style="${cor}">${t.icone} ${escHtml(t.texto)}${sinal}</p>`;
         }
 
-        // RENDERIZA A INTERFACE COMPLETA
         function renderizarInterface() {
             var dados = dadosEntregadoresCache || [];
             var coresRotas = getRotasPalette();
 
-            // Atualiza contadores dos headers
             var totalDrivers = dados.length;
-            var emRotaCount = 0;
-            var livresCount = 0;
-            var totalPedidosAtivos = 0;
-
-            dados.forEach(e => {
-                var temLoc = (e.latitude !== null && e.longitude !== null);
-                var pendentes = (e.pedidos || []).filter(p => p.status !== 'entregue');
-                totalPedidosAtivos += pendentes.length;
-                if (temLoc) {
-                    if (pendentes.length > 0) emRotaCount++;
-                    else livresCount++;
-                }
-            });
 
             var badgeDriversCount = document.getElementById('badgeDriversCount');
             if (badgeDriversCount) badgeDriversCount.textContent = totalDrivers;
@@ -622,28 +697,29 @@
 
             var container = document.getElementById('driverListContainer');
             container.innerHTML = '';
+            renderizarResumoTreinamentoNoContainer(container);
 
             var idsEntregadoresAtivos = new Set();
             var idsPedidosAtivos = new Set();
 
-            // Aplica filtros de pesquisa e status
             var dadosFiltrados = dados.filter(entregador => {
-                var temLocalizacao = (entregador.latitude !== null && entregador.longitude !== null);
-                var pedidosPendentes = (entregador.pedidos || []).filter(p => p.status !== 'entregue');
+                var lat = parseCoord(entregador.latitude);
+                var lng = parseCoord(entregador.longitude);
+                var temLocalizacao = (lat !== null && lng !== null);
+                var pedidosPendentes = (Array.isArray(entregador.pedidos) ? entregador.pedidos : []).filter(isPedidoPendente);
                 var temPedidos = pedidosPendentes.length > 0;
 
-                // Filtro por status
                 if (filtroAtivo === 'in_route' && (!temLocalizacao || !temPedidos)) return false;
                 if (filtroAtivo === 'idle' && (!temLocalizacao || temPedidos)) return false;
 
-                // Filtro por texto de busca
                 if (termoBusca) {
                     var nomeMatch = (entregador.nome_completo || '').toLowerCase().includes(termoBusca);
                     var idMatch = String(entregador.id_entregador || '').includes(termoBusca);
                     var pedidoMatch = pedidosPendentes.some(p =>
                         (p.nome_cliente || '').toLowerCase().includes(termoBusca) ||
                         (p.endereco || '').toLowerCase().includes(termoBusca) ||
-                        (p.bairro || '').toLowerCase().includes(termoBusca)
+                        (p.bairro || '').toLowerCase().includes(termoBusca) ||
+                        String(p.id_pedido || '').includes(termoBusca)
                     );
                     if (!nomeMatch && !idMatch && !pedidoMatch) return false;
                 }
@@ -652,24 +728,28 @@
             });
 
             if (dadosFiltrados.length === 0) {
-                container.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-12 px-4 text-center">
-                        <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3 text-xl">
-                            🔍
-                        </div>
-                        <h4 class="font-bold text-slate-700 text-sm">Nenhum entregador encontrado</h4>
-                        <p class="text-xs text-slate-400 mt-1 max-w-xs">
-                            ${termoBusca ? 'Nenhum resultado corresponde à sua pesquisa.' : 'Nenhum entregador cadastrado ou disponível no momento.'}
-                        </p>
+                var emptyDiv = document.createElement('div');
+                emptyDiv.className = 'flex flex-col items-center justify-center py-12 px-4 text-center';
+                emptyDiv.innerHTML = `
+                    <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3 text-xl">
+                        🔍
                     </div>
+                    <h4 class="font-bold text-slate-700 text-sm">Nenhum entregador encontrado</h4>
+                    <p class="text-xs text-slate-400 mt-1 max-w-xs">
+                        ${termoBusca ? 'Nenhum resultado corresponde à sua pesquisa.' : 'Nenhum entregador cadastrado ou disponível no momento.'}
+                    </p>
                 `;
+                container.appendChild(emptyDiv);
             }
 
             dados.forEach((entregador, index) => {
-                idsEntregadoresAtivos.add(entregador.id_entregador);
+                var driverKey = String(entregador.id_entregador);
+                idsEntregadoresAtivos.add(driverKey);
 
-                var temLocalizacao = (entregador.latitude !== null && entregador.longitude !== null);
-                var pedidosPendentes = (entregador.pedidos || []).filter(p => p.status !== 'entregue');
+                var lat = parseCoord(entregador.latitude);
+                var lng = parseCoord(entregador.longitude);
+                var temLocalizacao = (lat !== null && lng !== null);
+                var pedidosPendentes = (Array.isArray(entregador.pedidos) ? entregador.pedidos : []).filter(isPedidoPendente);
                 var temPedidos = pedidosPendentes.length > 0;
 
                 var statusText = 'Offline';
@@ -691,13 +771,12 @@
                     }
                 }
 
-                var primeiroNome = (entregador.nome_completo || 'Entregador').split(' ')[0];
+                var primeiroNome = (entregador.nome_completo || 'Entregador').trim().split(/\s+/)[0] || 'Entregador';
                 var iniciais = (entregador.nome_completo || 'EN').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 
-                // CARD LATERAL DO ENTREGADOR (somente se atender aos filtros)
                 if (dadosFiltrados.includes(entregador)) {
                     var card = document.createElement('div');
-                    card.id = 'driverCard_' + entregador.id_entregador;
+                    card.id = 'driverCard_' + driverKey;
                     card.className = `driver-card bg-white border border-slate-200 rounded-2xl p-4 shadow-sm border-l-4 ${borderAccent} cursor-pointer`;
 
                     card.onclick = function () {
@@ -705,9 +784,9 @@
                         card.classList.add('focused');
 
                         if (temLocalizacao) {
-                            map.flyTo([entregador.latitude, entregador.longitude], 16, { duration: 1.0 });
-                            if (marcadoresEntregadores[entregador.id_entregador]) {
-                                marcadoresEntregadores[entregador.id_entregador].openPopup();
+                            map.flyTo([lat, lng], 16, { duration: 1.0 });
+                            if (marcadoresEntregadores[driverKey]) {
+                                marcadoresEntregadores[driverKey].openPopup();
                             }
                         }
                     };
@@ -717,14 +796,14 @@
                             <div class="flex items-center gap-3 min-w-0">
                                 <div class="w-10 h-10 rounded-xl font-extrabold text-xs flex items-center justify-center flex-shrink-0 shadow-sm"
                                     style="background-color: var(--emp-secondary, #FFD400); color: var(--emp-secondary-contrast, #0F172A);">
-                                    ${iniciais}
+                                    ${escHtml(iniciais)}
                                 </div>
                                 <div class="min-w-0">
                                     <h3 class="font-bold text-slate-900 text-sm truncate flex items-center gap-1.5">
-                                        <span>${entregador.nome_completo}</span>
+                                        <span>${escHtml(entregador.nome_completo || 'Entregador')}</span>
                                     </h3>
                                     <p class="text-[11px] text-slate-400 font-medium">
-                                        ID #${entregador.id_entregador}
+                                        ID #${escHtml(driverKey)}
                                     </p>
                                 </div>
                             </div>
@@ -732,12 +811,11 @@
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${statusClass}"
                                 style="${temPedidos && temLocalizacao ? 'background-color: var(--emp-primary-light, #EEF2FF); color: var(--emp-primary, #4F46E5); border-color: var(--emp-primary-light-border, #C7D2FE);' : ''}">
                                 <span class="w-1.5 h-1.5 rounded-full ${statusDot}"></span>
-                                <span>${statusText}</span>
+                                <span>${escHtml(statusText)}</span>
                             </span>
                         </div>
                     `;
 
-                    // PRÓXIMA ENTREGA COM PREVISÃO
                     var proxima = pedidosPendentes[0];
                     if (temPedidos && proxima && proxima.previsao && ['a_caminho', 'chegou'].includes(proxima.previsao.tipo)) {
                         cardHTML += `
@@ -749,7 +827,6 @@
                         `;
                     }
 
-                    // LISTAGEM DE PEDIDOS PENDENTES DESTE ENTREGADOR
                     if (temPedidos) {
                         cardHTML += `
                             <div class="mt-3.5 pt-3 border-t border-slate-100 space-y-2">
@@ -760,11 +837,16 @@
                         `;
 
                         pedidosPendentes.forEach((pedido, pIndex) => {
-                            idsPedidosAtivos.add(pedido.id_pedido);
+                            var pedidoKey = String(pedido.id_pedido);
+                            idsPedidosAtivos.add(pedidoKey);
+
+                            var plat = parseCoord(pedido.latitude);
+                            var plng = parseCoord(pedido.longitude);
+                            var temCoordPedido = (plat !== null && plng !== null);
                             var precoFormatado = pedido.preco ? Number(pedido.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00';
 
                             cardHTML += `
-                                <div onclick="event.stopPropagation(); centralizarNoPedido(${pedido.id_pedido}, ${pedido.latitude}, ${pedido.longitude});"
+                                <div onclick="event.stopPropagation(); centralizarNoPedido('${escHtml(pedidoKey)}', ${temCoordPedido ? plat : 'null'}, ${temCoordPedido ? plng : 'null'});"
                                     class="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200/80 transition-all flex items-start justify-between gap-2.5 group">
                                     <div class="min-w-0 flex items-start gap-2">
                                         <span class="w-5 h-5 rounded-lg text-white font-extrabold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5"
@@ -773,20 +855,20 @@
                                         </span>
                                         <div class="min-w-0">
                                             <p class="text-xs font-bold text-slate-800 truncate group-hover:text-slate-900">
-                                                ${pedido.nome_cliente || 'Cliente'}
+                                                ${escHtml(pedido.nome_cliente || 'Cliente')}
                                             </p>
                                             <p class="text-[11px] text-slate-500 truncate flex items-center gap-1 mt-0.5">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                 </svg>
-                                                <span>${pedido.endereco || 'Endereço não informado'}${pedido.bairro ? ', ' + pedido.bairro : ''}</span>
+                                                <span>${escHtml(pedido.endereco || 'Endereço não informado')}${pedido.bairro ? ', ' + escHtml(pedido.bairro) : ''}</span>
                                             </p>
                                             ${htmlPrevisao(pedido.previsao)}
                                         </div>
                                     </div>
 
                                     <span class="text-[11px] font-extrabold flex-shrink-0" style="color: var(--emp-primary, #4F46E5);">
-                                        ${precoFormatado}
+                                        ${escHtml(precoFormatado)}
                                     </span>
                                 </div>
                             `;
@@ -809,12 +891,11 @@
                         `;
                     }
 
-                    // BOTÃO DE AÇÃO DO CARD
                     if (temLocalizacao) {
                         cardHTML += `
                             <div class="mt-3.5 pt-2 flex items-center gap-2">
                                 <button type="button"
-                                    onclick="event.stopPropagation(); map.flyTo([${entregador.latitude}, ${entregador.longitude}], 16, { duration: 1.0 }); marcadoresEntregadores[${entregador.id_entregador}]?.openPopup();"
+                                    onclick="event.stopPropagation(); map.flyTo([${lat}, ${lng}], 16, { duration: 1.0 }); marcadoresEntregadores['${escHtml(driverKey)}']?.openPopup();"
                                     class="w-full py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-98"
                                     style="background-color: var(--emp-primary, #4F46E5); color: var(--emp-primary-contrast, #ffffff);">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -831,25 +912,22 @@
                     container.appendChild(card);
                 }
 
-                // ATUALIZAÇÃO NO MAPA LEAFLET
                 if (temLocalizacao) {
-                    var lat = parseFloat(entregador.latitude);
-                    var lng = parseFloat(entregador.longitude);
-
-                    var pulseClass = temPedidos ? 'pulse-ring' : 'pulse-ring-idle';
-                    var bubbleClass = temPedidos ? '' : 'idle';
+                    var bgCor = temPedidos
+                        ? 'var(--emp-primary, #4F46E5)'
+                        : '#10b981';
+                    var textoCor = temPedidos
+                        ? 'var(--emp-primary-contrast, #ffffff)'
+                        : '#ffffff';
 
                     var customIcon = L.divIcon({
                         className: 'moto-marker',
                         html: `
-                            <div class="${pulseClass}"></div>
-                            <div class="moto-pin-bubble ${bubbleClass}">
-                                <span class="moto-icon-box">🛵</span>
-                                <span>${primeiroNome}</span>
+                            <div class="moto-pin-bubble" style="display: inline-flex; align-items: center; justify-content: center; width: auto; height: auto; min-width: 0; padding: 2px 1ch; font-size: 12px; font-weight: 700; line-height: 1.2; white-space: nowrap; border-radius: 9999px; background-color: ${bgCor}; color: ${textoCor}; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);">
+                                ${escHtml(primeiroNome)}
                             </div>
                         `,
-                        iconSize: [60, 40],
-                        iconAnchor: [30, 20]
+                        iconSize: null
                     });
 
                     var popupContent = `
@@ -857,17 +935,17 @@
                             <div class="flex items-center gap-2.5 pb-2.5 mb-2.5 border-b border-slate-100">
                                 <div class="w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center"
                                     style="background-color: var(--emp-secondary, #FFD400); color: var(--emp-secondary-contrast, #0F172A);">
-                                    ${iniciais}
+                                    ${escHtml(iniciais)}
                                 </div>
                                 <div>
-                                    <strong class="text-xs font-bold text-slate-900 block leading-tight">${entregador.nome_completo}</strong>
-                                    <span class="text-[10px] text-slate-400 font-semibold">ID #${entregador.id_entregador}</span>
+                                    <strong class="text-xs font-bold text-slate-900 block leading-tight">${escHtml(entregador.nome_completo || 'Entregador')}</strong>
+                                    <span class="text-[10px] text-slate-400 font-semibold">ID #${escHtml(driverKey)}</span>
                                 </div>
                             </div>
                             <div class="space-y-1.5 text-xs text-slate-600">
                                 <p class="flex items-center justify-between">
                                     <span class="text-slate-400">Status:</span>
-                                    <strong class="font-bold ${temPedidos ? 'text-indigo-600' : 'text-emerald-600'}">${statusText}</strong>
+                                    <strong class="font-bold ${temPedidos ? 'text-indigo-600' : 'text-emerald-600'}">${escHtml(statusText)}</strong>
                                 </p>
                                 <p class="flex items-center justify-between">
                                     <span class="text-slate-400">Entregas ativas:</span>
@@ -882,23 +960,24 @@
                         </div>
                     `;
 
-                    if (marcadoresEntregadores[entregador.id_entregador]) {
-                        marcadoresEntregadores[entregador.id_entregador].setLatLng([lat, lng]);
-                        marcadoresEntregadores[entregador.id_entregador].setIcon(customIcon);
-                        marcadoresEntregadores[entregador.id_entregador].setPopupContent(popupContent);
+                    if (marcadoresEntregadores[driverKey]) {
+                        marcadoresEntregadores[driverKey].setLatLng([lat, lng]);
+                        marcadoresEntregadores[driverKey].setIcon(customIcon);
+                        marcadoresEntregadores[driverKey].setPopupContent(popupContent);
                     } else {
                         var marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
                         marker.bindPopup(popupContent);
-                        marcadoresEntregadores[entregador.id_entregador] = marker;
+                        marcadoresEntregadores[driverKey] = marker;
                     }
 
-                    // MARCADORES DOS PEDIDOS NO MAPA
                     if (temPedidos) {
                         pedidosPendentes.forEach((pedido, pIdx) => {
-                            if (pedido.latitude && pedido.longitude) {
-                                idsPedidosAtivos.add(pedido.id_pedido);
-                                var plat = parseFloat(pedido.latitude);
-                                var plng = parseFloat(pedido.longitude);
+                            var pedidoKey = String(pedido.id_pedido);
+                            var plat = parseCoord(pedido.latitude);
+                            var plng = parseCoord(pedido.longitude);
+
+                            if (plat !== null && plng !== null) {
+                                idsPedidosAtivos.add(pedidoKey);
 
                                 var pedidoIcon = L.divIcon({
                                     className: 'delivery-marker-icon',
@@ -915,34 +994,33 @@
                                                 Parada #${pIdx + 1}
                                             </span>
                                             <span class="text-xs font-extrabold" style="color: var(--emp-primary, #4F46E5);">
-                                                ${pedido.preco ? Number(pedido.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : ''}
+                                                ${pedido.preco ? escHtml(Number(pedido.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })) : ''}
                                             </span>
                                         </div>
-                                        <strong class="text-xs font-bold text-slate-900 block leading-snug">${pedido.nome_cliente || 'Cliente'}</strong>
+                                        <strong class="text-xs font-bold text-slate-900 block leading-snug">${escHtml(pedido.nome_cliente || 'Cliente')}</strong>
                                         <p class="text-[11px] text-slate-500 mt-1 flex items-start gap-1">
                                             <span>📍</span>
-                                            <span>${pedido.endereco || ''}${pedido.bairro ? ', ' + pedido.bairro : ''}</span>
+                                            <span>${escHtml(pedido.endereco || '')}${pedido.bairro ? ', ' + escHtml(pedido.bairro) : ''}</span>
                                         </p>
                                         ${htmlPrevisao(pedido.previsao)}
                                     </div>
                                 `;
 
-                                if (marcadoresPedidos[pedido.id_pedido]) {
-                                    marcadoresPedidos[pedido.id_pedido].setLatLng([plat, plng]);
-                                    marcadoresPedidos[pedido.id_pedido].setIcon(pedidoIcon);
-                                    marcadoresPedidos[pedido.id_pedido].setPopupContent(pedidoPopup);
+                                if (marcadoresPedidos[pedidoKey]) {
+                                    marcadoresPedidos[pedidoKey].setLatLng([plat, plng]);
+                                    marcadoresPedidos[pedidoKey].setIcon(pedidoIcon);
+                                    marcadoresPedidos[pedidoKey].setPopupContent(pedidoPopup);
                                 } else {
                                     var pMarker = L.marker([plat, plng], { icon: pedidoIcon }).addTo(map);
                                     pMarker.bindPopup(pedidoPopup);
-                                    marcadoresPedidos[pedido.id_pedido] = pMarker;
+                                    marcadoresPedidos[pedidoKey] = pMarker;
                                 }
                             }
                         });
 
-                        // CÁLCULO E ATUALIZAÇÃO DA ROTA OSRM
                         var corRota = coresRotas[index % coresRotas.length];
-                        var idsPedidosStr = pedidosPendentes.map(p => p.id_pedido).sort().join(',');
-                        var estadoAnterior = estadoEntregadores[entregador.id_entregador];
+                        var idsPedidosStr = pedidosPendentes.map(p => String(p.id_pedido)).sort().join(',');
+                        var estadoAnterior = estadoEntregadores[driverKey];
 
                         var mudou = !estadoAnterior ||
                             estadoAnterior.lat !== lat ||
@@ -950,42 +1028,41 @@
                             estadoAnterior.idsPedidosStr !== idsPedidosStr;
 
                         if (mudou) {
-                            estadoEntregadores[entregador.id_entregador] = {
+                            estadoEntregadores[driverKey] = {
                                 lat: lat,
                                 lng: lng,
                                 idsPedidosStr: idsPedidosStr
                             };
 
                             calcularMelhorRotaParaEntregador(
-                                entregador.id_entregador,
+                                driverKey,
                                 L.latLng(lat, lng),
                                 pedidosPendentes,
                                 corRota
                             );
                         }
                     } else {
-                        if (rotasEntregadores[entregador.id_entregador]) {
-                            try { map.removeControl(rotasEntregadores[entregador.id_entregador]); } catch (e) {}
-                            delete rotasEntregadores[entregador.id_entregador];
+                        if (rotasEntregadores[driverKey]) {
+                            try { map.removeControl(rotasEntregadores[driverKey]); } catch (e) {}
+                            delete rotasEntregadores[driverKey];
                         }
-                        delete estadoEntregadores[entregador.id_entregador];
+                        delete estadoEntregadores[driverKey];
                     }
                 } else {
-                    if (marcadoresEntregadores[entregador.id_entregador]) {
-                        try { map.removeLayer(marcadoresEntregadores[entregador.id_entregador]); } catch (e) {}
-                        delete marcadoresEntregadores[entregador.id_entregador];
+                    if (marcadoresEntregadores[driverKey]) {
+                        try { map.removeLayer(marcadoresEntregadores[driverKey]); } catch (e) {}
+                        delete marcadoresEntregadores[driverKey];
                     }
-                    if (rotasEntregadores[entregador.id_entregador]) {
-                        try { map.removeControl(rotasEntregadores[entregador.id_entregador]); } catch (e) {}
-                        delete rotasEntregadores[entregador.id_entregador];
+                    if (rotasEntregadores[driverKey]) {
+                        try { map.removeControl(rotasEntregadores[driverKey]); } catch (e) {}
+                        delete rotasEntregadores[driverKey];
                     }
-                    delete estadoEntregadores[entregador.id_entregador];
+                    delete estadoEntregadores[driverKey];
                 }
             });
 
-            // LIMPA MARCADORES OBSOLETOS DE ENTREGADORES REMOVIDOS
             Object.keys(marcadoresEntregadores).forEach(id => {
-                if (!idsEntregadoresAtivos.has(parseInt(id))) {
+                if (!idsEntregadoresAtivos.has(String(id))) {
                     try { map.removeLayer(marcadoresEntregadores[id]); } catch (e) {}
                     delete marcadoresEntregadores[id];
 
@@ -996,26 +1073,26 @@
                 }
             });
 
-            // LIMPA MARCADORES OBSOLETOS DE PEDIDOS ENTREGUES/CANCELADOS
             Object.keys(marcadoresPedidos).forEach(id => {
-                if (!idsPedidosAtivos.has(parseInt(id))) {
+                if (!idsPedidosAtivos.has(String(id))) {
                     try { map.removeLayer(marcadoresPedidos[id]); } catch (e) {}
                     delete marcadoresPedidos[id];
                 }
             });
         }
 
-        // CENTRALIZAR MAPA NO PEDIDO
         function centralizarNoPedido(idPedido, lat, lng) {
-            if (lat && lng) {
-                map.flyTo([lat, lng], 17, { duration: 1.0 });
-                if (marcadoresPedidos[idPedido]) {
-                    marcadoresPedidos[idPedido].openPopup();
+            var parsedLat = parseCoord(lat);
+            var parsedLng = parseCoord(lng);
+            if (parsedLat !== null && parsedLng !== null) {
+                map.flyTo([parsedLat, parsedLng], 17, { duration: 1.0 });
+                var marker = marcadoresPedidos[String(idPedido)];
+                if (marker) {
+                    marker.openPopup();
                 }
             }
         }
 
-        // ENQUADRAR TODOS OS MARCADORES NO MAPA
         function enquadrarTodos() {
             var bounds = [];
 
@@ -1039,7 +1116,6 @@
 
         document.getElementById('btnFitBounds')?.addEventListener('click', enquadrarTodos);
 
-        // CONTROLE DO CAMPO DE BUSCA RÁPIDA
         var inputBusca = document.getElementById('inputBuscaMapa');
         var btnClearSearch = document.getElementById('btnClearSearch');
 
@@ -1062,7 +1138,6 @@
             });
         }
 
-        // FILTROS RÁPIDOS (TODOS / EM ROTA / DISPONÍVEIS)
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', function () {
                 var tipo = this.getAttribute('data-filter');
@@ -1082,7 +1157,6 @@
             });
         });
 
-        // NAVEGAÇÃO ENTRE ABAS MOBILE (MAPA vs LISTA)
         var tabToggleMap = document.getElementById('tabToggleMap');
         var tabToggleList = document.getElementById('tabToggleList');
         var mapWrapper = document.getElementById('mapWrapper');
@@ -1112,11 +1186,9 @@
             });
         }
 
-        // DISPARO INICIAL E INTERVALO AUTOMÁTICO
         atualizarRastreamento();
         setInterval(atualizarRastreamento, 5000);
 
-        // INVALIDA TAMANHO DO MAPA AO REDIMENSIONAR TELA
         window.addEventListener('resize', function () {
             map.invalidateSize();
         });
