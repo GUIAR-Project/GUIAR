@@ -592,21 +592,128 @@ select:focus {
 
 .order-actions .btn-track:hover { transform: translateY(-2px); }
 
+/* Popup / Modal de Rastreio alinhado ao design system GUIAR */
+#trackOrderModal .modal-content {
+    position: relative;
+    max-width: 520px;
+    width: calc(100% - 32px);
+    margin: 48px auto;
+    padding: 28px;
+    border-radius: 24px;
+    background: #ffffff;
+    border: 1px solid #edf0f6;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+}
+
+#trackOrderModal .track-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+#trackOrderModal .track-badge-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+#trackOrderModal .track-icon-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--emp-primary-light, rgba(79, 70, 229, 0.1));
+    color: var(--emp-primary, #4F46E5);
+    border: 1px solid var(--emp-primary-light-border, rgba(79, 70, 229, 0.2));
+}
+
+#trackOrderModal h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #0f172a;
+    line-height: 1.25;
+}
+
+#trackOrderModal .track-subtitle {
+    margin: 3px 0 0;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+#trackOrderModal .close {
+    float: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+    line-height: 1;
+    color: #64748b;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+#trackOrderModal .close:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+#trackOrderModal .track-desc {
+    color: #52627c;
+    line-height: 1.6;
+    font-size: 13.5px;
+    margin: 0 0 16px;
+}
+
+#trackOrderModal .track-desc strong {
+    color: #0f172a;
+    font-weight: 700;
+}
+
 .rastreio-link {
     display: flex;
+    align-items: center;
     gap: 8px;
-    margin: 14px 0 6px;
+    margin: 0;
+    padding: 6px;
+    border-radius: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rastreio-link:focus-within {
+    border-color: var(--emp-primary, #4F46E5);
+    box-shadow: 0 0 0 3px var(--emp-primary-light, rgba(79, 70, 229, 0.14));
 }
 
 .rastreio-link input {
     flex: 1;
     min-width: 0;
-    padding: 11px 12px;
-    border: 1px solid #e2e8f0;
+    padding: 8px 10px;
+    border: none;
     border-radius: 10px;
-    font-size: 13px;
-    color: #334155;
-    background: #f8fafc;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1e293b;
+    background: transparent;
+    outline: none;
 }
 
 .rastreio-acoes {
@@ -618,28 +725,98 @@ select:focus {
 
 .rastreio-acoes a,
 .rastreio-acoes button {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 12px;
+    padding: 11px 14px;
     border-radius: 12px;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 13px;
     text-decoration: none;
-    border: none;
+    border: 1px solid transparent;
     cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, filter 0.2s ease;
+}
+
+.rastreio-acoes button#trackCopiar {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #e2e8f0;
+}
+
+.rastreio-acoes button#trackCopiar:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+}
+
+.rastreio-acoes a#trackWhatsapp {
+    background: #16a34a;
+    color: #ffffff;
+    box-shadow: 0 6px 16px rgba(22, 163, 74, 0.22);
+}
+
+.rastreio-acoes a#trackWhatsapp:hover {
+    background: #15803d;
+    transform: translateY(-1px);
+}
+
+#trackOrderModal .track-sem-telefone {
+    display: none;
+    margin: 10px 0 0;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+#trackOrderModal .track-abrir-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 12px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--emp-primary, #4F46E5);
+    background: var(--emp-primary-light, rgba(79, 70, 229, 0.08));
+    border: 1px solid var(--emp-primary-light-border, rgba(79, 70, 229, 0.18));
+    transition: all 0.2s ease;
+}
+
+#trackOrderModal .track-abrir-link:hover {
+    filter: brightness(0.97);
+    transform: translateY(-1px);
 }
 
 .rastreio-aviso {
     margin-top: 12px;
-    padding: 10px 12px;
-    border-radius: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
     background: #fffbeb;
     border: 1px solid #fde68a;
     color: #92400e;
     font-size: 12px;
     line-height: 1.5;
+}
+
+@media (max-width: 520px) {
+    #trackOrderModal .modal-content {
+        margin: 24px auto;
+        padding: 20px;
+        border-radius: 20px;
+    }
+
+    .rastreio-acoes {
+        grid-template-columns: 1fr;
+    }
 }
 
 .orders-empty {
@@ -769,6 +946,173 @@ select:focus {
     .orders-topbar-copy .page-heading { font-size: 18px; }
     .orders-topbar-copy .page-subheading { font-size: 10px; }
     .orders-topbar-action { min-height: 36px; gap: 5px; padding: 8px 10px; font-size: 11px; }
+}
+/* Modal Enviar Pedidos Selecionados */
+#sendOrdersModal .modal-content {
+    position: relative;
+    max-width: 480px;
+    width: calc(100% - 32px);
+    margin: 56px auto;
+    padding: 28px;
+    border-radius: 24px;
+    background: #ffffff;
+    border: 1px solid #edf0f6;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+}
+
+#sendOrdersModal .send-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+#sendOrdersModal .send-modal-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+#sendOrdersModal .send-modal-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--emp-primary-light, rgba(79, 70, 229, 0.1));
+    color: var(--emp-primary, #4F46E5);
+    border: 1px solid var(--emp-primary-light-border, rgba(79, 70, 229, 0.2));
+}
+
+#sendOrdersModal h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #0f172a;
+    line-height: 1.25;
+}
+
+#sendOrdersModal .send-modal-subtitle {
+    margin: 3px 0 0;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+#sendOrdersModal .close {
+    float: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+    line-height: 1;
+    color: #64748b;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+#sendOrdersModal .close:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+#sendOrdersModal .send-modal-desc {
+    margin: 0 0 18px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #52627c;
+}
+
+#sendOrdersModal .form-group {
+    margin-bottom: 20px;
+}
+
+#sendOrdersModal .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+#sendOrdersModal select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-size: 13.5px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+#sendOrdersModal select:hover {
+    border-color: #cbd5e1;
+    background-color: #ffffff;
+}
+
+#sendOrdersModal select:focus {
+    background-color: #ffffff;
+    border-color: var(--emp-primary, #4F46E5);
+    box-shadow: 0 0 0 3px var(--emp-primary-light, rgba(79, 70, 229, 0.14));
+}
+
+#sendOrdersModal .send-empty-drivers {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    color: #64748b;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+#sendOrdersModal button[type="submit"] {
+    width: 100%;
+    padding: 13px 18px;
+    border: none;
+    border-radius: 14px;
+    background-color: var(--emp-primary, #4F46E5);
+    color: var(--emp-primary-contrast, #ffffff);
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 20px -4px var(--emp-primary-ring, rgba(79, 70, 229, 0.32));
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+#sendOrdersModal button[type="submit"]:hover {
+    filter: brightness(0.96);
+    transform: translateY(-1px);
+}
+
+#sendOrdersModal button[type="submit"]:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 520px) {
+    #sendOrdersModal .modal-content {
+        margin: 24px auto;
+        padding: 20px;
+        border-radius: 20px;
+    }
 }
     </style>
 </head>
@@ -1190,16 +1534,28 @@ select:focus {
 
 
 <!-- MODAL ENVIAR PEDIDOS -->
-<div id="sendOrdersModal" class="modal">
+<div id="sendOrdersModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="sendOrdersTitle">
 
     <div class="modal-content">
 
-        <span class="close"
-            id="closeSendOrdersModal">
-            &times;
-        </span>
+        <div class="send-modal-header">
+            <div class="send-modal-badge">
+                <div class="send-modal-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="send-modal-subtitle">Despacho de rota</p>
+                    <h2 id="sendOrdersTitle">Enviar Pedidos Selecionados</h2>
+                </div>
+            </div>
+            <button type="button" class="close" id="closeSendOrdersModal" aria-label="Fechar">&times;</button>
+        </div>
 
-        <h2>Enviar Pedidos Selecionados</h2>
+        <p class="send-modal-desc">
+            Escolha o entregador responsável para atribuir os pedidos marcados na lista.
+        </p>
 
         <form id="sendOrdersToDeliveryForm"
             method="POST"
@@ -1237,7 +1593,7 @@ select:focus {
 
                     } else {
 
-                        echo "<p style='color:#94A3B8'>
+                        echo "<p class='send-empty-drivers'>
                                 Nenhum entregador encontrado
                               </p>";
                     }
@@ -1260,7 +1616,6 @@ select:focus {
     </div>
 
 </div>
-
 
 <!-- MODAL EDITAR PEDIDO -->
 <div id="editOrderModal" class="modal">
@@ -1473,9 +1828,23 @@ select:focus {
 <!-- MODAL LINK DE RASTREIO -->
 <div id="trackOrderModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="trackOrderTitle">
     <div class="modal-content">
-        <span class="close" id="closeTrackOrderModal" aria-label="Fechar">&times;</span>
-        <h2 id="trackOrderTitle">Acompanhamento do pedido</h2>
-        <p style="color:#64748B; line-height:1.6; font-size:14px;">
+        <div class="track-header">
+            <div class="track-badge-wrap">
+                <div class="track-icon-box" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="track-subtitle">Rastreamento ao vivo</p>
+                    <h2 id="trackOrderTitle">Acompanhamento do pedido</h2>
+                </div>
+            </div>
+            <button type="button" class="close" id="closeTrackOrderModal" aria-label="Fechar">&times;</button>
+        </div>
+
+        <p class="track-desc">
             Envie este link para <strong id="trackCliente"></strong>. Ele mostra a previsão de chegada e o entregador no mapa, em tempo real, sem precisar de login.
         </p>
 
@@ -1484,13 +1853,28 @@ select:focus {
         </div>
 
         <div class="rastreio-acoes">
-            <button type="button" id="trackCopiar" style="background:#F1F5F9; color:#334155;">Copiar link</button>
-            <a id="trackWhatsapp" href="#" target="_blank" rel="noopener" style="background:#16A34A; color:#fff;">WhatsApp</a>
+            <button type="button" id="trackCopiar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>Copiar link</span>
+            </button>
+            <a id="trackWhatsapp" href="#" target="_blank" rel="noopener">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <span>WhatsApp</span>
+            </a>
         </div>
-        <p id="trackSemTelefone" style="display:none; margin-top:10px; color:#64748B; font-size:12px;">
+
+        <p id="trackSemTelefone" class="track-sem-telefone">
             Sem WhatsApp cadastrado: o WhatsApp vai abrir para você escolher o contato.
         </p>
-        <a id="trackAbrir" href="#" target="_blank" rel="noopener" style="display:block; text-align:center; margin-top:12px; font-size:13px; font-weight:600; color:var(--emp-primary, #E94E00);">Ver como o cliente vê ↗</a>
+
+        <a id="trackAbrir" class="track-abrir-link" href="#" target="_blank" rel="noopener">
+            <span>Ver como o cliente vê</span>
+            <span aria-hidden="true">↗</span>
+        </a>
 
         <div id="trackAvisoLocal" class="rastreio-aviso" style="display:none;">
             Este link usa <strong>localhost</strong> e só abre neste computador. Para o cliente abrir no celular, acesse o painel pelo endereço de rede (ex.: <strong>https://10.0.3.168:8000</strong>) e gere o link de novo.
@@ -2410,7 +2794,9 @@ iniciarMapaPedido();
                 document.getElementById('trackSemTelefone').style.display = numero ? 'none' : 'block';
                 document.getElementById('trackAvisoLocal').style.display =
                     /\/\/(localhost|127\.0\.0\.1)(:|\/)/.test(link) ? 'block' : 'none';
-                document.getElementById('trackCopiar').textContent = 'Copiar link';
+                const copyBtnSpan = document.querySelector('#trackCopiar span');
+                if (copyBtnSpan) copyBtnSpan.textContent = 'Copiar link';
+                else document.getElementById('trackCopiar').textContent = 'Copiar link';
                 modal.style.display = 'block';
             });
         });
@@ -2423,7 +2809,9 @@ iniciarMapaPedido();
                 campo.select();
                 document.execCommand('copy');
             }
-            this.textContent = 'Copiado ✓';
+            const span = this.querySelector('span');
+            if (span) span.textContent = 'Copiado ✓';
+            else this.textContent = 'Copiado ✓';
         });
 
         document.getElementById('closeTrackOrderModal').addEventListener('click', () => {
