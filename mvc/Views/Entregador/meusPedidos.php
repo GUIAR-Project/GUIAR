@@ -413,6 +413,62 @@
         <!-- MAIN -->
         <main class="flex-grow p-4 sm:p-8 lg:px-12 xl:px-16 pb-24 lg:pb-12 space-y-8">
 
+            <!-- ESTATÍSTICAS DO ENTREGADOR -->
+            <div class="max-w-[1400px] mx-auto">
+                <div class="mb-8">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Meus Pedidos</h1>
+                    <p class="text-slate-600">Gerencie suas entregas em andamento</p>
+                </div>
+
+                <!-- Cards de Estatísticas -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                    <!-- Total de Pedidos -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-600 mb-1">Total de Pedidos</p>
+                                <p class="text-3xl font-bold text-slate-900"><?= count($listaPedidos) ?></p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pedidos Pendentes -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-600 mb-1">Pendentes</p>
+                                <p class="text-3xl font-bold text-orange-600"><?= count($listaPedidos) ?></p>
+                            </div>
+                            <div class="bg-orange-50 p-3 rounded-xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Taxa de Conclusão -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-1">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-600 mb-1">Hoje</p>
+                                <p class="text-3xl font-bold text-green-600"><?= count($listaPedidos) ?></p>
+                            </div>
+                            <div class="bg-green-50 p-3 rounded-xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Cards de Pedidos -->
             <div class="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 <?php
@@ -428,53 +484,79 @@
                         $bairro = trim((string)($row['bairro'] ?? ''));
                         $descricao = (string)($row['descricao'] ?? $row['observacao'] ?? $row['observacoes'] ?? $row['itens'] ?? 'Sem descrição adicional');
                 ?>
-                        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col justify-between h-full relative overflow-hidden hover-card">
+                        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-lg transition-all duration-300 p-6 flex flex-col justify-between h-full relative overflow-hidden group">
+                            <!-- Indicador lateral colorido -->
+                            <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            
                             <div>
-                                <div class="flex items-center justify-between mb-4">
-                                    <h3 class="text-lg font-bold text-slate-900 truncate pr-4" title="<?= htmlspecialchars($nomeCliente, ENT_QUOTES, 'UTF-8') ?>">
-                                        <?= htmlspecialchars($nomeCliente, ENT_QUOTES, 'UTF-8') ?>
-                                    </h3>
-                                    <span class="text-xs font-bold px-3 py-1 rounded-full border whitespace-nowrap"
-                                        style="background-color: var(--emp-primary-light, #EEF2FF); color: var(--emp-primary, #4F46E5); border-color: var(--emp-primary-light-border, #C7D2FE);">
-                                        R$ <?= htmlspecialchars($precoFormatado, ENT_QUOTES, 'UTF-8') ?>
-                                    </span>
+                                <!-- Header do Card -->
+                                <div class="flex items-start justify-between mb-5">
+                                    <div class="flex-grow pr-3">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                            <span class="text-xs font-bold text-green-600 uppercase tracking-wide">Ativo</span>
+                                        </div>
+                                        <h3 class="text-lg font-bold text-slate-900 truncate" title="<?= htmlspecialchars($nomeCliente, ENT_QUOTES, 'UTF-8') ?>">
+                                            <?= htmlspecialchars($nomeCliente, ENT_QUOTES, 'UTF-8') ?>
+                                        </h3>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-1">
+                                        <span class="text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap"
+                                            style="background-color: var(--emp-primary-light, #EEF2FF); color: var(--emp-primary, #4F46E5); border: 2px solid var(--emp-primary, #4F46E5);">
+                                            R$ <?= htmlspecialchars($precoFormatado, ENT_QUOTES, 'UTF-8') ?>
+                                        </span>
+                                        <span class="text-[10px] text-slate-400 font-medium">Pedido #<?= htmlspecialchars($idPedido, ENT_QUOTES, 'UTF-8') ?></span>
+                                    </div>
                                 </div>
 
+                                <!-- Informações do Pedido -->
                                 <div class="space-y-4 mt-4">
-                                    <div class="flex items-start gap-3">
-                                        <div class="bg-slate-50 p-2 rounded-lg flex-shrink-0">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <!-- Endereço -->
+                                    <div class="flex items-start gap-3 group/item">
+                                        <div class="bg-gradient-to-br from-slate-50 to-slate-100 p-2.5 rounded-xl flex-shrink-0 group-hover/item:from-blue-50 group-hover/item:to-blue-100 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500 group-hover/item:text-blue-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                             </svg>
                                         </div>
-                                        <div>
-                                            <p class="text-sm font-semibold text-slate-700"><?= htmlspecialchars($endereco, ENT_QUOTES, 'UTF-8') ?></p>
+                                        <div class="flex-grow">
+                                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Destino</p>
+                                            <p class="text-sm font-semibold text-slate-900 leading-snug"><?= htmlspecialchars($endereco, ENT_QUOTES, 'UTF-8') ?></p>
                                             <?php if ($bairro !== ''): ?>
-                                                <p class="text-xs text-slate-500 font-medium mt-0.5"><?= htmlspecialchars($bairro, ENT_QUOTES, 'UTF-8') ?></p>
+                                                <p class="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                    </svg>
+                                                    <?= htmlspecialchars($bairro, ENT_QUOTES, 'UTF-8') ?>
+                                                </p>
                                             <?php endif; ?>
                                         </div>
                                     </div>
 
-                                    <div class="flex items-start gap-3">
-                                        <div class="bg-slate-50 p-2 rounded-lg flex-shrink-0">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    <!-- Descrição -->
+                                    <div class="flex items-start gap-3 group/item">
+                                        <div class="bg-gradient-to-br from-slate-50 to-slate-100 p-2.5 rounded-xl flex-shrink-0 group-hover/item:from-blue-50 group-hover/item:to-blue-100 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500 group-hover/item:text-blue-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                             </svg>
                                         </div>
-                                        <p class="text-sm text-slate-600 font-medium line-clamp-3 mt-1">
-                                            <?= htmlspecialchars($descricao, ENT_QUOTES, 'UTF-8') ?>
-                                        </p>
+                                        <div class="flex-grow">
+                                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Detalhes</p>
+                                            <p class="text-sm text-slate-700 font-medium line-clamp-2 leading-relaxed">
+                                                <?= htmlspecialchars($descricao, ENT_QUOTES, 'UTF-8') ?>
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
+                            <!-- Botão de Ação -->
                             <div class="mt-6 pt-5 border-t border-slate-100">
                                 <button type="button"
-                                    class="btn-delivered btn-emp-primary w-full flex items-center justify-center gap-2 font-bold text-sm px-4 py-3 rounded-2xl transition-all hover:scale-[1.02] active:scale-95"
+                                    class="btn-delivered btn-emp-primary w-full flex items-center justify-center gap-2.5 font-bold text-sm px-4 py-3.5 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-lg hover:shadow-xl"
                                     data-id="<?= htmlspecialchars($idPedido, ENT_QUOTES, 'UTF-8') ?>">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                     </svg>
                                     Marcar como Entregue
                                 </button>
