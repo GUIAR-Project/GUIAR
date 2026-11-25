@@ -560,4 +560,137 @@ class EntregadorController
             exit;
         }
     }
+
+    // ========================================
+    // RECUPERAÇÃO DE SENHA - ENTREGADOR
+    // ========================================
+
+    public function esqueceuSenha()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $erro = "E-mail inválido!";
+                require_once __DIR__ . '/../Views/Entregador/esqueceuSenha.php';
+                return;
+            }
+
+            $stmt = $this->pdo->prepare("SELECT id_entregador FROM entregador WHERE email = :email");
+            $stmt->bindParam(':email', $email);
+            $stmt->execute();
+
+            if ($stmt->rowCount() === 0) {
+                $erro = "E-mail não encontrado!";
+                require_once __DIR__ . '/../Views/Entregador/esqueceuSenha.php';
+                return;
+            }
+
+            $userId = $stmt->fetchColumn();
+            $token = bin2hex(random_bytes(32));
+            $expiry = date('Y-m-d H:i:s', strtotime('+1 hour'));
+
+            // Verificar se já existe uma solicitação ativa
+            $stmt = $this->pdo->prepare("DELETE FROM password_resets_entregador WHERE user_id = :user_id");
+            $stmt->bindParam(':user_id', $userId);
+            $stmt->execute();
+
+            $stmt = $this->pdo->prepare("INSERT INTO password_resets_entregador (user_id, token, expiry) VALUES (:user_id, :token, :expiry)");
+            $stmt->bindParam(':user_id', $userId);
+            $stmt->bindParam(':token', $token);
+            $stmt->bindParam(':expiry', $expiry);
+            $stmt->execute();
+
+            // Enviar e-mail usando PHPMailer
+            require_once __DIR__ . '/../../vendor/autoload.php';
+            require_once __DIR__ . '/../../mvc/Services/EmailService.php';
+
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            try {
+                \mvc\Services\EmailService::configure($mail);
+
+                $mail->setFrom('projGuiar@gmail.com', 'GUIAR');
+                $mail->addAddress($email);
+
+                $resetLink = BASE_URL . "/routes.php?action=redefinirSenhaEntregador&token=$token";
+
+                $mail->isHTML(true);
+                $mail->Subject = 'GUIAR - Solicitacao de Redefinicao de Senha';
+                $mail->Body = "
+                    <div style='font-family: Arial, sans-serif; color: #102b61; line-height: 1.6; max-width: 600px; margin: 0 auto; background-color: #eef5ff; border: 1px solid #c4d8ff; padding: 20px; border-radius: 8px;'>
+                        <h2 style='color: #ffffff; background-color: #111979; text-align: center; margin: -20px -20px 20px; padding: 20px; border-radius: 8px 8px 0 0;'>GUIAR</h2>
+                        <h3 style='color: #102b61;'>Prezado(a) entregador(a),</h3>
+                        <p>Recebemos uma solicitação para redefinir a senha da sua conta no sistema <strong>GUIAR</strong>.</p>
+                        <p>Para cadastrar uma nova senha e recuperar o acesso, por favor, clique no botão abaixo:</p>
+                        <div style='text-align: center; margin: 30px 0;'>
+                            <a href='{$resetLink}' style='background-color: #ffd400; color: #102b61; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;'>Redefinir Minha Senha</a>
+                        </div>
+                        <p>Se o botão não funcionar, você também pode acessar o endereço abaixo, copiando-o e colando-o em seu navegador:</p>
+                        <p style='word-break: break-all; color: #00288a;'><a href='{$resetLink}' style='color: #00288a;'>{$resetLink}</a></p>
+                        <p>Ressaltamos que este link de redefinição é válido por apenas <strong>1 hora</strong>. Caso você não tenha solicitado esta alteração, por favor, desconsidere este e-mail. Sua senha atual permanecerá segura e inalterada.</p>
+                        <hr style='border: none; border-top: 1px solid #c4d8ff; margin: 20px 0;'>
+                        <p style='font-size: 12px; color: #58769f; text-align: center;'>
+                            Atenciosamente,<br>
+                            <strong>Equipe GUIAR</strong><br>
+                        </p>
+                    </div>
+                ";
+
+                $mail->send();
+
+                $sucesso = "Um e-mail foi enviado para " . htmlspecialchars($email) . " com as instruções.";
+                require_once __DIR__ . '/../Views/Entregador/esqueceuSenha.php';
+                return;
+            } catch (\Exception $e) {
+                $erro = "Erro ao enviar email: {$mail->ErrorInfo}";
+                require_once __DIR__ . '/../Views/Entregador/esqueceuSenha.php';
+                return;
+            }
+        }
+
+        require_once __DIR__ . '/../Views/Entregador/esqueceuSenha.php';
+    }
+
+    public function redefinirSenha()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $token = $_POST['token'] ?? '';
+            $newPassword = $_POST['password'] ?? '';
+
+            if (strlen($newPassword) < 6) {
+                $erro = "A senha deve ter no mínimo 6 caracteres.";
+                require_once __DIR__ . '/../Views/Entregador/redefinirSenha.php';
+                return;
+            }
+
+            $stmt = $this->pdo->prepare("SELECT user_id FROM password_resets_entregador WHERE token = :token AND expiry > NOW()");
+            $stmt->bindParam(':token', $token);
+            $stmt->execute();
+
+            if ($stmt->rowCount() === 0) {
+                $erro = "Token inválido ou expirado.";
+                require_once __DIR__ . '/../Views/Entregador/redefinirSenha.php';
+                return;
+            }
+
+            $userId = $stmt->fetchColumn();
+
+            // Atualizar senha
+            $stmt = $this->pdo->prepare("UPDATE entregador SET senha = :senha WHERE id_entregador = :id");
+            $stmt->bindParam(':senha', $newPassword);
+            $stmt->bindParam(':id', $userId);
+            $stmt->execute();
+
+            // Remover token usado
+            $stmt = $this->pdo->prepare("DELETE FROM password_resets_entregador WHERE token = :token");
+            $stmt->bindParam(':token', $token);
+            $stmt->execute();
+
+            $sucesso = "Senha redefinida com sucesso! Você já pode fazer login com sua nova senha.";
+            require_once __DIR__ . '/../Views/Entregador/redefinirSenha.php';
+            return;
+        }
+
+        require_once __DIR__ . '/../Views/Entregador/redefinirSenha.php';
+    }
 }
