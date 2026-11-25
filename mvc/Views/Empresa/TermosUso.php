@@ -518,7 +518,7 @@
       <!-- MENU DESKTOP -->
       <nav class="hidden md:flex items-center gap-12 font-semibold text-xl">
         <a href="<?= BASE_URL ?>/index.html" class="text-white/90 hover:text-brand-yellow transition duration-300">Home</a>
-        <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow underline decoration-2 underline-offset-4 transition duration-300">Empresa</a>
+        <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow underline decoration-2 underline-offset-4 transition duration-300">Administrador</a>
         <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90 hover:text-brand-yellow transition duration-300">Entregador</a>
       </nav>
 
@@ -534,7 +534,7 @@
     <div id="nav-menu" class="hidden w-full md:hidden pb-4">
       <div class="flex flex-col gap-4 text-lg font-semibold mt-4">
         <a href="<?= BASE_URL ?>/index.html" class="text-white/90">Home</a>
-        <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold">Empresa</a>
+        <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold">Administrador</a>
         <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90">Entregador</a>
       </div>
     </div>

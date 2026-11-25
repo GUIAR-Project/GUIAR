@@ -28,6 +28,25 @@ class Administrador
         }
     }
 
+    public function isFirstAdminOfCompany($adminId, $companyId)
+    {
+        try {
+            $sql = "SELECT id_adm
+                    FROM administrador
+                    WHERE FK_EMPRESA_id_empresa = :company_id
+                    ORDER BY id_adm ASC
+                    LIMIT 1";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':company_id', $companyId, PDO::PARAM_INT);
+            $stmt->execute();
+
+            return (int)$stmt->fetchColumn() === (int)$adminId;
+        } catch (PDOException $e) {
+            error_log("Erro ao verificar o primeiro administrador da empresa: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function create($data)
     {
         try {
@@ -56,10 +75,8 @@ class Administrador
             $stmt->bindParam(':senha', $password, PDO::PARAM_STR);
             $stmt->execute();
 
-            if ($stmt->rowCount() > 0) {
-                return $stmt->fetch(PDO::FETCH_ASSOC);
-            }
-            return false;
+            $administrador = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $administrador ?: false;
         } catch (PDOException $e) {
             error_log("Erro no login do administrador: " . $e->getMessage());
             return false;

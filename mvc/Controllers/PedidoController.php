@@ -31,7 +31,7 @@ class PedidoController
             exit;
         }
         if (!isset($_SESSION['id_adm'])) {
-            header("Location: " . BASE_URL . "/routes.php?action=escolherAdm");
+            header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
             exit;
         }
     }

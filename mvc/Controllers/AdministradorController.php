@@ -20,9 +20,9 @@ class AdministradorController
         $this->entregadorModel = new \mvc\Models\Entregador($pdo);
     }
 
-    public function escolher()
+    public function gerenciar()
     {
-        if (!isset($_SESSION['company_id'])) {
+        if (!isset($_SESSION['company_id'], $_SESSION['id_adm'], $_SESSION['nome_usuario'])) {
             header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
             exit;
         }
@@ -32,6 +32,14 @@ class AdministradorController
 
         if (!$empresa) {
             header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
+            exit;
+        }
+
+        if (!$this->administradorModel->isFirstAdminOfCompany(
+            (int)$_SESSION['id_adm'],
+            (int)$company_id
+        )) {
+            header("Location: " . BASE_URL . "/routes.php?action=dashboardAdm");
             exit;
         }
 
@@ -45,7 +53,7 @@ class AdministradorController
 
     public function adicionar()
     {
-        if (!isset($_SESSION['company_id'])) {
+        if (!isset($_SESSION['company_id'], $_SESSION['id_adm'])) {
             header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
             exit;
         }
@@ -56,6 +64,14 @@ class AdministradorController
 
             if (!$empresa) {
                 header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
+                exit;
+            }
+
+            if (!$this->administradorModel->isFirstAdminOfCompany(
+                (int)$_SESSION['id_adm'],
+                (int)$company_id
+            )) {
+                header("Location: " . BASE_URL . "/routes.php?action=dashboardAdm");
                 exit;
             }
 
@@ -103,16 +119,16 @@ class AdministradorController
                 ];
 
                 if ($this->administradorModel->create($data)) {
-                    header("Location: " . BASE_URL . "/routes.php?action=escolherAdm");
+                    header("Location: " . BASE_URL . "/routes.php?action=gerenciarAdms");
                     exit();
                 } else {
                     $erro = "Erro ao adicionar administrador no banco de dados.";
-                    header("Location: " . BASE_URL . "/routes.php?action=escolherAdm&erro=" . urlencode($erro));
+                    header("Location: " . BASE_URL . "/routes.php?action=gerenciarAdms&erro=" . urlencode($erro));
                     exit();
                 }
             } else {
                 $erro = "Erro ao fazer upload da foto.";
-                header("Location: " . BASE_URL . "/routes.php?action=escolherAdm&erro=" . urlencode($erro));
+                header("Location: " . BASE_URL . "/routes.php?action=gerenciarAdms&erro=" . urlencode($erro));
                 exit();
             }
         }
@@ -121,20 +137,31 @@ class AdministradorController
     public function login()
     {
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            $adminUsername = $_POST['adminUsername'] ?? '';
-            $adminPassword = $_POST['adminPassword'] ?? '';
+            $adminUsername = $_POST['adminUsername'] ?? $_POST['username'] ?? '';
+            $adminPassword = $_POST['adminPassword'] ?? $_POST['password'] ?? '';
 
             $admin = $this->administradorModel->login($adminUsername, $adminPassword);
+            $companyId = (int)($admin['FK_EMPRESA_id_empresa'] ?? 0);
 
-            if ($admin) {
+            if ($admin && $companyId > 0 && $this->empresaModel->getById($companyId)) {
+                session_regenerate_id(true);
                 $_SESSION['id_adm'] = $admin['id_adm'];
                 $_SESSION['nome_usuario'] = $admin['nome_usuario'];
-                echo "success";
+                $_SESSION['company_id'] = $companyId;
+                header("Location: " . BASE_URL . "/routes.php?action=dashboardAdm");
             } else {
-                echo "error";
+                header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa&erro=" . urlencode("Nome de usuário ou senha incorretos"));
             }
-            exit; // Importante para as chamadas AJAX
+            exit;
         }
+
+        if (isset($_SESSION['company_id'], $_SESSION['id_adm'], $_SESSION['nome_usuario'])) {
+            header("Location: " . BASE_URL . "/routes.php?action=dashboardAdm");
+            exit;
+        }
+
+        $erro = $_GET['erro'] ?? null;
+        require_once __DIR__ . '/../Views/Empresa/login.php';
     }
 
     public function logout()
@@ -142,26 +169,25 @@ class AdministradorController
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        unset($_SESSION['id_adm'], $_SESSION['nome_usuario']);
+        unset($_SESSION['id_adm'], $_SESSION['nome_usuario'], $_SESSION['company_id']);
 
-        header("Location: " . BASE_URL . "/routes.php?action=escolherAdm");
+        header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
         exit();
     }
 
     public function dashboard()
     {
-        if (!isset($_SESSION['company_id'])) {
+        if (!isset($_SESSION['company_id'], $_SESSION['id_adm'], $_SESSION['nome_usuario'])) {
             header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
-            exit;
-        }
-
-        if (!isset($_SESSION['nome_usuario'])) {
-            header("Location: " . BASE_URL . "/routes.php?action=escolherAdm&erro=" . urlencode("Administrador não identificado"));
             exit;
         }
 
         $nomeAdmin  = $_SESSION['nome_usuario'];
         $company_id = $_SESSION['company_id'];
+        $isFirstAdmin = $this->administradorModel->isFirstAdminOfCompany(
+            (int)$_SESSION['id_adm'],
+            (int)$company_id
+        );
         $adminFotoUrl = $this->administradorModel->getPhotoUrlForCompany($_SESSION['id_adm'] ?? 0, $company_id);
         $logoEmpresaSidebar = $this->empresaModel->getLogoUrlById($company_id);
 
@@ -191,13 +217,8 @@ class AdministradorController
 
     public function mapa()
     {
-        if (!isset($_SESSION['company_id'])) {
+        if (!isset($_SESSION['company_id'], $_SESSION['id_adm'], $_SESSION['nome_usuario'])) {
             header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
-            exit;
-        }
-
-        if (!isset($_SESSION['nome_usuario'])) {
-            header("Location: " . BASE_URL . "/routes.php?action=escolherAdm&erro=" . urlencode("Administrador não identificado"));
             exit;
         }
 
@@ -211,12 +232,8 @@ class AdministradorController
     /** Painel "Inteligência de entregas": desempenho real × previsto e o modelo de machine learning. */
     public function inteligencia()
     {
-        if (!isset($_SESSION['company_id'])) {
+        if (!isset($_SESSION['company_id'], $_SESSION['id_adm'], $_SESSION['nome_usuario'])) {
             header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
-            exit;
-        }
-        if (!isset($_SESSION['nome_usuario'])) {
-            header("Location: " . BASE_URL . "/routes.php?action=escolherAdm&erro=" . urlencode("Administrador não identificado"));
             exit;
         }
 
@@ -243,7 +260,7 @@ class AdministradorController
             session_start();
         }
 
-        if (!isset($_SESSION['company_id'])) {
+        if (!$this->simuladorAdminAutenticado()) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'error' => 'Não autenticado']);
             exit;
@@ -389,13 +406,13 @@ class AdministradorController
 
     public function perfil()
     {
-        if (!isset($_SESSION['company_id'])) {
+        if (!isset($_SESSION['company_id'], $_SESSION['id_adm'], $_SESSION['nome_usuario'])) {
             header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
             exit;
         }
 
-        if (!isset($_SESSION['nome_usuario']) || !isset($_SESSION['id_adm'])) {
-            header("Location: " . BASE_URL . "/routes.php?action=escolherAdm&erro=" . urlencode("Administrador não identificado"));
+        if (!isset($_SESSION['nome_usuario'], $_SESSION['id_adm'])) {
+            header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa&erro=" . urlencode("Faça login como administrador"));
             exit;
         }
 
@@ -410,7 +427,7 @@ class AdministradorController
         $admin = $this->administradorModel->getById($_SESSION['id_adm']);
 
         if (!$admin) {
-            header("Location: " . BASE_URL . "/routes.php?action=escolherAdm&erro=" . urlencode("Administrador não encontrado"));
+            header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa&erro=" . urlencode("Administrador não encontrado"));
             exit;
         }
 
@@ -424,7 +441,7 @@ class AdministradorController
 
     public function editarPerfil()
     {
-        if (!isset($_SESSION['company_id']) || !isset($_SESSION['id_adm'])) {
+        if (!isset($_SESSION['company_id'], $_SESSION['id_adm'], $_SESSION['nome_usuario'])) {
             header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
             exit;
         }

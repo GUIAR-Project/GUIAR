@@ -327,6 +327,16 @@
                     Entregadores
                 </a>
 
+                <?php if ($isFirstAdmin): ?>
+                    <a href="<?= BASE_URL ?>/routes.php?action=gerenciarAdms"
+                        class="menu-item flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m4-4a4 4 0 100-8 4 4 0 000 8zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+                        </svg>
+                        Administradores
+                    </a>
+                <?php endif; ?>
+
                 <!-- PEDIDOS ENTREGUES -->
                 <a href="<?= BASE_URL ?>/routes.php?action=pedidosEntregues"
                     class="menu-item flex items-center gap-3.5 px-4 py-3 rounded-xl font-semibold text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-all">

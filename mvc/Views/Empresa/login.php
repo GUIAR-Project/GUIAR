@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login | Empresa</title>
+  <title>Login | Administrador</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -84,7 +84,7 @@
       <!-- MENU DESKTOP -->
       <nav class="hidden md:flex items-center gap-12 font-semibold text-xl">
         <a href="<?= BASE_URL ?>/index.html" class="text-white/90 hover:text-brand-yellow transition duration-300">Home</a>
-        <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-white/90 hover:text-brand-yellow transition duration-300">Empresa</a>
+        <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-white/90 hover:text-brand-yellow transition duration-300">Administrador</a>
         <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90 hover:text-brand-yellow transition duration-300">Entregador</a>
       </nav>
 
@@ -100,7 +100,7 @@
     <div id="nav-menu" class="hidden w-full md:hidden pb-4">
       <div class="flex flex-col gap-4 text-lg font-semibold mt-4">
         <a href="<?= BASE_URL ?>/index.html" class="text-white/90">Home</a>
-        <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold">Empresa</a>
+        <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold">Administrador</a>
         <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90">Entregador</a>
       </div>
     </div>
@@ -152,14 +152,14 @@
 
           <!-- Cabeçalho: Ícone do Prédio e Título -->
           <div class="login-form-heading flex items-center justify-center gap-3 mb-10">
-            <!-- Ícone de Empresa (Fundo circular azul claro) -->
+            <!-- Ícone do administrador -->
             <div class="w-[4.5rem] h-[4.5rem] rounded-full bg-[#d6e0f5] flex items-center justify-center text-brand-blue shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
             <!-- Título -->
-            <h2 class="login-form-title text-[1.8rem] font-bold text-gray-900 tracking-tight leading-none pt-2">Login Empresa</h2>
+            <h2 class="login-form-title text-[1.8rem] font-bold text-gray-900 tracking-tight leading-none pt-2">Login do Administrador</h2>
           </div>
 
           <!-- Início do Formulário -->
@@ -167,8 +167,8 @@
 
             <!-- Input Nome de Usuário -->
             <div>
-              <label class="block text-[0.85rem] font-medium text-gray-700 mb-1.5 ml-1">Nome de Usuário</label>
-              <input type="text" name="username" required
+              <label class="block text-[0.85rem] font-medium text-gray-700 mb-1.5 ml-1">Usuário do administrador</label>
+              <input type="text" name="adminUsername" required
                 class="w-full px-4 py-3 rounded-xl border border-brand-inputborder focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 transition-all text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)]"
                 placeholder="">
             </div>
@@ -177,10 +177,10 @@
             <div>
               <label class="block text-[0.85rem] font-medium text-gray-700 mb-1.5 ml-1">Senha</label>
               <div class="password-field">
-                <input id="companyPassword" type="password" name="password" required
+                <input id="adminPassword" type="password" name="adminPassword" required
                   class="w-full px-4 py-3 rounded-xl border border-brand-inputborder focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 transition-all text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)]"
                   placeholder="">
-                <button id="toggleCompanyPassword" class="password-toggle" type="button" aria-label="Mostrar senha" aria-controls="companyPassword" aria-pressed="false">
+                <button id="toggleAdminPassword" class="password-toggle" type="button" aria-label="Mostrar senha" aria-controls="adminPassword" aria-pressed="false">
                   <svg data-eye-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8" />
                     <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c5 0 8.5 4.5 9.5 7-.4 1.1-1.2 2.2-2.2 3.2M6.2 6.2C3.8 7.7 2.6 10.2 2.5 12c.5 1.2 3.8 7 9.5 7 1 0 2-.2 2.9-.5" />
@@ -191,11 +191,6 @@
                   </svg>
                 </button>
               </div>
-            </div>
-
-            <!-- Link Esqueceu a Senha -->
-            <div class="text-center mt-1">
-              <a href="<?= BASE_URL ?>/routes.php?action=esqueceuSenha" class="text-brand-link text-[0.85rem] font-bold hover:underline tracking-wide">Esqueceu sua senha?</a>
             </div>
 
             <!-- Exibir mensagem de erro se houver -->
@@ -214,8 +209,8 @@
             <!-- Link Cadastro -->
             <div class="text-center mt-3">
               <p class="text-sm font-medium text-gray-800">
-                Não tem uma conta?
-                <a href="<?= BASE_URL ?>/routes.php?action=cadastroEmpresa" class="text-brand-link font-bold hover:underline">Faça cadastro</a>
+                Sua empresa ainda não tem acesso?
+                <a href="<?= BASE_URL ?>/routes.php?action=cadastroEmpresa" class="text-brand-link font-bold hover:underline">Cadastre a empresa e o primeiro administrador</a>
               </p>
             </div>
           </form>
@@ -247,16 +242,16 @@
       });
     }
 
-    const companyPassword = document.getElementById('companyPassword');
-    const toggleCompanyPassword = document.getElementById('toggleCompanyPassword');
-    const hiddenEye = toggleCompanyPassword.querySelector('[data-eye-hidden]');
-    const visibleEye = toggleCompanyPassword.querySelector('[data-eye-visible]');
+    const adminPassword = document.getElementById('adminPassword');
+    const toggleAdminPassword = document.getElementById('toggleAdminPassword');
+    const hiddenEye = toggleAdminPassword.querySelector('[data-eye-hidden]');
+    const visibleEye = toggleAdminPassword.querySelector('[data-eye-visible]');
 
-    toggleCompanyPassword.addEventListener('click', () => {
-      const showPassword = companyPassword.type === 'password';
-      companyPassword.type = showPassword ? 'text' : 'password';
-      toggleCompanyPassword.setAttribute('aria-label', showPassword ? 'Ocultar senha' : 'Mostrar senha');
-      toggleCompanyPassword.setAttribute('aria-pressed', String(showPassword));
+    toggleAdminPassword.addEventListener('click', () => {
+      const showPassword = adminPassword.type === 'password';
+      adminPassword.type = showPassword ? 'text' : 'password';
+      toggleAdminPassword.setAttribute('aria-label', showPassword ? 'Ocultar senha' : 'Mostrar senha');
+      toggleAdminPassword.setAttribute('aria-pressed', String(showPassword));
       hiddenEye.hidden = showPassword;
       visibleEye.hidden = !showPassword;
     });

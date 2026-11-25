@@ -27,8 +27,8 @@ class EntregadorController
             header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
             exit;
         }
-        if (!isset($_SESSION['id_adm']) && !isset($_SESSION['nome_usuario'])) {
-            header("Location: " . BASE_URL . "/routes.php?action=escolherAdm");
+        if (!isset($_SESSION['id_adm'], $_SESSION['nome_usuario'])) {
+            header("Location: " . BASE_URL . "/routes.php?action=loginEmpresa");
             exit;
         }
     }

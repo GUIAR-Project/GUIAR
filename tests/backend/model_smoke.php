@@ -84,6 +84,37 @@ check($administrador->create([
     'company_id' => 1,
 ]), 'Administrador::create não inseriu o registro.');
 check(count($administrador->getByEmpresaId(1)) === 1, 'Administrador::getByEmpresaId não retornou o registro.');
+check($administrador->isFirstAdminOfCompany(1, 1), 'O primeiro administrador da empresa não foi identificado.');
+$adminLogado = $administrador->login('admin_ci', 'senha-teste');
+check($adminLogado !== false && (int)$adminLogado['FK_EMPRESA_id_empresa'] === 1, 'Administrador::login não autenticou o administrador e sua empresa.');
+check($administrador->login('admin_ci', 'senha-incorreta') === false, 'Administrador::login aceitou uma senha incorreta.');
+check($administrador->create([
+    'nome_adm' => 'Outro Administrador CI',
+    'nome_usuario' => 'admin_ci_2',
+    'nome_foto' => 'foto2.png',
+    'senha' => 'senha-teste',
+    'company_id' => 1,
+]), 'O segundo administrador da empresa não foi cadastrado.');
+check(!$administrador->isFirstAdminOfCompany(2, 1), 'Um administrador posterior foi identificado como o primeiro da empresa.');
+check($administrador->isFirstAdminOfCompany(1, 1), 'O primeiro administrador deixou de ser identificado após novo cadastro.');
+$segundaEmpresaCriada = $empresa->create([
+    'nome_empresa' => 'Segunda Empresa CI',
+    'cnpj' => '11.111.111/0001-11',
+    'nome_usuario' => 'empresa_ci_2',
+    'email' => 'empresa-ci-2@example.com',
+    'senha' => 'senha-teste',
+    'nome_arquivo' => 'logo2.png',
+]);
+check($segundaEmpresaCriada, 'A segunda empresa de teste não foi cadastrada.');
+check($administrador->create([
+    'nome_adm' => 'Administrador da Segunda Empresa',
+    'nome_usuario' => 'admin_ci_3',
+    'nome_foto' => 'foto3.png',
+    'senha' => 'senha-teste',
+    'company_id' => 2,
+]), 'O administrador da segunda empresa não foi cadastrado.');
+check($administrador->isFirstAdminOfCompany(3, 2), 'A primeira conta administrativa de outra empresa não foi identificada.');
+check(!$administrador->isFirstAdminOfCompany(2, 2), 'Um administrador de outra empresa recebeu permissão indevida.');
 
 $pedido = new Pedido($pdo);
 check($pedido->create([

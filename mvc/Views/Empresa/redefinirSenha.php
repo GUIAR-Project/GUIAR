@@ -38,12 +38,12 @@
             <div class="flex items-center"><a href="<?= BASE_URL ?>/index.html"><img src="<?= BASE_URL ?>/img/LogoGAzul.png" alt="Logo GUIAR" class="h-10 md:h-14 w-auto object-contain"></a></div>
             <nav class="hidden md:flex items-center font-semibold">
                 <a href="<?= BASE_URL ?>/index.html" class="transition duration-300">Home</a>
-                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="transition duration-300">Empresa</a>
+                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="transition duration-300">Administrador</a>
                 <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="transition duration-300">Entregador</a>
             </nav>
             <button id="nav-toggle" class="md:hidden p-2 focus:outline-none rounded-lg transition-colors" type="button" aria-label="Abrir menu"><svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
         </div>
-        <div id="nav-menu" class="hidden w-full md:hidden pb-4"><div class="flex flex-col gap-4 text-lg font-semibold mt-4"><a href="<?= BASE_URL ?>/index.html">Home</a><a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa">Empresa</a><a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="font-bold">Entregador</a></div></div>
+        <div id="nav-menu" class="hidden w-full md:hidden pb-4"><div class="flex flex-col gap-4 text-lg font-semibold mt-4"><a href="<?= BASE_URL ?>/index.html">Home</a><a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa">Administrador</a><a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="font-bold">Entregador</a></div></div>
     </header>
 
     <main class="flex-grow flex items-center justify-center px-6 py-16">
