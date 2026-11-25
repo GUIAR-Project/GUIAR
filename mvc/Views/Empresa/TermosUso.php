@@ -66,13 +66,19 @@
         }
 
     body > header {
-        min-height: 80px;
-        background: #fff !important;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -2px rgb(0 0 0 / 10%) !important;
+      min-height: 72px;
+      padding-right: 12px !important;
+      padding-left: 12px !important;
+      background: rgba(255, 255, 255, .96) !important;
+      box-shadow: none !important;
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
     }
 
     body > header > div:first-child {
-      min-height: 80px;
+      width: 100%;
+      max-width: 1140px;
+      min-height: 72px;
     }
 
     body > header > div:first-child > div {
@@ -80,53 +86,91 @@
       margin-bottom: 0 !important;
     }
 
-     body > header img {
+    body > header img {
       width: auto !important;
-      height: 56px !important;
+      height: 48px !important;
       max-height: none;
       filter: none !important;
+      object-fit: contain;
     }
 
     body > header nav {
-      gap: 48px !important;
-      font-size: 24px !important;
+      gap: 24px !important;
+      font-size: 1rem !important;
       font-weight: 600 !important;
-      font-family: ui-sans-serif, system-ui, sans-serif !important;
+      font-family: 'Inter', Arial, sans-serif !important;
     }
 
-     body > header nav a,
-     body > header #nav-menu a {
-      color: #1b138f !important;
-      text-decoration: none !important;
-      transition: color 300ms ease;
-    }
-    
     body > header nav a,
     body > header #nav-menu a {
-      color: #1b138f !important;
+      color: #061d3b !important;
+      line-height: 1.5 !important;
       text-decoration: none !important;
-      transition: color 300ms ease;
+      transition: color .25s ease;
+    }
+
+    body > header nav a {
+      padding: .5rem !important;
     }
 
     body > header nav a:hover,
     body > header #nav-menu a:hover {
-      color: #2b6dd6 !important;
+      color: #2e8bdc !important;
+    }
+
+    body > header nav a.text-brand-yellow,
+    body > header #nav-menu a.text-brand-yellow {
+      color: #061d3b !important;
     }
 
     body > header #nav-toggle {
-      color: #fff !important;
-      background: #1b138f !important;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #073b7840;
+      color: #073b78 !important;
+      background: transparent !important;
     }
 
     body > header #nav-menu {
-      padding-bottom: 16px;
+      margin-top: .8rem;
+      padding: 1rem 1.2rem !important;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .98);
     }
 
     body > header #nav-menu > div {
-      gap: 16px;
-      margin-top: 16px;
-      font-size: 18px;
+      gap: 0;
+      margin-top: 0;
+      font-size: 1rem;
       font-weight: 600;
+    }
+
+    body > header #nav-menu a {
+      padding: .5rem 0 !important;
+    }
+
+    @supports ((-webkit-backdrop-filter: blur(8px)) or (backdrop-filter: blur(8px))) {
+      body > header {
+        background: rgba(255, 255, 255, .62) !important;
+      }
+    }
+
+    @media (min-width: 768px) and (max-width: 991.98px) {
+      body > header nav {
+        display: none !important;
+      }
+
+      body > header #nav-toggle {
+        display: inline-flex !important;
+      }
+
+      body > header #nav-menu.hidden {
+        display: none !important;
+      }
+
+      body > header #nav-menu.flex {
+        display: block !important;
+      }
     }
 
      body > .flex-grow > div > div:first-child {
@@ -249,8 +293,8 @@
 
     body > .flex-grow > div {
       width: 100% !important;
-      max-width: 950px !important;
-      min-height: 580px !important;
+      max-width: 1100px !important;
+      min-height: 540px !important;
       border-radius: 14px !important;
       box-shadow: 0 24px 60px rgb(31 91 166 / 16%) !important;
       animation: none !important;
@@ -312,8 +356,9 @@
 
     body > .flex-grow > div > div:last-child {
       width: 55% !important;
-      padding: 56px 48px !important;
+      padding: 48px !important;
       background: #fff !important;
+      justify-content: flex-start !important;
     }
 
     .login-form-heading {
@@ -382,7 +427,7 @@
 
     .terms-action {
       display: inline-flex;
-      min-height: 60px;
+      min-height: 52px;
       flex: 1 1 0;
       align-items: center;
       justify-content: center;
@@ -431,7 +476,7 @@
 
     @media (max-width: 1100px) {
       body > .flex-grow > div {
-        max-width: 900px !important;
+        max-width: 1000px !important;
       }
 
       body > .flex-grow > div > div:first-child {
@@ -450,15 +495,15 @@
     @media (max-width: 767px) {
       body > header,
       body > header > div:first-child {
-        min-height: 80px;
+        min-height: 72px;
       }
 
       body > header img {
-        height: 40px !important;
+        height: 48px !important;
       }
 
       body > header nav {
-        font-size: 20px !important;
+        font-size: 1rem !important;
       }
 
       body > .flex-grow {
@@ -511,14 +556,14 @@
       <!-- LOGO -->
       <div class="flex items-center -my-6">
         <a href="<?= BASE_URL ?>/index.html">
-          <img src="<?= BASE_URL ?>/img/LogoGAzul.png" alt="LOGO" class="w-52 h-auto object-contain brightness-0 invert">
+          <img src="<?= BASE_URL ?>/img/LogoGAzul.png" alt="GUIAR Logística" class="w-52 h-auto object-contain brightness-0 invert">
         </a>
       </div>
 
       <!-- MENU DESKTOP -->
       <nav class="hidden md:flex items-center gap-12 font-semibold text-xl">
-        <a href="<?= BASE_URL ?>/index.html" class="text-white/90 hover:text-brand-yellow transition duration-300">Home</a>
-        <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow underline decoration-2 underline-offset-4 transition duration-300">Administrador</a>
+        <a href="<?= BASE_URL ?>/index.html" class="text-white/90 hover:text-brand-yellow transition duration-300">Início</a>
+        <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-white/90 hover:text-brand-yellow transition duration-300">Administrador</a>
         <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90 hover:text-brand-yellow transition duration-300">Entregador</a>
       </nav>
 
@@ -533,8 +578,9 @@
     <!-- MENU MOBILE -->
     <div id="nav-menu" class="hidden w-full md:hidden pb-4">
       <div class="flex flex-col gap-4 text-lg font-semibold mt-4">
-        <a href="<?= BASE_URL ?>/index.html" class="text-white/90">Home</a>
-        <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold">Administrador</a>
+      <a href="<?= BASE_URL ?>/index.html" class="text-white/90">Início</a>
+      <a href="<?= BASE_URL ?>/index.html#sobre" class="text-white/90">Sobre nós</a>
+      <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold">Empresa</a>
         <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90">Entregador</a>
       </div>
     </div>

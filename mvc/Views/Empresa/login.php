@@ -9,7 +9,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="Shortcut Icon" type="image/png" href="<?= BASE_URL ?>/img/logoIcon.png" class=" w-50 h-60 object-contain">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/style/login.css">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/style/login.css?v=20261125-1820">
 
   <script>
     tailwind.config = {
@@ -77,13 +77,13 @@
       <!-- LOGO -->
       <div class="flex items-center -my-6">
         <a href="<?= BASE_URL ?>/index.html">
-          <img src="<?= BASE_URL ?>/img/LogoGAzul.png" alt="LOGO" class="h-10 md:h-14 w-auto object-contain">
+          <img src="<?= BASE_URL ?>/img/LogoGAzul.png" alt="GUIAR Logística" class="h-10 md:h-14 w-auto object-contain">
         </a>
       </div>
 
       <!-- MENU DESKTOP -->
       <nav class="hidden md:flex items-center gap-12 font-semibold text-xl">
-        <a href="<?= BASE_URL ?>/index.html" class="text-white/90 hover:text-brand-yellow transition duration-300">Home</a>
+        <a href="<?= BASE_URL ?>/index.html" class="text-white/90 hover:text-brand-yellow transition duration-300">Início</a>
         <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-white/90 hover:text-brand-yellow transition duration-300">Administrador</a>
         <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90 hover:text-brand-yellow transition duration-300">Entregador</a>
       </nav>
@@ -99,7 +99,8 @@
     <!-- MENU MOBILE -->
     <div id="nav-menu" class="hidden w-full md:hidden pb-4">
       <div class="flex flex-col gap-4 text-lg font-semibold mt-4">
-        <a href="<?= BASE_URL ?>/index.html" class="text-white/90">Home</a>
+        <a href="<?= BASE_URL ?>/index.html" class="text-white/90">Início</a>
+        <a href="<?= BASE_URL ?>/index.html#sobre" class="text-white/90">Sobre nós</a>
         <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold">Administrador</a>
         <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90">Entregador</a>
       </div>

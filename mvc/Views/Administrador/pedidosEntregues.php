@@ -55,19 +55,21 @@
                 rgba(255, 255, 255, .72);
             border: 0;
         }
+        .orders-title-group > div {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
         .orders-page-title {
-            color: #172b4d;
-            font-size: clamp(16px, 1.35vw, 21px);
-            font-weight: 800;
-            letter-spacing: -.035em;
+            display: block !important;
+            visibility: visible !important;
+            margin: 0 !important;
+            color: #0f172a !important;
+            font-size: 20px !important;
+            font-weight: 800 !important;
+            line-height: 1.25 !important;
+            letter-spacing: -.025em;
         }
         .orders-page-icon { color: var(--emp-primary, #f3243e); }
-        .orders-page-subtitle {
-            margin-top: 2px;
-            color: #8390a8;
-            font-size: clamp(10px, .72vw, 12px);
-            line-height: 1.45;
-        }
         .orders-content {
             width: 100%;
             max-width: 1760px;
@@ -301,6 +303,7 @@
             }
         }
         @media (max-width: 768px) {
+            .orders-page-title { font-size: 18px !important; }
             .orders-columns { display: none; }
             .order-card {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -354,15 +357,6 @@
             .orders-header > .orders-date span { white-space: nowrap; }
             .orders-header > .orders-date span span:first-child { font-size: 9px; }
             .orders-header > .orders-date time { font-size: 8px; }
-            .orders-page-title {
-                font-size: clamp(14px, 4vw, 16px);
-                line-height: 1.2;
-            }
-            .orders-page-subtitle {
-                max-width: 100%;
-                font-size: clamp(9px, 2.8vw, 10px);
-                line-height: 1.35;
-            }
             .orders-content { padding: 12px 10px 88px; }
             .orders-toolbar { gap: 6px; padding: 5px; }
             .orders-toolbar > label { gap: 6px; padding-right: 8px; padding-left: 8px; }
@@ -413,14 +407,19 @@ $nomeAdmin = $_SESSION['nome_usuario'] ?? ($admin["nome_adm"] ?? "Admin");
             ✕
         </button>
 
-        <!-- LOGO -->
-        <div class="px-5 pt-6 pb-4 mb-2 flex justify-start">
-            <div style="width: 68px; height: 68px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #fff; border: 2px solid rgba(79,70,229,0.15); box-shadow: 0 2px 10px rgba(79,70,229,0.12); display: flex; align-items: center; justify-content: center; padding: 6px;">
-                <img src="<?= htmlspecialchars($logoEmpresaSidebar, ENT_QUOTES, 'UTF-8') ?>"
-                    alt="Logo da empresa"
-                    style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block;">
+        <!-- LOGO DA EMPRESA -->
+            <div class="px-6 pt-7 pb-4 mb-2 flex justify-start items-center gap-3">
+                <div style="width: 58px; height: 58px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #fff; border: 2px solid var(--emp-primary-light-border, rgba(79,70,229,0.18)); box-shadow: 0 4px 14px var(--emp-primary-ring, rgba(79,70,229,0.12)); display: flex; align-items: center; justify-content: center; padding: 5px;">
+                    <img src="<?= htmlspecialchars($logoEmpresaSidebar, ENT_QUOTES, 'UTF-8') ?>"
+                        alt="Logo da empresa"
+                        style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block;">
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Painel do Gestor</p>
+                    <p class="text-sm font-extrabold text-slate-800 truncate">GUIAR Entregas</p>
+                </div>
             </div>
-        </div>
+
 
         <!-- MENU -->
         <nav class="sidebar-menu px-4 space-y-2 flex-grow">
@@ -638,10 +637,10 @@ class="menu-item flex items-center gap-3.5 px-5 py-3 rounded-xl font-semibold te
                         </svg>
                     </span>
                     <div class="min-w-0">
-                    <h1 class="orders-page-title">
+                    <h1 class="orders-page-title page-heading text-lg md:text-xl font-extrabold tracking-tight">
                         Pedidos Entregues
                     </h1>
-                    <p class="orders-page-subtitle">Aqui estão os status dos seus pedidos entregues hoje.</p>
+                    <p class="page-subheading text-xs md:text-sm text-slate-500 font-medium truncate">Aqui estão os status dos seus pedidos entregues hoje.</p>
                     </div>
                 </div>
                 <div class="orders-date flex shrink-0 items-center gap-2 rounded-xl border border-slate-100 bg-white/90 px-2.5 py-1.5 text-slate-500 shadow-sm" aria-label="Data atual">

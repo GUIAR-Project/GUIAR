@@ -11,6 +11,7 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/style/login.css?v=20261125-1820">
 
     <script>
         tailwind.config = {
@@ -56,8 +57,15 @@
         }
     </script>
     <style>
-        body {
-            background: linear-gradient(135deg, #e6eaf0 0%, #f0f4f8 100%);
+        body > .flex-grow form input[name='codigo_verificacao'] {
+            padding: 0 16px !important;
+            text-align: center;
+            letter-spacing: .3em;
+        }
+
+        .login-form-title span {
+            color: inherit !important;
+            font-weight: inherit !important;
         }
     </style>
 </head>
@@ -66,22 +74,30 @@
 
     <!-- HEADER -->
     <header class="bg-brand-blue shadow-md py-0 px-8 sticky top-0 z-50">
-
         <div class="max-w-7xl mx-auto flex items-center justify-between">
-
-            <!-- LOGO -->
             <div class="flex items-center -my-6">
                 <a href="<?= BASE_URL ?>/index.html">
-                    <img src="<?= BASE_URL ?>/img/LogoGuiar.png" alt="LOGO" class="w-52 h-auto object-contain brightness-0 invert">
+                    <img src="<?= BASE_URL ?>/img/LogoGAzul.png" alt="GUIAR Logística" class="h-10 md:h-14 w-auto object-contain">
                 </a>
             </div>
-
-            <!-- MENU DESKTOP -->
             <nav class="hidden md:flex items-center gap-12 font-semibold text-xl">
-                <a href="<?= BASE_URL ?>/index.html" class="text-white/90 hover:text-brand-yellow transition duration-300">Home</a>
-                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold underline decoration-2 underline-offset-4 transition duration-300">Administrador</a>
+                <a href="<?= BASE_URL ?>/index.html" class="text-white/90 hover:text-brand-yellow transition duration-300">Início</a>
+                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-white/90 hover:text-brand-yellow transition duration-300">Administrador</a>
                 <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90 hover:text-brand-yellow transition duration-300">Entregador</a>
             </nav>
+            <button id="nav-toggle" class="md:hidden p-2 text-white focus:outline-none hover:bg-white/10 rounded-lg transition-colors" type="button" aria-label="Abrir menu">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="nav-menu" class="hidden w-full md:hidden pb-4">
+            <div class="flex flex-col gap-4 text-lg font-semibold mt-4">
+                <a href="<?= BASE_URL ?>/index.html" class="text-white/90">Início</a>
+                <a href="<?= BASE_URL ?>/index.html#sobre" class="text-white/90">Sobre nós</a>
+                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold">Administrador</a>
+                <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90">Entregador</a>
+            </div>
         </div>
     </header>
 
@@ -123,10 +139,10 @@
             <!-- Painel Direito (Formulário) -->
             <div class="w-full md:w-[55%] bg-white p-8 sm:p-14 flex flex-col justify-center items-center relative">
 
-                <div class="w-full max-w-[360px]">
+                <div class="login-form-content w-full max-w-[508px]">
 
                     <!-- Cabeçalho: Ícone e Título -->
-                    <div class="flex items-center justify-center gap-3 mb-10">
+                    <div class="login-form-heading flex items-center justify-center gap-3 mb-10">
                         <div class="w-[4.5rem] h-[4.5rem] rounded-full bg-[#d6e0f5] flex items-center justify-center text-brand-blue shrink-0">
                             <!-- Ícone de Lock -->
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -134,7 +150,7 @@
                             </svg>
                         </div>
                         <!-- Título -->
-                        <h2 class="text-[1.8rem] font-bold text-gray-900 tracking-tight leading-none pt-2">Código <span class="text-brand-blue font-semibold">| Empresa</span></h2>
+                        <h2 class="login-form-title text-[1.8rem] font-bold text-gray-900 tracking-tight leading-none pt-2">Código <span class="text-brand-blue font-semibold">| Empresa</span></h2>
                     </div>
 
                     <!-- Início do Formulário -->

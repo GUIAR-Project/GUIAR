@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciamento de Pedidos - GUIAR</title>
     <link rel="stylesheet" href="<?= BASE_URL ?>/CSSadm/pedidos.css"> 
-    <link rel="Shortcut Icon" type="image/png" href="<?= BASE_URL ?>/img/G.png">
+    <link rel="Shortcut Icon" type="image/png" href="<?= BASE_URL ?>/img/logoIcon.png">
     <style>
         @font-face {
             font-family: 'Brice-Bold';
