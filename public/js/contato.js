@@ -11,6 +11,7 @@
     const message = document.getElementById('home-contato-mensagem');
     const token = form.elements.csrf_token;
     let tokenRequest;
+    let opener = launcher;
 
     function showNotice(text, kind) {
         notice.textContent = text;
@@ -23,22 +24,28 @@
             tokenRequest = fetch(form.action, { credentials: 'same-origin', cache: 'no-store' })
                 .then(async response => {
                     const data = await response.json();
-                    if (!response.ok || !data.csrf_token) throw new Error('token');
+                    if (!response.ok || !data.csrf_token) throw new Error('Token CSRF indisponível.');
                     token.value = data.csrf_token;
-                }).finally(() => { tokenRequest = null; });
+                })
+                .finally(() => { tokenRequest = null; });
         }
         return tokenRequest;
     }
 
-    function togglePanel(open, restoreFocus = true) {
+    function togglePanel(open, restoreFocus = true, trigger = launcher) {
         panel.hidden = !open;
         launcher.setAttribute('aria-expanded', String(open));
         if (open) {
+            opener = trigger;
             document.getElementById('home-contato-nome').focus();
-            if (!token.value) getToken().catch(() => {
-                showNotice('Não foi possível conectar. Acesse o site pelo servidor e tente novamente.', 'error');
-            });
-        } else if (restoreFocus) launcher.focus();
+            if (!token.value) {
+                getToken().catch(() => {
+                    showNotice('Não foi possível conectar. Acesse o site pelo servidor e tente novamente.', 'error');
+                });
+            }
+        } else if (restoreFocus && opener.isConnected) {
+            opener.focus();
+        }
     }
 
     launcher.addEventListener('click', () => togglePanel(panel.hidden));
@@ -47,7 +54,14 @@
         if (event.key === 'Escape' && !panel.hidden) togglePanel(false);
     });
     document.addEventListener('click', event => {
-        if (!panel.hidden && !panel.contains(event.target) && !launcher.contains(event.target)) {
+        const target = event.target;
+        const contactLink = target instanceof Element ? target.closest('a[href="#contato"]') : null;
+        if (contactLink) {
+            event.preventDefault();
+            togglePanel(true, true, contactLink);
+            return;
+        }
+        if (!panel.hidden && !panel.contains(target) && !launcher.contains(target)) {
             togglePanel(false, false);
         }
     });
@@ -56,6 +70,7 @@
             togglePanel(false, false);
         }
     });
+
     const updateCounter = () => {
         document.getElementById('contato-contador').textContent = `${message.value.length.toLocaleString('pt-BR')} / 5.000 caracteres`;
     };
@@ -64,6 +79,7 @@
     form.addEventListener('submit', async event => {
         event.preventDefault();
         if (send.disabled || !form.reportValidity()) return;
+
         send.disabled = true;
         send.setAttribute('aria-busy', 'true');
         sendText.textContent = 'Enviando...';
@@ -73,7 +89,10 @@
         try {
             await getToken();
             const response = await fetch(form.action, {
-                method: 'POST', body: new FormData(form), credentials: 'same-origin', signal: controller.signal
+                method: 'POST',
+                body: new FormData(form),
+                credentials: 'same-origin',
+                signal: controller.signal
             });
             const data = await response.json();
             if (!response.ok || !data.success) {
@@ -84,7 +103,7 @@
             form.reset();
             updateCounter();
             showNotice(data.message, 'success');
-        } catch (error) {
+        } catch {
             showNotice('Não foi possível confirmar o envio. Verifique sua conexão e tente novamente.', 'error');
         } finally {
             clearTimeout(timeout);

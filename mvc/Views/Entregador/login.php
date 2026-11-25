@@ -8,27 +8,8 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/style/login.css">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/style/login.css?v=20261125-1820">
   <link rel="Shortcut Icon" type="image/png" href="<?= BASE_URL ?>/img/logoIcon.png" class=" w-50 h-60 object-contain">
-
-  <style>
-    body > .flex-grow form input[name='email'] {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2358769f' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Cpath d='m3 7 9 6 9-6'/%3E%3C/svg%3E") !important;
-      background-repeat: no-repeat !important;
-      background-position: 16px center !important;
-      background-size: 22px !important;
-      padding-left: 50px !important;
-    }
-
-    body > .flex-grow form input[name='senha'] {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2358769f' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='10' width='16' height='11' rx='2'/%3E%3Cpath d='M8 10V7a4 4 0 0 1 8 0v3m-4 4v3'/%3E%3C/svg%3E") !important;
-      background-repeat: no-repeat !important;
-      background-position: 16px center !important;
-      background-size: 22px !important;
-      padding-left: 50px !important;
-      padding-right: 52px !important;
-    }
-  </style>
 
   <script>
     tailwind.config = {
@@ -85,13 +66,13 @@
       <!-- LOGO -->
       <div class="flex items-center -my-6">
         <a href="<?= BASE_URL ?>/index.html">
-          <img src="<?= BASE_URL ?>/img/LogoGAzul.png" alt="LOGO" class="h-10 md:h-14 w-auto object-contain">
+          <img src="<?= BASE_URL ?>/img/LogoGAzul.png" alt="GUIAR Logística" class="h-10 md:h-14 w-auto object-contain">
         </a>
       </div>
 
       <!-- MENU DESKTOP -->
       <nav class="hidden md:flex items-center gap-12 font-semibold text-xl">
-        <a href="<?= BASE_URL ?>/index.html" class="text-white/90 hover:text-brand-yellow transition duration-300">Home</a>
+        <a href="<?= BASE_URL ?>/index.html" class="text-white/90 hover:text-brand-yellow transition duration-300">Início</a>
         <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-white/90 hover:text-brand-yellow transition duration-300">Administrador</a>
         <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90 hover:text-brand-yellow transition duration-300">Entregador</a>
       </nav>
@@ -107,8 +88,9 @@
     <!-- MENU MOBILE -->
     <div id="nav-menu" class="hidden w-full md:hidden pb-4">
       <div class="flex flex-col gap-4 text-lg font-semibold mt-4">
-        <a href="<?= BASE_URL ?>/index.html" class="text-white/90">Home</a>
-        <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-white/90">Administrador</a>
+        <a href="<?= BASE_URL ?>/index.html" class="text-white/90">Início</a>
+        <a href="<?= BASE_URL ?>/index.html#sobre" class="text-white/90">Sobre nós</a>
+        <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-white/90">Empresa</a>
         <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-brand-yellow font-bold">Entregador</a>
       </div>
     </div>

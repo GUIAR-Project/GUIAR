@@ -838,7 +838,7 @@
                     <!-- Card de Gráficos "Entregas por dia" -->
                     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-6">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-sm font-extrabold text-slate-900">Entregas por dia</h3>
+                            <h3 class="text-sm font-extrabold text-slate-900">Entregas</h3>
                             <select id="deliveryChartPeriod" class="bg-[#F8FAFC] border border-slate-200 text-[10px] font-bold text-slate-600 rounded-xl px-2 py-1 outline-none">
                                 <option value="week">Esta semana</option>
                                 <option value="month">Este mês</option>
@@ -946,7 +946,7 @@
                 </div>
 
                 <!-- Dica do Dia -->
-                <div class="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-3xl p-5 border border-amber-200/40 shadow-sm flex items-start gap-4 hover-card relative overflow-hidden">
+                <div class="md:col-span-2 bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-3xl p-5 border border-amber-200/40 shadow-sm flex items-start gap-4 hover-card relative overflow-hidden">
                     <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-amber-200/20 rounded-full blur-lg"></div>
                     <div class="w-10 h-10 rounded-xl bg-amber-400 text-white flex items-center justify-center shadow flex-shrink-0 mt-0.5">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

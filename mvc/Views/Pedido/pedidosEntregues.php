@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pedidos Entregues - GUIAR</title>
-    <link rel="Shortcut Icon" type="image/png" href="<?= BASE_URL ?>/img/G.png">
+    <link rel="Shortcut Icon" type="image/png" href="<?= BASE_URL ?>/img/logoIcon.png">
     <style>
         @font-face {
             font-family: 'Brice-Bold';
