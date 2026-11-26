@@ -450,7 +450,7 @@
             </div>
         </header>
 
-        <!-- MODAL CROP IMAGEM DA EMPRESA (MANTIDO) -->
+        <!-- MODAL CROP IMAGEM DA EMPRESA (MANTIDO)! -->
         <div id="empresaImageCard" class="hidden fixed inset-0 z-[70] bg-black/50 backdrop-blur-[1px]">
             <div class="absolute inset-0" data-close="empresa-card"></div>
             <div class="relative mx-auto mt-12 max-w-5xl rounded-[26px] overflow-hidden border border-slate-700 bg-[#111b21] shadow-[0_20px_60px_rgba(0,0,0,0.45)]" style="width: min(92vw, 1100px);">

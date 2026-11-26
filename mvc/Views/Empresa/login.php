@@ -81,7 +81,7 @@
         </a>
       </div>
 
-      <!-- MENU DESKTOP -->
+      <!-- MENU DESKTOP! -->
       <nav class="hidden md:flex items-center gap-12 font-semibold text-xl">
         <a href="<?= BASE_URL ?>/index.html" class="text-white/90 hover:text-brand-yellow transition duration-300">Início</a>
         <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-white/90 hover:text-brand-yellow transition duration-300">Administrador</a>
