@@ -212,8 +212,8 @@ jobs:
           response="$(curl --silent --fail --location --cookie-jar "$cookie_jar" --cookie "$cookie_jar" \
             --data-urlencode 'adminUsername=Vini' --data-urlencode 'adminPassword=1234' \
             'http://127.0.0.1:8080/routes.php?action=loginEmpresa')"
-          echo "$response" | grep -q '<title>Dashboard | GUIAR</title>'
-          echo "$response" | grep -q 'Administradores'
+          [[ "$response" == *'<title>Dashboard | GUIAR</title>'* ]]
+          [[ "$response" == *'Administradores'* ]]
           echo "Login contra o banco real funcionou."
 
       - name: Logs em caso de falha
