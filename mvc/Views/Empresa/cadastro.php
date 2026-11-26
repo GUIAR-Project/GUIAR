@@ -273,7 +273,7 @@
     body > .flex-grow > div {
       width: 100% !important;
       max-width: 1200px !important;
-      min-height: 540px !important;
+      min-height: 520px !important;
       height: auto !important;
       border-radius: 14px !important;
       box-shadow: 0 24px 60px rgb(31 91 166 / 16%) !important;
@@ -318,7 +318,7 @@
 
     body > .flex-grow > div > div:last-child {
       width: 55% !important;
-      padding: 48px !important;
+      padding: 28px 36px !important;
       justify-content: flex-start !important;
     }
 
@@ -333,6 +333,12 @@
       gap: 12px;
     }
 
+    .cadastro-two-column > div {
+      display: flex;
+      flex-direction: column;
+      align-self: end;
+    }
+
     @media (min-width: 900px) {
       .cadastro-two-column {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -344,8 +350,8 @@
       position: relative;
       width: 100%;
       max-width: 508px;
-      margin: 0 0 24px !important;
-      padding-top: 21px;
+      margin: 0 0 18px !important;
+      padding-top: 16px;
     }
 
     .login-form-heading > div:first-child {
@@ -383,15 +389,15 @@
 
     body > .flex-grow form label {
       color: #102b61 !important;
-      font-size: 16px !important;
+      font-size: 14px !important;
       font-weight: 500 !important;
     }
 
     body > .flex-grow form input:not([type='submit']) {
       display: block;
       width: 100%;
-      height: 52px;
-      min-height: 52px;
+      height: 46px;
+      min-height: 46px;
       box-sizing: border-box;
       border: 1px solid #c4d8ff !important;
       border-radius: 11px !important;
@@ -402,8 +408,8 @@
     }
 
     body > .flex-grow form input[type='file'] {
-      height: 52px;
-      padding: 8px 10px !important;
+      height: 46px;
+      padding: 5px 8px !important;
     }
 
     body > .flex-grow form input:not([type='submit']):focus {
@@ -414,8 +420,8 @@
     body > .flex-grow form button[type='submit'] {
       position: relative;
       width: 100%;
-      height: 52px;
-      min-height: 52px;
+      height: 48px;
+      min-height: 48px;
       box-sizing: border-box;
       border: 0 !important;
       border-radius: 11px !important;
@@ -434,7 +440,7 @@
     }
 
     body > .flex-grow form [class*="bg-blue-50"] {
-      padding: 8px 12px !important;
+      padding: 6px 10px !important;
       margin-top: 0 !important;
     }
 
@@ -463,7 +469,7 @@
       }
 
       body > .flex-grow > div > div:last-child {
-        padding: 32px !important;
+        padding: 24px !important;
       }
 
       body > .flex-grow > div > div:first-child h1 {
@@ -472,8 +478,8 @@
 
       body > .flex-grow form input:not([type='submit']),
       body > .flex-grow form button[type='submit'] {
-        height: 52px;
-        min-height: 52px;
+        height: 46px;
+        min-height: 46px;
       }
     }
 
@@ -492,7 +498,7 @@
       body > .flex-grow > div > div:first-child,
       body > .flex-grow > div > div:last-child {
         width: 100% !important;
-        padding: 30px !important;
+        padding: 24px !important;
       }
 
       body > .flex-grow > div > div:first-child {

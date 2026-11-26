@@ -16,7 +16,7 @@
       width: 100% !important;
       max-width: 1100px !important;
       height: auto !important;
-      min-height: 540px !important;
+      min-height: 500px !important;
       border-radius: 14px !important;
       box-shadow: 0 24px 60px rgb(31 91 166 / 16%) !important;
       animation: none !important;
@@ -25,14 +25,14 @@
 
     @media (min-width: 768px) {
       body.login-page > .flex-grow > div {
-        min-height: 621px !important;
+        min-height: 520px !important;
       }
     }
 
     body > .flex-grow > div > div:first-child {
       position: relative !important;
       width: 45% !important;
-      padding: 52px !important;
+      padding: 40px !important;
       background:
         linear-gradient(135deg, transparent 0 73%, rgb(10 42 151 / 88%) 73% 84%, transparent 84%),
         linear-gradient(135deg, transparent 0 86%, #101c8b 86% 100%),
@@ -84,7 +84,7 @@
 
     body > .flex-grow > div > div:last-child {
       width: 55% !important;
-      padding: 48px !important;
+      padding: 36px !important;
       background: #fff !important;
       justify-content: flex-start !important;
     }
@@ -94,8 +94,8 @@
       position: relative;
       width: 100%;
       max-width: 508px;
-      margin: 0 0 34px !important;
-      padding-top: 21px;
+      margin: 0 0 22px !important;
+      padding-top: 16px;
     }
 
     .login-form-heading > div:first-child {
@@ -129,15 +129,15 @@
 
     body > .flex-grow form label {
       color: #102b61 !important;
-      font-size: 16px !important;
+      font-size: 14px !important;
       font-weight: 500 !important;
     }
 
     body > .flex-grow form input:not([type='submit']) {
       display: block;
       width: 100%;
-      height: 52px;
-      min-height: 52px;
+      height: 46px;
+      min-height: 46px;
       box-sizing: border-box;
       border: 1px solid #c4d8ff !important;
       border-radius: 11px !important;
@@ -203,7 +203,11 @@
     }
 
     .admin-login-form {
-      gap: 28px !important;
+      gap: 18px !important;
+    }
+
+    body > .flex-grow form {
+      gap: 18px !important;
     }
 
     body > .flex-grow form input:not([type='submit']):focus {
@@ -214,8 +218,8 @@
     body > .flex-grow form button[type='submit'] {
       position: relative;
       width: 100%;
-      height: 52px;
-      min-height: 52px;
+      height: 48px;
+      min-height: 48px;
       box-sizing: border-box;
       border: 0 !important;
       border-radius: 11px !important;
@@ -261,11 +265,11 @@
       }
 
       body > .flex-grow > div > div:first-child {
-        padding: 36px !important;
+        padding: 30px !important;
       }
 
       body > .flex-grow > div > div:last-child {
-        padding: 36px 40px !important;
+        padding: 30px 32px !important;
       }
 
       body > .flex-grow > div > div:first-child h1 {
@@ -274,8 +278,8 @@
 
       body > .flex-grow form input:not([type='submit']),
       body > .flex-grow form button[type='submit'] {
-        height: 52px;
-        min-height: 52px;
+        height: 46px;
+        min-height: 46px;
       }
     }
 
@@ -288,14 +292,14 @@
       body > .flex-grow > div {
         max-width: 520px !important;
         height: auto !important;
-        min-height: 500px !important;
+        min-height: 460px !important;
         border-radius: 12px !important;
       }
 
       body > .flex-grow > div > div:first-child,
       body > .flex-grow > div > div:last-child {
         width: 100% !important;
-        padding: 30px !important;
+        padding: 24px !important;
       }
 
       body > .flex-grow > div > div:first-child {
@@ -308,7 +312,7 @@
       }
 
       body > .flex-grow > div > div:first-child > div:last-child > div:first-child {
-        margin-bottom: 24px !important;
+        margin-bottom: 18px !important;
       }
 
       body > .flex-grow > div > div:first-child h1 {
