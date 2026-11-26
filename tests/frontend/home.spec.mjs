@@ -4,7 +4,7 @@ test('home apresenta navegação e abre o formulário de contato', async ({ page
   await page.goto('/index.html');
 
   await expect(page).toHaveTitle('GUIAR');
-  await expect(page.locator('nav a', { hasText: 'Empresa' })).toHaveAttribute(
+  await expect(page.locator('nav a', { hasText: 'Administrador' })).toHaveAttribute(
     'href',
     'routes.php?action=loginEmpresa'
   );
@@ -21,7 +21,7 @@ test('home apresenta navegação e abre o formulário de contato', async ({ page
   await expect(page.locator('#contato-contador')).toHaveText('30 / 5.000 caracteres');
   await expect(page.locator('#home-contato-enviar')).toBeEnabled();
 
-  await page.locator('#contato-abrir').click();
+  await page.locator('#contato-fechar').click();
   await expect(page.locator('#contato')).toBeHidden();
   await expect(page.locator('#contato-abrir')).toHaveAttribute('aria-expanded', 'false');
 
