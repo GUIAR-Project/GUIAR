@@ -210,9 +210,9 @@ jobs:
           curl --silent --fail --cookie-jar "$cookie_jar" --cookie "$cookie_jar" \
             'http://127.0.0.1:8080/routes.php?action=loginEmpresa' >/dev/null
           response="$(curl --silent --fail --location --cookie-jar "$cookie_jar" --cookie "$cookie_jar" \
-            --data-urlencode 'username=bigboca01' --data-urlencode 'password=123' \
+            --data-urlencode 'adminUsername=Vini' --data-urlencode 'adminPassword=1234' \
             'http://127.0.0.1:8080/routes.php?action=loginEmpresa')"
-          echo "$response" | grep -q 'Big Boca'
+          echo "$response" | grep -q '<title>Dashboard | GUIAR</title>'
           echo "$response" | grep -q 'Administradores'
           echo "Login contra o banco real funcionou."
 
