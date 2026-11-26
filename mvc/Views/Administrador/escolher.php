@@ -687,12 +687,7 @@
       applyCompanyLogo(localLogo);
     }
 
-    const localNome = localStorage.getItem('guiar_empresa_nome');
-    if (localNome) {
-      const empresaNomeDisplay = document.getElementById('empresaNomeDisplay');
-      if (empresaNomeDisplay) empresaNomeDisplay.textContent = localNome;
-      if (empresaNomeInputCard) empresaNomeInputCard.value = localNome;
-    }
+    localStorage.removeItem('guiar_empresa_nome');
 
     // Barra de Busca Inteligente em Tempo Real
     document.getElementById('searchInput').addEventListener('input', function() {

@@ -223,6 +223,10 @@ class AdministradorController
         }
 
         $nomeAdmin = $_SESSION['nome_usuario'];
+        $isFirstAdmin = $this->administradorModel->isFirstAdminOfCompany(
+            (int)$_SESSION['id_adm'],
+            (int)$_SESSION['company_id']
+        );
         $adminFotoUrl = $this->administradorModel->getPhotoUrlForCompany($_SESSION['id_adm'] ?? 0, $_SESSION['company_id']);
         $logoEmpresaSidebar = $this->empresaModel->getLogoUrlById($_SESSION['company_id']);
 
@@ -239,6 +243,10 @@ class AdministradorController
 
         $nomeAdmin = $_SESSION['nome_usuario'];
         $company_id = (int)$_SESSION['company_id'];
+        $isFirstAdmin = $this->administradorModel->isFirstAdminOfCompany(
+            (int)$_SESSION['id_adm'],
+            $company_id
+        );
         $adminFotoUrl = $this->administradorModel->getPhotoUrlForCompany($_SESSION['id_adm'] ?? 0, $company_id);
         $logoEmpresaSidebar = $this->empresaModel->getLogoUrlById($company_id);
 
@@ -410,6 +418,10 @@ class AdministradorController
         }
 
         $nome_empresa = $empresa['nome_empresa'];
+        $isFirstAdmin = $this->administradorModel->isFirstAdminOfCompany(
+            (int)$_SESSION['id_adm'],
+            (int)$company_id
+        );
         $admin = $this->administradorModel->getById($_SESSION['id_adm']);
 
         if (!$admin) {

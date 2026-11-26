@@ -37,6 +37,10 @@ class EntregadorController
     {
         $this->checkAuth();
         $company_id = $_SESSION['company_id'];
+        $isFirstAdmin = $this->administradorModel->isFirstAdminOfCompany(
+            (int)$_SESSION['id_adm'],
+            (int)$company_id
+        );
         $nomeAdmin = $_SESSION['nome_usuario'] ?? '';
         $adminFotoUrl = $this->administradorModel->getPhotoUrlForCompany($_SESSION['id_adm'] ?? 0, $company_id);
         $logoEmpresaSidebar = $this->empresaModel->getLogoUrlById($company_id);

@@ -73,19 +73,19 @@
 <body class="min-h-screen flex flex-col font-sans">
 
     <!-- HEADER -->
-    <header class="bg-brand-blue shadow-md py-0 px-8 sticky top-0 z-50">
+    <header class="bg-white shadow-md py-3 px-4 sm:px-8 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="flex items-center -my-6">
+            <div class="flex items-center">
                 <a href="<?= BASE_URL ?>/index.html">
-                    <img src="<?= BASE_URL ?>/img/LogoGAzul.png" alt="GUIAR Logística" class="h-10 md:h-14 w-auto object-contain">
+                    <img src="<?= BASE_URL ?>/img/LogoGAzul.png" alt="GUIAR Logística" class="h-10 md:h-12 w-auto object-contain">
                 </a>
             </div>
             <nav class="hidden md:flex items-center gap-12 font-semibold text-xl">
-                <a href="<?= BASE_URL ?>/index.html" class="text-white/90 hover:text-brand-yellow transition duration-300">Início</a>
-                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-white/90 hover:text-brand-yellow transition duration-300">Administrador</a>
-                <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90 hover:text-brand-yellow transition duration-300">Entregador</a>
+                <a href="<?= BASE_URL ?>/index.html" class="text-brand-blue hover:text-blue-700 transition duration-300">Início</a>
+                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-blue hover:text-blue-700 transition duration-300">Administrador</a>
+                <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-brand-blue hover:text-blue-700 transition duration-300">Entregador</a>
             </nav>
-            <button id="nav-toggle" class="md:hidden p-2 text-white focus:outline-none hover:bg-white/10 rounded-lg transition-colors" type="button" aria-label="Abrir menu">
+            <button id="nav-toggle" class="md:hidden p-2 text-brand-blue focus:outline-none hover:bg-blue-50 rounded-lg transition-colors" type="button" aria-label="Abrir menu">
                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
@@ -93,10 +93,10 @@
         </div>
         <div id="nav-menu" class="hidden w-full md:hidden pb-4">
             <div class="flex flex-col gap-4 text-lg font-semibold mt-4">
-                <a href="<?= BASE_URL ?>/index.html" class="text-white/90">Início</a>
-                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold">Administrador</a>
-                <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90">Entregador</a>
-            </div>
+                <a href="<?= BASE_URL ?>/index.html" class="text-brand-blue">Início</a>
+                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-blue font-bold">Administrador</a>
+                <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-brand-blue">Entregador</a>
+             </div>
         </div>
     </header>
 

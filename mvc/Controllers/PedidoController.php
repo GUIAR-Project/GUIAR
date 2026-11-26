@@ -40,6 +40,10 @@ class PedidoController
     {
         $this->checkAuth();
         $company_id = $_SESSION['company_id'];
+        $isFirstAdmin = $this->administradorModel->isFirstAdminOfCompany(
+            (int)$_SESSION['id_adm'],
+            (int)$company_id
+        );
         $adminFotoUrl = $this->administradorModel->getPhotoUrlForCompany($_SESSION['id_adm'], $company_id);
         $logoEmpresaSidebar = $this->empresaModel->getLogoUrlById($company_id);
 
@@ -54,6 +58,10 @@ class PedidoController
     {
         $this->checkAuth();
         $company_id = $_SESSION['company_id'];
+        $isFirstAdmin = $this->administradorModel->isFirstAdminOfCompany(
+            (int)$_SESSION['id_adm'],
+            (int)$company_id
+        );
         $adminFotoUrl = $this->administradorModel->getPhotoUrlForCompany($_SESSION['id_adm'], $company_id);
         $logoEmpresaSidebar = $this->empresaModel->getLogoUrlById($company_id);
 
