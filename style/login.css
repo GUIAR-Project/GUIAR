@@ -23,6 +23,12 @@
       opacity: 1 !important;
     }
 
+    @media (min-width: 768px) {
+      body.login-page > .flex-grow > div {
+        min-height: 621px !important;
+      }
+    }
+
     body > .flex-grow > div > div:first-child {
       position: relative !important;
       width: 45% !important;
