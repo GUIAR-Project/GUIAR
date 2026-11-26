@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="shortcut icon" type="image/png" href="<?= BASE_URL ?>/img/logoIcon.png">
+    <link rel="icon" href="<?= htmlspecialchars(!empty($logoEmpresaSidebar) ? $logoEmpresaSidebar : BASE_URL . '/img/logoIcon.png', ENT_QUOTES, 'UTF-8') ?>">
 
     <title>Mapa de Entregas | GUIAR</title>
 
@@ -47,8 +47,12 @@
         $entregadorFotoUrl = $normalizarUrlAsset($fotoRaw);
     }
 
-    $logoFallback = BASE_URL . '/img/LogoPreto.png';
+    $logoFallback = BASE_URL . '/img/logoIcon.png';
     $logoRaw = $logoEmpresaSidebar ?? ($logoEmpresa ?? ($empresa['logo_url'] ?? ($empresa['logo'] ?? '')));
+    $logoPath = parse_url((string)$logoRaw, PHP_URL_PATH);
+    if (is_string($logoPath) && preg_match('#/img/logopreto\.png$#i', $logoPath)) {
+        $logoRaw = '';
+    }
     $logoEmpresaSidebar = !empty($logoRaw)
         ? $normalizarUrlAsset($logoRaw)
         : $logoFallback;
@@ -62,11 +66,20 @@
     $pedidosMapaIniciaisJson = json_encode($pedidosMapaIniciais ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '[]';
     ?>
 
-    <!-- SIDEBAR CLARA (DESKTOP) -->
+    <!-- OVERLAY MOBILE -->
+    <div id="overlay" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden transition-opacity"></div>
+
+    <!-- SIDEBAR -->
     <aside id="sidebar"
-        class="hidden md:flex w-72 bg-white flex-col fixed top-0 left-0 text-slate-700 z-50 transition-all rounded-none overflow-hidden h-screen border-r border-slate-200/80 shadow-sm">
+        class="flex w-72 bg-white flex-col fixed top-0 left-0 text-slate-700 z-50 transition-all rounded-none overflow-hidden h-screen border-r border-slate-200/80 shadow-sm">
 
         <div class="flex flex-col h-full">
+
+            <button id="closeSidebar" type="button"
+                class="absolute top-5 right-5 md:hidden text-slate-500 hover:text-slate-800 text-xl font-bold p-1 rounded-lg transition-colors z-50"
+                aria-label="Fechar menu">
+                ✕
+            </button>
 
             <!-- LOGO DA EMPRESA -->
             <div class="px-6 pt-7 pb-4 mb-2 flex justify-start items-center gap-3">
@@ -120,7 +133,7 @@
             <!-- FOOTER SIDEBAR -->
             <div class="p-4 mt-auto border-t border-slate-100">
                 <div class="px-2 pb-3.5 flex flex-col items-center gap-1">
-                    <img src="<?= BASE_URL ?>/img/LogoPreto.png" alt="GUIAR" class="w-20 h-auto object-contain opacity-90">
+                    <img src="<?= htmlspecialchars(!empty($logoEmpresaSidebar) ? $logoEmpresaSidebar : BASE_URL . '/img/logoIcon.png', ENT_QUOTES, 'UTF-8') ?>" alt="Logo da empresa" class="w-20 h-auto object-contain opacity-90">
                     <p class="text-[10px] text-slate-400 text-center leading-tight">
                         Conectando você ao seu destino.
                     </p>
@@ -166,6 +179,14 @@
         <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-4 md:px-8 py-3 md:py-4 flex items-center justify-between gap-2.5 sm:gap-4 sticky top-0 z-20 flex-shrink-0">
 
             <div class="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
+                <button id="toggleSidebar" type="button"
+                    class="md:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex-shrink-0"
+                    aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+
                 <!-- ÍCONE DA ABA -->
                 <div class="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto rounded-xl sm:rounded-none bg-indigo-50/80 sm:bg-transparent flex-shrink-0 transition-transform hover:scale-105"
                     style="color: var(--emp-primary, #4F46E5);">
@@ -1690,6 +1711,7 @@
     <script>
         window.GUIAR_EMPRESA_LOGO = <?= json_encode($logoEmpresaSidebar) ?>;
     </script>
+    <script src="<?= BASE_URL ?>/public/js/mobile-sidebar.js"></script>
     <script src="<?= BASE_URL ?>/public/js/empresa-palette.js"></script>
 </body>
 

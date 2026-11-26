@@ -604,7 +604,6 @@
         <div id="nav-menu" class="hidden w-full md:hidden pb-4">
         <div class="flex flex-col gap-4 text-lg font-semibold mt-4">
             <a href="<?= BASE_URL ?>/index.html" class="text-white/90">Início</a>
-            <a href="<?= BASE_URL ?>/index.html#sobre" class="text-white/90">Sobre nós</a>
             <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-white/90">Empresa</a>
                 <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90">Entregador</a>
             </div>
@@ -627,7 +626,7 @@
 
 
                 <div class="hidden md:block absolute top-[75%] left-[25%] transform -translate-x-1/2 -translate-y-1/2 z-0 opacity-80 pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[4.5rem] w-[4.5rem] text-brand-yellow drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="cadastro-brand-secondary h-[4.5rem] w-[4.5rem] text-brand-yellow drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
                     </svg>
@@ -648,7 +647,7 @@
                         <h1 class="text-white text-[2rem] leading-[1.2] font-bold mb-5 tracking-tight">
                             Junte-se ao Guiar e<br>cresça conosco.
                         </h1>
-                        <div class="h-1 w-20 bg-brand-yellow"></div>
+                        <div class="cadastro-brand-accent h-1 w-20 bg-brand-yellow"></div>
                     </div>
                 </div>
             </div>
@@ -720,7 +719,7 @@
                             <!-- Imagem da Empresa -->
                             <div>
                                 <label for="formFile" class="block text-[0.85rem] font-medium text-gray-700 mb-1 ml-1">Imagem da Empresa</label>
-                                <input type="file" id="formFile" name="LogoGAzul.png"
+                                <input type="file" id="formFile" name="foto_logo" accept="image/*"
                                     class="w-full px-3 py-2 rounded-xl border border-brand-inputborder focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 transition-all text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)] file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[0.75rem] file:font-bold file:bg-blue-50 file:text-brand-blue hover:file:bg-blue-100 bg-white">
                             </div>
                         </div>

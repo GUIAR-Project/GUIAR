@@ -47,6 +47,35 @@ class Administrador
         }
     }
 
+    public function updateFirstAdminPassword($companyId, $password)
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT id_adm
+             FROM administrador
+             WHERE FK_EMPRESA_id_empresa = :company_id
+             ORDER BY id_adm ASC
+             LIMIT 1"
+        );
+        $stmt->bindParam(':company_id', $companyId, PDO::PARAM_INT);
+        $stmt->execute();
+        $adminId = $stmt->fetchColumn();
+
+        if ($adminId === false) {
+            return false;
+        }
+
+        $stmt = $this->pdo->prepare(
+            "UPDATE administrador
+             SET senha = :senha
+             WHERE id_adm = :id AND FK_EMPRESA_id_empresa = :company_id"
+        );
+        $stmt->bindParam(':senha', $password, PDO::PARAM_STR);
+        $stmt->bindParam(':id', $adminId, PDO::PARAM_INT);
+        $stmt->bindParam(':company_id', $companyId, PDO::PARAM_INT);
+
+        return $stmt->execute();
+    }
+
     public function create($data)
     {
         try {

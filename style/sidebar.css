@@ -41,6 +41,6 @@
             }
 
             #overlay.active {
-                display: block;
+                display: block !important;
             }
         }

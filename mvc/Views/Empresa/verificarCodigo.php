@@ -94,7 +94,6 @@
         <div id="nav-menu" class="hidden w-full md:hidden pb-4">
             <div class="flex flex-col gap-4 text-lg font-semibold mt-4">
                 <a href="<?= BASE_URL ?>/index.html" class="text-white/90">Início</a>
-                <a href="<?= BASE_URL ?>/index.html#sobre" class="text-white/90">Sobre nós</a>
                 <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold">Administrador</a>
                 <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90">Entregador</a>
             </div>

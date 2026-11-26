@@ -125,20 +125,50 @@ class EmpresaController
                 return;
             }
 
-            // Lógica para o upload da imagem
+            // Salva a logo com nome único para evitar colisões entre empresas.
             $diretorio = __DIR__ . '/../../public/uploads/empresas/';
 
-            // Verifica se o diretório existe, se não existir, tenta criar
             if (!is_dir($diretorio)) {
-                mkdir($diretorio, 0777, true);
+                mkdir($diretorio, 0755, true);
             }
 
             $nome_imagem = '';
-            // Lógica para verificar e mover a imagem
-            if (isset($_FILES['foto_logo']) && $_FILES['foto_logo']['error'] == 0) {
-                $nome_imagem = basename($_FILES['foto_logo']['name']);
-                $caminho_imagem = $diretorio . $nome_imagem;
-                move_uploaded_file($_FILES['foto_logo']['tmp_name'], $caminho_imagem);
+            $uploadLogo = $_FILES['foto_logo'] ?? null;
+            if (is_array($uploadLogo) && ($uploadLogo['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                $arquivoTemporario = $uploadLogo['tmp_name'] ?? '';
+                if (
+                    ($uploadLogo['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
+                    || $arquivoTemporario === ''
+                    || !is_uploaded_file($arquivoTemporario)
+                ) {
+                    $erro = 'Não foi possível enviar a imagem da empresa. Tente novamente.';
+                } else {
+                    $mimeType = (new \finfo(FILEINFO_MIME_TYPE))->file($arquivoTemporario);
+                    $extensoesPermitidas = [
+                        'image/jpeg' => 'jpg',
+                        'image/png' => 'png',
+                        'image/gif' => 'gif',
+                        'image/webp' => 'webp',
+                        'image/svg+xml' => 'svg'
+                    ];
+
+                    if (!isset($extensoesPermitidas[$mimeType])) {
+                        $erro = 'Selecione uma imagem PNG, JPG, GIF, WEBP ou SVG.';
+                    } else {
+                        $nome_imagem = bin2hex(random_bytes(16)) . '.' . $extensoesPermitidas[$mimeType];
+                        $caminho_imagem = $diretorio . $nome_imagem;
+
+                        if (!move_uploaded_file($arquivoTemporario, $caminho_imagem)) {
+                            $nome_imagem = '';
+                            $erro = 'Não foi possível salvar a imagem da empresa. Tente novamente.';
+                        }
+                    }
+                }
+            }
+
+            if (isset($erro)) {
+                require_once __DIR__ . '/../Views/Empresa/cadastro.php';
+                return;
             }
 
             // Iniciar sessão para salvar temporariamente os dados do cadastro
@@ -207,7 +237,7 @@ class EmpresaController
                     <div style='font-family: Arial, sans-serif; color: #102b61; line-height: 1.6; max-width: 600px; margin: 0 auto; background-color: #eef5ff; border: 1px solid #c4d8ff; padding: 20px; border-radius: 8px;'>
                         <h2 style='color: #ffffff; background-color: #111979; text-align: center; margin: -20px -20px 20px; padding: 20px; border-radius: 8px 8px 0 0;'>GUIAR</h2>
                         <h3 style='color: #102b61;'>Prezado(a) parceiro(a),</h3>
-                        <p>Recebemos uma solicitação para redefinir a senha da sua conta empresarial no sistema <strong>GUIAR</strong>.</p>
+                        <p>Recebemos uma solicitação para redefinir a senha do administrador principal vinculado a esta conta empresarial no sistema <strong>GUIAR</strong>.</p>
                         <p>Para cadastrar uma nova senha e recuperar o acesso, por favor, clique no botão abaixo:</p>
                         <div style='text-align: center; margin: 30px 0;'>
                             <a href='{$resetLink}' style='background-color: #ffd400; color: #102b61; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;'>Redefinir Minha Senha</a>
@@ -244,30 +274,62 @@ class EmpresaController
             $token = $_POST['token'] ?? '';
             $newPassword = $_POST['password'] ?? '';
 
-            $stmt = $this->pdo->prepare("SELECT user_id FROM password_resets WHERE token = :token AND expiry > NOW()");
-            $stmt->bindParam(':token', $token);
-            $stmt->execute();
-
-            if ($stmt->rowCount() === 0) {
-                $erro = "Token inválido ou expirado.";
+            if ($newPassword === '') {
+                $erro = "Informe a nova senha.";
                 require_once __DIR__ . '/../Views/Empresa/redefinirSenha.php';
                 return;
             }
 
-            $userId = $stmt->fetchColumn();
+            try {
+                $this->pdo->beginTransaction();
 
-            $stmt = $this->pdo->prepare("UPDATE empresa SET senha = :senha WHERE id_empresa = :id");
-            $stmt->bindParam(':senha', $newPassword);
-            $stmt->bindParam(':id', $userId);
-            $stmt->execute();
+                $stmt = $this->pdo->prepare(
+                    "SELECT user_id FROM password_resets
+                     WHERE token = :token AND expiry > NOW()
+                     FOR UPDATE"
+                );
+                $stmt->bindParam(':token', $token);
+                $stmt->execute();
+                $userId = $stmt->fetchColumn();
 
-            $stmt = $this->pdo->prepare("DELETE FROM password_resets WHERE token = :token");
-            $stmt->bindParam(':token', $token);
-            $stmt->execute();
+                if ($userId === false) {
+                    $this->pdo->rollBack();
+                    $erro = "Token inválido ou expirado.";
+                    require_once __DIR__ . '/../Views/Empresa/redefinirSenha.php';
+                    return;
+                }
 
-            $sucesso = "Senha redefinida com sucesso.";
-            require_once __DIR__ . '/../Views/Empresa/redefinirSenha.php';
-            return;
+                $administradorModel = new Administrador($this->pdo);
+                if (!$administradorModel->updateFirstAdminPassword((int)$userId, $newPassword)) {
+                    $this->pdo->rollBack();
+                    $erro = "Não foi possível localizar o administrador principal desta empresa.";
+                    require_once __DIR__ . '/../Views/Empresa/redefinirSenha.php';
+                    return;
+                }
+
+                $stmt = $this->pdo->prepare("UPDATE empresa SET senha = :senha WHERE id_empresa = :id");
+                $stmt->bindParam(':senha', $newPassword);
+                $stmt->bindParam(':id', $userId);
+                $stmt->execute();
+
+                $stmt = $this->pdo->prepare("DELETE FROM password_resets WHERE token = :token");
+                $stmt->bindParam(':token', $token);
+                $stmt->execute();
+
+                $this->pdo->commit();
+                $sucesso = "Senha do administrador principal redefinida com sucesso.";
+                require_once __DIR__ . '/../Views/Empresa/redefinirSenha.php';
+                return;
+            } catch (\PDOException $e) {
+                if ($this->pdo->inTransaction()) {
+                    $this->pdo->rollBack();
+                }
+
+                error_log("Erro ao redefinir senha do administrador: " . $e->getMessage());
+                $erro = "Não foi possível redefinir a senha. Tente novamente.";
+                require_once __DIR__ . '/../Views/Empresa/redefinirSenha.php';
+                return;
+            }
         }
 
         require_once __DIR__ . '/../Views/Empresa/redefinirSenha.php';

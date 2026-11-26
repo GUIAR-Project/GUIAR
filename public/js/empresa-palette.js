@@ -1,6 +1,6 @@
 /**
  * GUIAR - Sistema de Paleta Dinâmica da Empresa
- * Extração de cores da logo via JavaScript e aplicação exclusiva em escolher.php e dashboard.php.
+ * Extrai as cores da logo e aplica a paleta nas telas de cadastro, escolha e dashboard.
  * 
  * Regra do projeto: Não altera regras de negócio do backend; funciona 100% via JavaScript no cliente.
  */
@@ -293,7 +293,7 @@
     }
 
     // ==========================================
-    // APLICAÇÃO DO TEMA EM ESCOLHER.PHP E DASHBOARD.PHP
+    // APLICAÇÃO DO TEMA NAS PÁGINAS DA EMPRESA
     // ==========================================
 
     function applyDynamicTheme(palette, pageType) {
@@ -326,7 +326,51 @@
 
         let pageCss = '';
 
-        if (pageType === 'escolher') {
+        if (pageType === 'cadastro') {
+            pageCss = `
+                .cadastro-brand-accent {
+                    background-color: var(--emp-secondary) !important;
+                }
+                .cadastro-brand-secondary {
+                    color: var(--emp-secondary) !important;
+                }
+                .cadastro-form-content .login-form-heading::before {
+                    background-color: var(--emp-secondary) !important;
+                }
+                .cadastro-form-content .login-form-heading > div:first-child {
+                    background-color: var(--emp-primary-light) !important;
+                    color: var(--emp-primary) !important;
+                }
+                #cadaForm input:not([type="submit"]):focus {
+                    border-color: var(--emp-primary) !important;
+                    box-shadow: 0 0 0 3px var(--emp-primary-ring) !important;
+                }
+                #cadaForm button[type="submit"] {
+                    background-color: var(--emp-primary) !important;
+                    color: var(--emp-primary-contrast) !important;
+                    transition: background-color 0.2s ease, transform 0.2s ease !important;
+                }
+                #cadaForm button[type="submit"]:hover {
+                    background-color: var(--emp-primary-hover) !important;
+                }
+                #cadaForm a {
+                    color: var(--emp-primary-dark) !important;
+                }
+                #cadaForm input[type="file"]::file-selector-button {
+                    background-color: var(--emp-secondary-light);
+                    color: var(--emp-secondary);
+                    border: 0;
+                    border-radius: 9999px;
+                    padding: 4px 12px;
+                    font-weight: 700;
+                    cursor: pointer;
+                }
+                #cadaForm input[type="file"]::file-selector-button:hover {
+                    background-color: var(--emp-secondary);
+                    color: var(--emp-secondary-contrast);
+                }
+            `;
+        } else if (pageType === 'escolher') {
             pageCss = `
                 /* Nome da Empresa em Destaque */
                 header strong.text-\\[\\#1B138F\\],
@@ -752,6 +796,7 @@
                 img.onload = function () {
                     extractPaletteFromImage(img, function (palette) {
                         savePalette(palette, dataUrl);
+                        applyDynamicTheme(palette, 'cadastro');
 
                         // Exibe feedback elegante abaixo do input de arquivo
                         previewBox.style.display = 'block';

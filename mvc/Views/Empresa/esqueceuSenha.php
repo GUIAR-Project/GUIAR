@@ -4,13 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esqueceu sua senha | Empresa</title>
+    <title>Esqueceu sua senha | Administrador</title>
 
-      <link rel="Shortcut Icon" type="image/png" href="<?= BASE_URL ?>/img/logoIcon.png" class=" w-50 h-60 object-contain">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="Shortcut Icon" type="image/png" href="<?= BASE_URL ?>/img/logoIcon.png">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/style/navbar.css">
 
     <script>
         tailwind.config = {
@@ -60,89 +62,6 @@
             background: #eef5ff !important;
             color: #102b61;
             font-family: 'Inter', sans-serif !important;
-        }
-
-        body > header {
-            min-height: 80px;
-            background: #fff !important;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -2px rgb(0 0 0 / 10%) !important;
-        }
-
-        body > header > div:first-child {
-            min-height: 80px;
-        }
-
-        body > header > div:first-child > div {
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-        }
-
-        body > header img {
-            width: auto !important;
-            height: 56px !important;
-            max-height: none;
-            filter: none !important;
-            object-fit: contain;
-        }
-
-        body > header nav {
-            gap: 48px !important;
-            font-size: 24px !important;
-            font-weight: 600 !important;
-            font-family: ui-sans-serif, system-ui, sans-serif !important;
-        }
-
-        body > header nav a,
-        body > header #nav-menu a {
-            color: #1b138f !important;
-            text-decoration: none !important;
-            transition: color 300ms ease;
-        }
-
-        body > header nav a {
-            position: relative;
-        }
-
-        body > header nav a::after {
-            position: absolute;
-            right: 0;
-            bottom: -6px;
-            left: 0;
-            width: 0;
-            height: 3px;
-            background: #1b138f;
-            content: '';
-            transition: width 300ms ease;
-        }
-
-        body > header nav a:hover,
-        body > header #nav-menu a:hover {
-            color: #2b6dd6 !important;
-        }
-
-        body > header nav a:hover::after {
-            width: 100%;
-        }
-
-        body > header nav a.text-brand-yellow,
-        body > header #nav-menu a.text-brand-yellow {
-            color: #111979 !important;
-        }
-
-        body > header #nav-toggle {
-            color: #fff !important;
-            background: #1b138f !important;
-        }
-
-        body > header #nav-menu {
-            padding-bottom: 16px;
-        }
-
-        body > header #nav-menu > div {
-            gap: 16px;
-            margin-top: 16px;
-            font-size: 18px;
-            font-weight: 600;
         }
 
         body > .flex-grow {
@@ -323,19 +242,6 @@
         }
 
         @media (max-width: 767px) {
-            body > header,
-            body > header > div:first-child {
-                min-height: 80px;
-            }
-
-            body > header img {
-                height: 40px !important;
-            }
-
-            body > header nav {
-                font-size: 20px !important;
-            }
-
             body > .flex-grow {
                 min-height: 0;
                 padding: 32px 18px !important;
@@ -398,45 +304,25 @@
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col font-sans">
-
-    <!-- HEADER -->
-    <header class="bg-brand-blue shadow-md py-0 px-8 sticky top-0 z-50">
-
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-
-            <!-- LOGO -->
-             <div class="flex items-center -my-6">
-                <a href="<?= BASE_URL ?>/index.html">
-                    <img src="<?= BASE_URL ?>/img/LogoGAzul.png" alt="LOGO" class="h-10 md:h-14 w-auto object-contain">
-                </a>
-            </div>
-
-            <!-- MENU DESKTOP -->
-            <nav class="hidden md:flex items-center gap-12 font-semibold text-xl">
-                <a href="<?= BASE_URL ?>/index.html" class="text-white/90 hover:text-brand-yellow transition duration-300">Home</a>
-                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold underline decoration-2 underline-offset-4 transition duration-300">Administrador</a>
-                <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90 hover:text-brand-yellow transition duration-300">Entregador</a>
-            </nav>
-
-            <!-- BOTÃO MOBILE -->
-            <button id="nav-toggle" class="md:hidden p-2 text-white focus:outline-none hover:bg-white/10 rounded-lg transition-colors" type="button">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                </svg>
+<body class="min-h-screen flex flex-col font-sans login-page">
+    <nav id="navbar" class="navbar navbar-expand-lg fixed-top py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="<?= BASE_URL ?>/index.html">
+                <img class="brand-logo" src="<?= BASE_URL ?>/img/LogoGAzul.png" alt="GUIAR Logística">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
+                aria-controls="menu" aria-expanded="false" aria-label="Abrir menu">
+                <span class="navbar-toggler-icon"></span>
             </button>
-        </div>
-
-        <!-- MENU MOBILE -->
-        <div id="nav-menu" class="hidden w-full md:hidden pb-4">
-            <div class="flex flex-col gap-4 text-lg font-semibold mt-4">
-                <a href="<?= BASE_URL ?>/index.html" class="text-white/90">Home</a>
-                <a href="<?= BASE_URL ?>/routes.php?action=loginEmpresa" class="text-brand-yellow font-bold">Administrador</a>
-                <a href="<?= BASE_URL ?>/routes.php?action=loginEntregador" class="text-white/90">Entregador</a>
+            <div class="collapse navbar-collapse" id="menu">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-4">
+                    <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/index.html">Início</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/routes.php?action=loginEmpresa">Administrador</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/routes.php?action=loginEntregador">Entregador</a></li>
+                </ul>
             </div>
         </div>
-
-    </header>
+    </nav>
 
     <!-- Container centralizador do formulário -->
     <div class="flex-grow flex items-center justify-center p-4 sm:p-8">
@@ -510,7 +396,7 @@
                     <form class="flex flex-col gap-5" method="POST">
                         <!-- Input Email -->
                         <div>
-                            <label for="email" class="block text-[0.85rem] font-medium text-gray-700 mb-1.5 ml-1">Digite o e-mail cadastrado</label>
+                            <label for="email" class="block text-[0.85rem] font-medium text-gray-700 mb-1.5 ml-1">Digite o e-mail cadastrado da empresa</label>
                             <input type="email" name="email" id="email" required
                                 class="w-full px-4 py-3 rounded-xl border border-brand-inputborder focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-blue-100 transition-all text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.02)]"
                                 placeholder="Digite seu e-mail">
@@ -547,16 +433,13 @@
         </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Toggle do menu mobile
-        const btn = document.getElementById('nav-toggle');
-        const menu = document.getElementById('nav-menu');
-        if (btn && menu) {
-            btn.addEventListener('click', () => {
-                menu.classList.toggle('hidden');
-                menu.classList.toggle('flex');
-            });
-        }
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 40));
+        document.querySelectorAll('#menu .nav-link').forEach(link => link.addEventListener('click', () => {
+            bootstrap.Collapse.getOrCreateInstance(document.getElementById('menu')).hide();
+        }));
     </script>
 </body>
 

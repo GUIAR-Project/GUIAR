@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="Shortcut Icon" type="image/png" href="img/logoIcon.png" class=" w-50 h-60 object-contain">
+    <link rel="icon" href="<?= htmlspecialchars(!empty($logoEmpresaSidebar) ? $logoEmpresaSidebar : BASE_URL . '/img/logoIcon.png', ENT_QUOTES, 'UTF-8') ?>">
     <title>Pedidos Entregues</title>
 
     
@@ -555,8 +555,8 @@ class="menu-item flex items-center gap-3.5 px-5 py-3 rounded-xl font-semibold te
         <!-- FOOTER -->
         <div class="p-4 mt-auto">
             <div class="px-4 pb-4 flex flex-col items-center gap-1.5">
-                <img src="<?= BASE_URL ?>/img/LogoPreto.png"
-                    alt="GUIAR"
+                <img src="<?= htmlspecialchars(!empty($logoEmpresaSidebar) ? $logoEmpresaSidebar : BASE_URL . '/img/LogoPreto.png', ENT_QUOTES, 'UTF-8') ?>"
+                    alt="Logo da empresa"
                     class="w-24 h-auto object-contain">
                 <p class="text-[10px] text-slate-400 text-center leading-tight">
                     Conectando você ao seu destino.

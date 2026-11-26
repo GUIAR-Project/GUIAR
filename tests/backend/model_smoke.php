@@ -97,6 +97,10 @@ check($administrador->create([
 ]), 'O segundo administrador da empresa não foi cadastrado.');
 check(!$administrador->isFirstAdminOfCompany(2, 1), 'Um administrador posterior foi identificado como o primeiro da empresa.');
 check($administrador->isFirstAdminOfCompany(1, 1), 'O primeiro administrador deixou de ser identificado após novo cadastro.');
+check($administrador->updateFirstAdminPassword(1, 'senha-nova'), 'A recuperação não atualizou o primeiro administrador.');
+check($administrador->login('admin_ci', 'senha-nova') !== false, 'A nova senha do primeiro administrador não autentica.');
+check($administrador->login('admin_ci_2', 'senha-teste') !== false, 'A recuperação alterou a senha de outro administrador.');
+check(!$administrador->updateFirstAdminPassword(999, 'senha-nova'), 'A recuperação aceitou uma empresa sem administrador.');
 $segundaEmpresaCriada = $empresa->create([
     'nome_empresa' => 'Segunda Empresa CI',
     'cnpj' => '11.111.111/0001-11',

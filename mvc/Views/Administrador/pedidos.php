@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciamento de Pedidos</title>
 
-    <link rel="Shortcut Icon" type="image/png" href="img/logoIcon.png" class=" w-50 h-60 object-contain">
+    <link rel="icon" href="<?= htmlspecialchars(!empty($logoEmpresaSidebar) ? $logoEmpresaSidebar : BASE_URL . '/img/logoIcon.png', ENT_QUOTES, 'UTF-8') ?>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="<?= BASE_URL ?>/style/sidebar.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1225,7 +1225,7 @@ select:focus {
             <!-- FOOTER SIDEBAR -->
             <div class="p-4 mt-auto border-t border-slate-100">
                 <div class="px-2 pb-3.5 flex flex-col items-center gap-1">
-                    <img src="<?= BASE_URL ?>/img/LogoPreto.png" alt="GUIAR" class="w-20 h-auto object-contain opacity-90">
+                    <img src="<?= htmlspecialchars(!empty($logoEmpresaSidebar) ? $logoEmpresaSidebar : BASE_URL . '/img/LogoPreto.png', ENT_QUOTES, 'UTF-8') ?>" alt="Logo da empresa" class="w-20 h-auto object-contain opacity-90">
                     <p class="text-[10px] text-slate-400 text-center leading-tight">
                         Conectando você ao seu destino.
                     </p>

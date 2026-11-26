@@ -5,7 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gerenciar Administradores | GUIAR</title>
-  <link rel="Shortcut Icon" type="image/png" href="img/logoIcon.png" class=" w-50 h-60 object-contain">
+  <?php
+  $logoEmpresaHeader = isset($empresa['nome_arquivo']) && !empty($empresa['nome_arquivo'])
+      ? BASE_URL . '/public/uploads/empresas/' . htmlspecialchars($empresa['nome_arquivo'])
+      : BASE_URL . '/img/logoIcon.png';
+  ?>
+  <link rel="icon" href="<?= htmlspecialchars($logoEmpresaHeader, ENT_QUOTES, 'UTF-8') ?>">
 
   <!-- Scripts para os Modais funcionarem (jQuery e Bootstrap JS) -->
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -288,11 +293,6 @@
       <!-- DIREITA: empresa + sino + logout -->
       <div class="flex items-center flex-wrap gap-4">
 
-        <?php
-        $logoEmpresaHeader = isset($empresa['nome_arquivo']) && !empty($empresa['nome_arquivo'])
-            ? BASE_URL . '/public/uploads/empresas/' . htmlspecialchars($empresa['nome_arquivo'])
-            : BASE_URL . '/img/logoIcon.png';
-        ?>
         <div class="flex items-center gap-2 border border-[#E2E8F0] bg-white rounded-2xl px-4 py-2.5 shadow-sm text-sm">
           <div class="relative">
             <button type="button" id="empresaLogoTrigger" class="block focus:outline-none">
